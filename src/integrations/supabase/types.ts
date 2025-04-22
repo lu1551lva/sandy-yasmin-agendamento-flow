@@ -9,7 +9,142 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      agendamentos: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          data: string
+          hora: string
+          id: string
+          profissional_id: string
+          servico_id: string
+          status: string
+          ultima_mensagem_enviada_em: string | null
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          data: string
+          hora: string
+          id?: string
+          profissional_id: string
+          servico_id: string
+          status?: string
+          ultima_mensagem_enviada_em?: string | null
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          data?: string
+          hora?: string
+          id?: string
+          profissional_id?: string
+          servico_id?: string
+          status?: string
+          ultima_mensagem_enviada_em?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agendamentos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agendamentos_profissional_id_fkey"
+            columns: ["profissional_id"]
+            isOneToOne: false
+            referencedRelation: "profissionais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agendamentos_servico_id_fkey"
+            columns: ["servico_id"]
+            isOneToOne: false
+            referencedRelation: "servicos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clientes: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          nome: string
+          telefone: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          nome: string
+          telefone: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          nome?: string
+          telefone?: string
+        }
+        Relationships: []
+      }
+      profissionais: {
+        Row: {
+          created_at: string
+          dias_atendimento: string[]
+          horario_fim: string
+          horario_inicio: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          created_at?: string
+          dias_atendimento: string[]
+          horario_fim: string
+          horario_inicio: string
+          id?: string
+          nome: string
+        }
+        Update: {
+          created_at?: string
+          dias_atendimento?: string[]
+          horario_fim?: string
+          horario_inicio?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      servicos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          duracao_em_minutos: number
+          id: string
+          nome: string
+          valor: number
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          duracao_em_minutos: number
+          id?: string
+          nome: string
+          valor: number
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          duracao_em_minutos?: number
+          id?: string
+          nome?: string
+          valor?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
