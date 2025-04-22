@@ -1,10 +1,12 @@
 
 import { Outlet } from "react-router-dom";
 import Sidebar from "@/components/admin/Sidebar";
-import { useAuth } from "@/context/auth-context";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
 
 const AdminLayout = () => {
-  const { user } = useAuth();
+  const { logout } = useAdminAuth();
 
   return (
     <div className="min-h-screen flex">
@@ -14,9 +16,15 @@ const AdminLayout = () => {
           <div className="flex justify-between items-center">
             <h1 className="text-xl font-medium">Painel Administrativo</h1>
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-muted-foreground">
-                {user?.email}
-              </span>
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                onClick={logout}
+                className="flex items-center gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                Sair
+              </Button>
             </div>
           </div>
         </header>
