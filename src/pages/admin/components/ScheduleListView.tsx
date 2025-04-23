@@ -1,7 +1,7 @@
-
 import { format, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { cn, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/classnames";
+import { formatDate } from "@/lib/dateUtils";
 
 interface Props {
   weekDays: Date[];

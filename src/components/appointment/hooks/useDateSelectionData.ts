@@ -1,10 +1,9 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase, Service } from "@/lib/supabase";
 import { format, addDays, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { generateTimeSlots } from "@/lib/utils";
+import { generateTimeSlots } from "@/lib/dateUtils";
 
 export function useDateSelectionData(selectedService: Service | null, selectedDate: Date | null, professionalId: string | null) {
   const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>([]);

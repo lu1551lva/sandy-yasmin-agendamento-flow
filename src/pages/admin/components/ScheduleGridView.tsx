@@ -1,5 +1,5 @@
-
-import { cn, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/classnames";
+import { formatDate } from "@/lib/dateUtils";
 import { format, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 

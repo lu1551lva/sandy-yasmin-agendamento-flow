@@ -1,10 +1,9 @@
-
 // Hooks and types
 import { useState } from "react";
 import { Service } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/dateUtils";
 // Custom hook for all logic
 import { useDateSelectionData } from "./hooks/useDateSelectionData";
 // Presentational component
