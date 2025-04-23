@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Edit, Trash2 } from "lucide-react";
 import { Professional } from "@/lib/supabase";
 import React from "react";
+import { Badge } from "@/components/ui/badge";
 
 interface ProfessionalTableProps {
   professionals: Professional[];
@@ -22,6 +23,27 @@ const ProfessionalTable: React.FC<ProfessionalTableProps> = ({
   formatDiasAtendimento,
   onAddProfessional,
 }) => {
+  // Lista completa dos dias da semana para verificar disponibilidade
+  const diasSemana = ["domingo", "segunda", "terca", "quarta", "quinta", "sexta", "sabado"];
+  const diasSemanaCompletos = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
+  // Função para renderizar badges dos dias de atendimento
+  const renderDiasBadges = (dias: string[]) => {
+    return (
+      <div className="flex flex-wrap gap-1">
+        {diasSemana.map((dia, index) => (
+          <Badge 
+            key={dia}
+            variant={dias.includes(dia) ? "default" : "outline"} 
+            className={!dias.includes(dia) ? "opacity-40" : ""}
+          >
+            {diasSemanaCompletos[index]}
+          </Badge>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div>
       {isLoading ? (
@@ -46,7 +68,7 @@ const ProfessionalTable: React.FC<ProfessionalTableProps> = ({
                     {professional.nome}
                   </TableCell>
                   <TableCell>
-                    {formatDiasAtendimento(professional.dias_atendimento)}
+                    {renderDiasBadges(professional.dias_atendimento)}
                   </TableCell>
                   <TableCell>
                     {professional.horario_inicio} às {professional.horario_fim}

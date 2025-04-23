@@ -25,7 +25,17 @@ export const formatDate = (date: Date) => {
 
 // Check if a date is a holiday
 export const isHoliday = (date: Date) => {
-  // Example fixed holidays
+  // Recupera os feriados customizados do localStorage
+  const customHolidays = localStorage.getItem('customHolidays');
+  const holidayList = customHolidays ? JSON.parse(customHolidays) : [];
+  
+  // Verifica se existe um feriado personalizado para essa data
+  const dateString = format(date, "yyyy-MM-dd");
+  if (holidayList.includes(dateString)) {
+    return true;
+  }
+  
+  // Example fixed holidays - agora só para referência, não bloqueia atendimento
   const fixedHolidays = [
     "01-01", // Ano Novo
     "04-21", // Tiradentes
@@ -39,13 +49,15 @@ export const isHoliday = (date: Date) => {
 
   const monthDay = format(date, "MM-dd");
   
-  return fixedHolidays.includes(monthDay);
+  // Por padrão, não bloqueamos mais os feriados fixos
+  return false;
 };
 
 // Generate available time slots
-export const generateTimeSlots = (date: Date, serviceDuration: number) => {
-  // If weekend or holiday, no slots available
-  if (isWeekend(date) || isHoliday(date)) {
+export const generateTimeSlots = (date: Date, serviceDuration: number, ignoreDateRestrictions = false) => {
+  // Se ignoreDateRestrictions for true, geramos slots independente do dia
+  // Caso contrário, verificamos se é fim de semana
+  if (!ignoreDateRestrictions && isWeekend(date)) {
     return [];
   }
 
@@ -72,6 +84,28 @@ export const generateTimeSlots = (date: Date, serviceDuration: number) => {
   }
   
   return slots;
+};
+
+// Get holidays from localStorage
+export const getHolidays = () => {
+  const savedHolidays = localStorage.getItem('customHolidays');
+  return savedHolidays ? JSON.parse(savedHolidays) : [];
+};
+
+// Add a holiday to localStorage
+export const addHoliday = (dateString: string) => {
+  const holidays = getHolidays();
+  if (!holidays.includes(dateString)) {
+    holidays.push(dateString);
+    localStorage.setItem('customHolidays', JSON.stringify(holidays));
+  }
+};
+
+// Remove a holiday from localStorage
+export const removeHoliday = (dateString: string) => {
+  const holidays = getHolidays();
+  const updatedHolidays = holidays.filter((holiday: string) => holiday !== dateString);
+  localStorage.setItem('customHolidays', JSON.stringify(updatedHolidays));
 };
 
 // Format phone number to (00) 00000-0000

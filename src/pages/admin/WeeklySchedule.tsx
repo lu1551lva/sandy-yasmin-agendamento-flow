@@ -27,11 +27,13 @@ import { CalendarIcon, List, LayoutGrid, Loader } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, isToday, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import HolidayManager from "./components/HolidayManager";
 
 const WeeklySchedule = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [viewType, setViewType] = useState<"grid" | "list">("grid");
   const [professionalFilter, setProfessionalFilter] = useState<string>("all");
+  const [showHolidayManager, setShowHolidayManager] = useState(false);
   
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 0 });
   const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 0 });
@@ -214,6 +216,19 @@ const WeeklySchedule = () => {
           Visualize os agendamentos da semana
         </p>
       </div>
+
+      <div className="flex justify-between">
+        <Button 
+          variant="outline" 
+          onClick={() => setShowHolidayManager(!showHolidayManager)}
+        >
+          {showHolidayManager ? "Fechar Gerenciador de Feriados" : "Gerenciar Feriados"}
+        </Button>
+      </div>
+
+      {showHolidayManager && (
+        <HolidayManager />
+      )}
 
       <Card>
         <CardHeader>

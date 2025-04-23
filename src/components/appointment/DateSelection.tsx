@@ -57,11 +57,29 @@ const DateSelection = ({
     enabled: !!selectedDate && !!professionalId,
   });
 
+  // Query professional to check available days
+  const { data: professional } = useQuery({
+    queryKey: ["professional", professionalId],
+    queryFn: async () => {
+      if (!professionalId) return null;
+      
+      const { data, error } = await supabase
+        .from("profissionais")
+        .select("*")
+        .eq("id", professionalId)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!professionalId,
+  });
+
   // Update available time slots when date changes
   useEffect(() => {
     if (selectedDate && selectedService) {
       // Get basic time slots for the selected date
-      const baseSlots = generateTimeSlots(selectedDate, selectedService.duracao_em_minutos);
+      const baseSlots = generateTimeSlots(selectedDate, selectedService.duracao_em_minutos, true);
       
       // Filter out already booked slots
       const bookedTimes = appointments?.map(app => app.hora) || [];
@@ -91,12 +109,40 @@ const DateSelection = ({
   };
 
   const isDateDisabled = (date: Date) => {
-    // Disable past dates, holidays, and dates beyond one month
-    return (
-      isBefore(date, startOfDay(today)) ||
-      isHoliday(date) ||
-      isBefore(oneMonthLater, date)
-    );
+    // Disable past dates and dates beyond one month
+    if (isBefore(date, startOfDay(today)) || isBefore(oneMonthLater, date)) {
+      return true;
+    }
+
+    // Verificar se o profissional atende neste dia da semana
+    if (professional && professional.dias_atendimento) {
+      const diaSemana = format(date, "EEEE", { locale: ptBR });
+      const mapDias: Record<string, string> = {
+        domingo: "domingo",
+        segunda: "segunda-feira",
+        terca: "terça-feira",
+        quarta: "quarta-feira",
+        quinta: "quinta-feira",
+        sexta: "sexta-feira",
+        sabado: "sábado"
+      };
+
+      // Converte o dia da semana para o formato que está armazenado no banco
+      let diaFormatado = diaSemana;
+      for (const [key, value] of Object.entries(mapDias)) {
+        if (value === diaSemana) {
+          diaFormatado = key;
+          break;
+        }
+      }
+
+      // Verifica se o profissional não atende neste dia
+      if (!professional.dias_atendimento.includes(diaFormatado)) {
+        return true;
+      }
+    }
+
+    return false;
   };
 
   if (!selectedService) {
