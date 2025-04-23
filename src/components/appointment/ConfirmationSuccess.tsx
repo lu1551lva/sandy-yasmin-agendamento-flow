@@ -13,7 +13,7 @@ interface ConfirmationSuccessProps {
       telefone?: string;
     };
     service?: Service;
-    date?: Date;
+    date?: string;
     time?: string;
     professional_name?: string;
   };

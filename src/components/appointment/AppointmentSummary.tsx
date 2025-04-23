@@ -1,19 +1,20 @@
 
-import { Service } from "@/lib/supabase";
-import { formatDate } from "@/lib/utils";
+import { formatCurrency } from "@/lib/supabase";
+import { Service, Client } from "@/lib/supabase";
+import { formatLocalDate } from "@/lib/dateUtils";
 
 interface AppointmentSummaryProps {
   service?: Service;
   professionalName?: string;
-  date?: Date;
+  date?: string;
   time?: string;
-  client?: { nome: string; telefone: string; email: string };
+  client?: Client;
   appointmentData?: {
     service?: Service;
     professional_name?: string;
-    date?: Date;
+    date?: string;
     time?: string;
-    client?: { nome: string; telefone: string; email: string };
+    client?: Client;
   };
 }
 
@@ -25,62 +26,61 @@ const AppointmentSummary = ({
   client,
   appointmentData,
 }: AppointmentSummaryProps) => {
-  // Use direct props if available, otherwise fall back to appointmentData
-  const serviceData = service || appointmentData?.service;
-  const profName = professionalName || appointmentData?.professional_name || "Profissional padrão";
-  const dateValue = date || appointmentData?.date;
-  const timeValue = time || appointmentData?.time;
-  const clientData = client || appointmentData?.client;
+  // Allow direct props or data from appointmentData
+  const _service = service || appointmentData?.service;
+  const _professionalName = professionalName || appointmentData?.professional_name;
+  const _date = date || appointmentData?.date;
+  const _time = time || appointmentData?.time;
+  const _client = client || appointmentData?.client;
 
-  if (!serviceData || !dateValue || !timeValue || !clientData) {
-    return <div>Dados do agendamento incompletos</div>;
+  if (!_service || !_date || !_time || !_client) {
+    return (
+      <div className="text-center py-6 text-muted-foreground">
+        Dados do agendamento incompletos
+      </div>
+    );
   }
 
+  const formatDateDisplay = (dateString: string) => {
+    try {
+      return formatLocalDate(dateString);
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return dateString;
+    }
+  };
+
   return (
-    <div>
-      <h3 className="font-medium text-lg mb-4">Resumo do agendamento</h3>
-      <div className="space-y-3">
-        <div className="flex justify-between">
-          <span className="text-gray-600">Serviço:</span>
-          <span className="font-medium">{serviceData.nome}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-gray-600">Valor:</span>
-          <span className="font-medium">
-            {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(serviceData.valor)}
-          </span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-gray-600">Data:</span>
-          <span className="font-medium">{formatDate(dateValue)}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-gray-600">Horário:</span>
-          <span className="font-medium">{timeValue}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-gray-600">Duração:</span>
-          <span className="font-medium">{serviceData.duracao_em_minutos} minutos</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-gray-600">Profissional:</span>
-          <span className="font-medium">{profName}</span>
-        </div>
+    <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+      <div>
+        <h3 className="font-medium text-lg">Serviço</h3>
+        <p>{_service.nome}</p>
+        <p className="text-sm text-muted-foreground">
+          Valor: {formatCurrency(_service.valor)} • 
+          Duração: {_service.duracao_em_minutos} min
+        </p>
       </div>
-      <hr className="my-4" />
-      <div className="space-y-3">
-        <div className="flex justify-between">
-          <span className="text-gray-600">Nome:</span>
-          <span className="font-medium">{clientData.nome}</span>
+
+      {_professionalName && (
+        <div>
+          <h3 className="font-medium">Profissional</h3>
+          <p>{_professionalName}</p>
         </div>
-        <div className="flex justify-between">
-          <span className="text-gray-600">Telefone:</span>
-          <span className="font-medium">{clientData.telefone}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-gray-600">E-mail:</span>
-          <span className="font-medium">{clientData.email}</span>
-        </div>
+      )}
+
+      <div>
+        <h3 className="font-medium">Data e Hora</h3>
+        <p>
+          {formatDateDisplay(_date)} às {_time}
+        </p>
+      </div>
+
+      <div>
+        <h3 className="font-medium">Cliente</h3>
+        <p>{_client.nome}</p>
+        <p className="text-sm text-muted-foreground">
+          {_client.telefone} • {_client.email}
+        </p>
       </div>
     </div>
   );

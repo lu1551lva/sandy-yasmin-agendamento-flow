@@ -7,7 +7,7 @@ import ServiceSelection from "@/components/appointment/ServiceSelection";
 import DateSelection from "@/components/appointment/DateSelection";
 import CustomerForm from "@/components/appointment/CustomerForm";
 import Confirmation from "@/components/appointment/Confirmation";
-import { Service, Client, getSalonBySlug, Salon } from "@/lib/supabase";
+import { Service, Client } from "@/lib/supabase";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader } from "lucide-react";
 import { format } from "date-fns";
@@ -19,11 +19,9 @@ type AppointmentData = {
   date: Date | null;
   time: string | null;
   client: Client | null;
-  salon_id?: string;
 };
 
 const SalonAppointment = () => {
-  const { slug } = useParams<{ slug: string }>();
   const [currentStep, setCurrentStep] = useState(1);
   const [appointmentData, setAppointmentData] = useState<AppointmentData>({
     service: null,
@@ -35,48 +33,9 @@ const SalonAppointment = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [salon, setSalon] = useState<Salon | null>(null);
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const loadSalon = async () => {
-      if (!slug) {
-        navigate('/');
-        return;
-      }
-
-      setLoading(true);
-      const salonData = await getSalonBySlug(slug);
-
-      if (!salonData) {
-        toast({
-          title: "Salon não encontrado",
-          description: "O salão que você está procurando não existe ou foi removido.",
-          variant: "destructive",
-        });
-        navigate('/');
-        return;
-      }
-
-      if (salonData.status === 'inativo') {
-        toast({
-          title: "Salon inativo",
-          description: "Este salão não está aceitando agendamentos no momento.",
-          variant: "destructive",
-        });
-        navigate('/');
-        return;
-      }
-
-      setSalon(salonData);
-      setAppointmentData(prev => ({ ...prev, salon_id: salonData.id }));
-      setLoading(false);
-    };
-
-    loadSalon();
-  }, [slug, navigate, toast]);
 
   const nextStep = () => {
     if (currentStep < 4) {
@@ -97,8 +56,6 @@ const SalonAppointment = () => {
   };
 
   const renderStepContent = () => {
-    if (!salon) return null;
-
     switch (currentStep) {
       case 1:
         return (
@@ -106,7 +63,6 @@ const SalonAppointment = () => {
             selectedService={appointmentData.service}
             updateAppointmentData={updateAppointmentData}
             nextStep={nextStep}
-            salonId={salon.id}
           />
         );
       case 2:
@@ -119,7 +75,6 @@ const SalonAppointment = () => {
             updateAppointmentData={updateAppointmentData}
             nextStep={nextStep}
             prevStep={prevStep}
-            salonId={salon.id}
           />
         );
       case 3:
@@ -129,7 +84,6 @@ const SalonAppointment = () => {
             updateAppointmentData={updateAppointmentData}
             nextStep={nextStep}
             prevStep={prevStep}
-            salonId={salon.id}
           />
         );
       case 4:
@@ -147,7 +101,6 @@ const SalonAppointment = () => {
             setIsSubmitting={setIsSubmitting}
             setIsComplete={setIsComplete}
             prevStep={prevStep}
-            salonId={salon.id}
           />
         );
       default:
@@ -166,7 +119,7 @@ const SalonAppointment = () => {
   return (
     <div className="max-w-3xl mx-auto">
       <h1 className="text-3xl font-bold text-center font-playfair mb-2">
-        Agendamento Online - {salon?.nome}
+        Agendamento Online - Studio Sandy Yasmin
       </h1>
       <p className="text-center text-muted-foreground mb-8">
         Reserve seu horário em poucos passos

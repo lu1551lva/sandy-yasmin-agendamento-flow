@@ -9,6 +9,7 @@ import AppointmentSummary from "./AppointmentSummary";
 import ConfirmationActions from "./ConfirmationActions";
 import ConfirmationSuccess from "./ConfirmationSuccess";
 import { format, parseISO } from "date-fns";
+import { parseDate } from "@/lib/dateUtils";
 
 export interface AppointmentData {
   service: any;
