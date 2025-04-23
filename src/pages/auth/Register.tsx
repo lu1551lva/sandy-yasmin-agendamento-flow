@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,7 +21,15 @@ const Register = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // Helper function to create URL friendly slugs
+  useEffect(() => {
+    toast({
+      title: "Registro não disponível",
+      description: "Este é um aplicativo de inquilino único para Studio Sandy Yasmin. Por favor faça login com as credenciais fornecidas.",
+      variant: "destructive"
+    });
+    navigate('/admin/login');
+  }, [navigate, toast]);
+  
   const generateSlug = (text: string) => {
     return text
       .toLowerCase()
@@ -32,19 +39,16 @@ const Register = () => {
       .replace(/\s+/g, '-');
   };
 
-  // Update custom URL when salon name changes
   const handleSalonNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value;
     setSalonName(name);
     
-    // Only auto-generate URL if user hasn't manually edited it yet
     if (!customUrl || customUrl === generateSlug(salonName)) {
       setCustomUrl(generateSlug(name));
     }
   };
 
   const handleCustomUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Remove spaces and special characters, only allow letters, numbers, and hyphens
     const value = e.target.value.replace(/[^\w-]/g, '').toLowerCase();
     setCustomUrl(value);
   };
@@ -53,37 +57,6 @@ const Register = () => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Validation
-    if (password !== passwordConfirm) {
-      toast({
-        title: "Senhas não conferem",
-        description: "Por favor verifique se as senhas são iguais",
-        variant: "destructive"
-      });
-      setIsLoading(false);
-      return;
-    }
-    
-    if (password.length < 6) {
-      toast({
-        title: "Senha muito curta",
-        description: "A senha deve ter pelo menos 6 caracteres",
-        variant: "destructive"
-      });
-      setIsLoading(false);
-      return;
-    }
-    
-    if (!salonName || !email || !customUrl) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Por favor preencha todos os campos obrigatórios",
-        variant: "destructive"
-      });
-      setIsLoading(false);
-      return;
-    }
-    
     try {
       const { error, user } = await signUp(email, password, {
         nome: salonName,
@@ -91,9 +64,13 @@ const Register = () => {
         telefone: phone
       });
       
-      if (!error && user) {
-        // Redirect to admin dashboard with the custom URL
-        navigate(`/admin/${customUrl}`);
+      if (error) {
+        toast({
+          title: "Registro não disponível",
+          description: error,
+          variant: "destructive"
+        });
+        navigate('/admin/login');
       }
     } catch (error) {
       console.error('Erro no registro:', error);
@@ -119,107 +96,21 @@ const Register = () => {
           </div>
           <CardTitle className="text-2xl font-playfair">Crie sua conta</CardTitle>
           <CardDescription>
-            Comece sua avaliação gratuita de 7 dias
+            Esta funcionalidade não está disponível
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="salonName">Nome do salão/profissional*</Label>
-              <Input
-                id="salonName"
-                placeholder="Studio de Beleza"
-                value={salonName}
-                onChange={handleSalonNameChange}
-                required
-              />
-            </div>
+          <div className="space-y-4 text-center">
+            <p>O registro não é permitido para Studio Sandy Yasmin.</p>
+            <p>Este é um aplicativo de inquilino único.</p>
             
-            <div className="space-y-2">
-              <Label htmlFor="customUrl">URL personalizada*</Label>
-              <div className="flex items-center">
-                <span className="text-sm text-muted-foreground mr-1 whitespace-nowrap">/agendar/</span>
-                <Input
-                  id="customUrl"
-                  placeholder="seu-salao"
-                  value={customUrl}
-                  onChange={handleCustomUrlChange}
-                  required
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Este será o link que seus clientes usarão para agendar: /agendar/{customUrl}
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail*</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="contato@seusalao.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="phone">Telefone</Label>
-              <Input
-                id="phone"
-                placeholder="(00) 00000-0000"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha*</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="new-password"
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="passwordConfirm">Confirme a senha*</Label>
-              <Input
-                id="passwordConfirm"
-                type="password"
-                placeholder="••••••••"
-                value={passwordConfirm}
-                onChange={(e) => setPasswordConfirm(e.target.value)}
-                autoComplete="new-password"
-                required
-              />
-            </div>
-
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader className="mr-2 h-4 w-4 animate-spin" /> Criando conta...
-                </>
-              ) : (
-                "Criar conta"
-              )}
+            <Button
+              className="w-full"
+              onClick={() => navigate('/admin/login')}
+            >
+              Ir para página de login
             </Button>
-            
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">
-                Já possui uma conta?{' '}
-                <Button variant="link" className="p-0 h-auto" onClick={() => navigate('/admin/login')}>
-                  Entrar
-                </Button>
-              </p>
-            </div>
-          </form>
+          </div>
         </CardContent>
       </Card>
     </div>

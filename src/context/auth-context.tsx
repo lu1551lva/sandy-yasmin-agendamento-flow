@@ -12,6 +12,7 @@ interface AuthContextProps {
   isLoggedIn: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => void;
+  signUp: (email: string, password: string, userData?: any) => Promise<{ error: string | null, user: User | null }>;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -54,11 +55,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     navigate('/admin/login');
   };
 
+  // Added signUp function to satisfy the Register.tsx requirements
+  // For a single-tenant app, this function will always return an error
+  const signUp = async (email: string, password: string, userData?: any) => {
+    // For Studio Sandy Yasmin, we don't allow signup
+    return { 
+      error: "Registro não permitido. Este é um aplicativo de inquilino único.", 
+      user: null 
+    };
+  };
+
   const value: AuthContextProps = {
     user,
     isLoggedIn,
     signIn,
     signOut,
+    signUp,
   };
 
   return (
