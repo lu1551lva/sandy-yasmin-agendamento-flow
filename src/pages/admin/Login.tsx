@@ -4,8 +4,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { useAuth } from '@/context/auth-context';
 import { Logo } from '@/components/common/Logo';
 import { Loader, ArrowLeft } from 'lucide-react';
 
@@ -13,7 +13,7 @@ const AdminLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login, isLoggedIn } = useAdminAuth();
+  const { signIn, isLoggedIn, user, salon } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -21,24 +21,23 @@ const AdminLogin = () => {
   
   // Redirect if already logged in
   useEffect(() => {
-    if (isLoggedIn) {
-      navigate(from, { replace: true });
+    if (user && salon) {
+      // For super admin
+      if (salon.email === 'admin@meusistema.com') {
+        navigate('/superadmin');
+      } else {
+        // For regular salon admin
+        navigate(`/admin/${salon.url_personalizado}`);
+      }
     }
-  }, [isLoggedIn, navigate, from]);
+  }, [user, salon, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Default values for dev/test
-    const finalEmail = email || 'admin@studio.com';
-    const finalPassword = password || 'admin123';
-    
     try {
-      const success = await login(finalEmail, finalPassword);
-      if (success) {
-        navigate('/admin/dashboard');
-      }
+      await signIn(email, password);
     } catch (error) {
       console.error('Erro no login:', error);
     } finally {
@@ -51,9 +50,9 @@ const AdminLogin = () => {
       <Button 
         variant="ghost" 
         className="absolute top-4 left-4" 
-        onClick={() => navigate('/agendar')}
+        onClick={() => navigate('/')}
       >
-        <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para agendamento
+        <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para a página inicial
       </Button>
       
       <Card className="w-full max-w-md">
@@ -73,7 +72,7 @@ const AdminLogin = () => {
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@studio.com"
+                placeholder="contato@seusalao.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
@@ -90,9 +89,6 @@ const AdminLogin = () => {
                 autoComplete="current-password"
               />
             </div>
-            <div className="text-xs text-muted-foreground">
-              Padrão: admin@studio.com / admin123
-            </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <>
@@ -104,6 +100,21 @@ const AdminLogin = () => {
             </Button>
           </form>
         </CardContent>
+        <CardFooter className="flex flex-col space-y-4">
+          <div className="text-xs text-muted-foreground text-center w-full">
+            <p className="mb-1">Acessos para teste:</p>
+            <p>Super Admin: admin@meusistema.com / admin123</p>
+            <p>Salão Demo: admin@studioyasmin.com / admin123</p>
+          </div>
+          <div className="text-center w-full">
+            <p className="text-sm text-muted-foreground">
+              Não tem uma conta?{' '}
+              <Button variant="link" className="p-0 h-auto" onClick={() => navigate('/registrar')}>
+                Registre-se
+              </Button>
+            </p>
+          </div>
+        </CardFooter>
       </Card>
     </div>
   );

@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '@/types/database.types';
 
@@ -17,6 +18,7 @@ export type Json =
 
 export type Tables = Database['public']['Tables'];
 
+export type Salon = Tables['saloes']['Row'];
 export type Client = Tables['clientes']['Row'];
 export type Professional = Tables['profissionais']['Row'] & { salao_id?: string };
 export type Service = Tables['servicos']['Row'];
@@ -26,4 +28,43 @@ export type AppointmentWithDetails = Appointment & {
   cliente: Client;
   servico: Service;
   profissional: Professional;
+  salao?: Salon;
 };
+
+export const DEFAULT_SALON_LOGO = "https://placehold.co/400x400/FFEFEF/D0A638?text=S";
+
+// Helper function to get salon by URL slug
+export async function getSalonBySlug(slug: string): Promise<Salon | null> {
+  if (!slug) return null;
+  
+  const { data, error } = await supabase
+    .from('saloes')
+    .select('*')
+    .eq('url_personalizado', slug)
+    .single();
+  
+  if (error || !data) return null;
+  return data;
+}
+
+// Check if a salon's trial has expired
+export function hasTrialExpired(salon: Salon | null): boolean {
+  if (!salon) return true;
+  if (salon.plano !== 'trial') return false;
+  
+  const today = new Date();
+  const trialEndDate = salon.trial_expira_em ? new Date(salon.trial_expira_em) : null;
+  
+  if (!trialEndDate) return false;
+  return today > trialEndDate;
+}
+
+// Check if a salon is active (either in valid trial or active status)
+export function isSalonActive(salon: Salon | null): boolean {
+  if (!salon) return false;
+  
+  if (salon.plano === 'ativo') return true;
+  if (salon.plano === 'trial' && !hasTrialExpired(salon)) return true;
+  
+  return false;
+}

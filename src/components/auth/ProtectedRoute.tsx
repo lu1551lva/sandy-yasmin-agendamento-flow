@@ -1,6 +1,6 @@
 
-import { Navigate, useLocation } from "react-router-dom";
-import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { Navigate, useLocation, useParams } from "react-router-dom";
+import { useAuth } from "@/context/auth-context";
 import { Loader } from "lucide-react";
 
 interface ProtectedRouteProps {
@@ -8,16 +8,41 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { isLoggedIn } = useAdminAuth();
+  const { user, loading, salon, isSuperAdmin } = useAuth();
   const location = useLocation();
-
-  // Check if the admin is logged in
-  if (isLoggedIn) {
+  const { slug } = useParams<{ slug?: string }>();
+  
+  // Handle loading state
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+  
+  // Check if user is authenticated
+  if (!user) {
+    return <Navigate to="/admin/login" state={{ from: location }} replace />;
+  }
+  
+  // Handle super admin routes
+  const isSuperAdminRoute = location.pathname.startsWith('/superadmin');
+  if (isSuperAdminRoute) {
+    // Only allow access to superadmin if the user is the super admin
+    if (!isSuperAdmin) {
+      return <Navigate to="/admin/login" state={{ from: location }} replace />;
+    }
     return <>{children}</>;
   }
+  
+  // For regular salon admin routes
+  // If using a slug, validate that the user has access to this salon
+  if (slug && salon && salon.url_personalizado !== slug) {
+    return <Navigate to={`/admin/${salon.url_personalizado}`} replace />;
+  }
 
-  // If not logged in, redirect to the login page with the current location
-  return <Navigate to="/admin/login" state={{ from: location }} replace />;
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;

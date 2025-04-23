@@ -10,8 +10,9 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import PublicLayout from "./components/layouts/PublicLayout";
 import AdminLayout from "./components/layouts/AdminLayout";
-import Appointment from "./pages/public/Appointment";
+import SalonAppointment from "./pages/public/SalonAppointment";
 import AdminLogin from "./pages/admin/Login";
+import Register from "./pages/auth/Register";
 import Dashboard from "./pages/admin/Dashboard";
 import AppointmentList from "./pages/admin/AppointmentList";
 import WeeklySchedule from "./pages/admin/WeeklySchedule";
@@ -20,6 +21,11 @@ import Services from "./pages/admin/Services";
 import WhatsAppMessages from "./pages/admin/WhatsAppMessages";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { initializeDefaultData } from "@/lib/initData";
+
+// Super Admin
+import SuperAdminLayout from "./pages/superadmin/SuperAdminLayout";
+import SuperAdminDashboard from "./pages/superadmin/Dashboard";
+import SaloesList from "./pages/superadmin/SaloesList";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,26 +58,48 @@ const App = () => {
               {/* Public Routes */}
               <Route element={<PublicLayout />}>
                 <Route path="/" element={<Navigate to="/agendar" replace />} />
-                <Route path="/agendar" element={<Appointment />} />
+                <Route path="/agendar" element={<Navigate to="/registrar" replace />} />
+                <Route path="/agendar/:slug" element={<SalonAppointment />} />
               </Route>
 
-              {/* Admin Routes */}
+              {/* Auth Routes */}
               <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/registrar" element={<Register />} />
+
+              {/* Admin Routes - Multi-Tenant */}
               <Route 
-                path="/admin" 
+                path="/admin/:slug" 
                 element={
                   <ProtectedRoute>
                     <AdminLayout />
                   </ProtectedRoute>
                 }
               >
-                <Route index element={<Navigate to="/admin/dashboard" replace />} />
-                <Route path="dashboard" element={<Dashboard />} />
+                <Route index element={<Dashboard />} />
                 <Route path="agendamentos" element={<AppointmentList />} />
                 <Route path="agenda-semanal" element={<WeeklySchedule />} />
                 <Route path="profissionais" element={<Professionals />} />
                 <Route path="servicos" element={<Services />} />
                 <Route path="mensagens" element={<WhatsAppMessages />} />
+              </Route>
+              
+              {/* Redirects for old routes */}
+              <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
+              <Route path="/admin/dashboard" element={<Navigate to="/admin/login" replace />} />
+              
+              {/* Super Admin Routes */}
+              <Route
+                path="/superadmin"
+                element={
+                  <ProtectedRoute>
+                    <SuperAdminLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<SuperAdminDashboard />} />
+                <Route path="saloes" element={<SaloesList />} />
+                <Route path="estatisticas" element={<SuperAdminDashboard />} />
+                <Route path="configuracoes" element={<SuperAdminDashboard />} />
               </Route>
 
               {/* Catch-all */}

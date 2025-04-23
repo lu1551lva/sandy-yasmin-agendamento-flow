@@ -14,38 +14,44 @@ import {
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/common/Logo";
 
-const Sidebar = () => {
-  const { signOut } = useAuth();
+interface SidebarProps {
+  salonSlug?: string;
+}
+
+const Sidebar = ({ salonSlug }: SidebarProps) => {
+  const { signOut, isSuperAdmin } = useAuth();
+  
+  const baseUrl = salonSlug ? `/admin/${salonSlug}` : '/admin';
 
   const navItems = [
     {
       name: "Dashboard",
-      path: "/admin",
+      path: baseUrl,
       icon: <LayoutDashboard className="mr-2 h-5 w-5" />,
     },
     {
       name: "Agendamentos",
-      path: "/admin/agendamentos",
+      path: `${baseUrl}/agendamentos`,
       icon: <ClipboardList className="mr-2 h-5 w-5" />,
     },
     {
       name: "Agenda Semanal",
-      path: "/admin/agenda-semanal",
+      path: `${baseUrl}/agenda-semanal`,
       icon: <Calendar className="mr-2 h-5 w-5" />,
     },
     {
       name: "Profissionais",
-      path: "/admin/profissionais",
+      path: `${baseUrl}/profissionais`,
       icon: <Users className="mr-2 h-5 w-5" />,
     },
     {
       name: "Serviços",
-      path: "/admin/servicos",
+      path: `${baseUrl}/servicos`,
       icon: <Scissors className="mr-2 h-5 w-5" />,
     },
     {
       name: "Mensagens WhatsApp",
-      path: "/admin/mensagens",
+      path: `${baseUrl}/mensagens`,
       icon: <MessageSquare className="mr-2 h-5 w-5" />,
     },
   ];
@@ -61,7 +67,7 @@ const Sidebar = () => {
             <li key={item.path}>
               <NavLink
                 to={item.path}
-                end={item.path === "/admin"}
+                end={item.path === baseUrl}
                 className={({ isActive }) =>
                   cn(
                     "flex items-center px-4 py-3 text-sm rounded-md transition-colors",
@@ -76,6 +82,20 @@ const Sidebar = () => {
               </NavLink>
             </li>
           ))}
+          
+          {/* Show link to public booking page */}
+          {salonSlug && (
+            <li className="mt-4">
+              <NavLink
+                to={`/agendar/${salonSlug}`}
+                className="flex items-center px-4 py-3 text-sm rounded-md text-gray-300 hover:text-white hover:bg-white/10"
+                target="_blank"
+              >
+                <Calendar className="mr-2 h-5 w-5" />
+                Página de Agendamento
+              </NavLink>
+            </li>
+          )}
         </ul>
       </nav>
       <div className="p-4 mt-auto border-t border-gray-700">
