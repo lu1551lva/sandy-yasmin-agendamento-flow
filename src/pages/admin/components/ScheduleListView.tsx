@@ -18,6 +18,7 @@ const ScheduleListView = ({
         const dayAppointments = getAppointmentsForDay(day);
         const formattedDay = formatDate(day);
         const isCurrentDay = isToday(day);
+        // Exibir dia da semana em pt-BR, formato completo (e.g., Segunda-feira)
         const diaDaSemana = format(day, "EEEE", { locale: ptBR });
 
         return (
@@ -29,7 +30,7 @@ const ScheduleListView = ({
               )}
             >
               {isCurrentDay ? "Hoje - " : ""}
-              {diaDaSemana}, {formattedDay}
+              {diaDaSemana.charAt(0).toUpperCase() + diaDaSemana.slice(1)}, {formattedDay}
             </h3>
             {dayAppointments.length === 0 ? (
               <div className="text-gray-500 py-3 text-center">
