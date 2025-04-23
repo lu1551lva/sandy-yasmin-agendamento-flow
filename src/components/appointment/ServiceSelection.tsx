@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { supabase, Service } from "@/lib/supabase";
+import { supabase, Service, Professional } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import { Loader } from "lucide-react";
@@ -16,7 +16,8 @@ const ServiceSelection = ({
   updateAppointmentData,
   nextStep,
 }: ServiceSelectionProps) => {
-  const { data: services, isLoading, error } = useQuery({
+  // Fetch services
+  const { data: services, isLoading: isLoadingServices, error: servicesError } = useQuery({
     queryKey: ["services"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -29,12 +30,32 @@ const ServiceSelection = ({
     },
   });
 
+  // Fetch professionals to get the default professional's UUID
+  const { data: professionals, isLoading: isLoadingProfessionals, error: professionalsError } = useQuery({
+    queryKey: ["professionals"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profissionais")
+        .select("*");
+
+      if (error) throw error;
+      return data as Professional[];
+    },
+  });
+
   const handleServiceSelect = (service: Service) => {
-    // For simplicity, we're setting the professional_id to the first available one
-    // In a real app, you might want to let the user choose a professional
+    // Get the default professional (Sandy Yasmin)
+    const defaultProfessional = professionals?.find(p => p.nome === "Sandy Yasmin") || professionals?.[0];
+    
+    if (!defaultProfessional) {
+      console.error("Nenhum profissional encontrado. Verifique se há profissionais cadastrados.");
+      return;
+    }
+
+    // Use the actual UUID of the professional
     updateAppointmentData({ 
       service,
-      professional_id: "1" // Default professional
+      professional_id: defaultProfessional.id
     });
   };
 
@@ -43,6 +64,9 @@ const ServiceSelection = ({
       nextStep();
     }
   };
+
+  const isLoading = isLoadingServices || isLoadingProfessionals;
+  const error = servicesError || professionalsError;
 
   if (isLoading) {
     return (
@@ -56,7 +80,7 @@ const ServiceSelection = ({
     return (
       <div className="text-center py-8">
         <p className="text-destructive mb-4">
-          Erro ao carregar serviços. Por favor, tente novamente.
+          Erro ao carregar dados. Por favor, tente novamente.
         </p>
         <Button onClick={() => window.location.reload()}>Recarregar</Button>
       </div>
