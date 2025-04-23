@@ -1,164 +1,69 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from "@/lib/supabase";
+
+// Simplified User type for single-tenant admin
+interface User {
+  email: string;
+}
 
 interface AuthContextProps {
-  user: any;
+  user: User | null;
   isLoggedIn: boolean;
-  isLoading: boolean;
-  signUp: (email: string, password: string, additionalData: any) => Promise<any>;
-  signIn: (email: string, password: string) => Promise<any>;
-  signOut: () => Promise<void>;
+  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signOut: () => void;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState(null);
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    async function getSession() {
-      try {
-        const { data, error } = await supabase.auth.getSession();
-        
-        setUser(data?.session?.user ?? null);
-        setIsLoggedIn(!!data?.session?.user);
-        setIsLoading(false);
-      } catch (error) {
-        console.error("Error getting session:", error);
-        setIsLoading(false);
-      }
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      const parsedUser = JSON.parse(savedUser);
+      setUser(parsedUser);
+      setIsLoggedIn(true);
     }
-    
-    getSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setUser(session.user);
-        setIsLoggedIn(true);
-      } else {
-        setUser(null);
-        setIsLoggedIn(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, additionalData: any) => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: additionalData,
-        }
-      });
-
-      if (error) {
-        console.error("Erro ao registrar:", error);
-        throw error;
-      }
-
-      if (data.user) {
-        setUser(data.user);
-        setIsLoggedIn(true);
-        
-        // Update user metadata
-        const { error: metadataError } = await supabase
-          .from('admins')
-          .insert([
-            { 
-              id: data.user.id, 
-              email: email, 
-              senha: password 
-            }
-          ]);
-          
-        if (metadataError) {
-          console.error("Erro ao inserir metadados do usuário:", metadataError);
-          throw metadataError;
-        }
-      }
-      
-      return { data, error };
-    } catch (error: any) {
-      console.error("Erro no signUp:", error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const signIn = async (email: string, password: string) => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password,
-      });
-
-      if (error) {
-        console.error("Erro ao logar:", error);
-        throw error;
-      }
-
-      if (data.user) {
-        setUser(data.user);
-        setIsLoggedIn(true);
-      }
+    // Fixed credentials for Studio Sandy Yasmin
+    if (email === 'admin@studio.com' && password === 'admin123') {
+      const userData: User = { email };
       
-      return { data, error };
-    } catch (error: any) {
-      console.error("Erro no signIn:", error);
-      throw error;
-    } finally {
-      setIsLoading(false);
+      setUser(userData);
+      setIsLoggedIn(true);
+      localStorage.setItem('user', JSON.stringify(userData));
+      
+      navigate('/admin');
+      
+      return { error: null };
     }
+    
+    return { error: 'Credenciais inválidas' };
   };
 
-  const signOut = async () => {
-    setIsLoading(true);
-    try {
-      const { error } = await supabase.auth.signOut();
-
-      if (error) {
-        console.error("Erro ao deslogar:", error);
-        throw error;
-      }
-
-      setUser(null);
-      setIsLoggedIn(false);
-      navigate('/admin/login');
-    } catch (error: any) {
-      console.error("Erro no signOut:", error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
+  const signOut = () => {
+    setUser(null);
+    setIsLoggedIn(false);
+    localStorage.removeItem('user');
+    navigate('/admin/login');
   };
 
   const value: AuthContextProps = {
     user,
     isLoggedIn,
-    isLoading,
-    signUp,
     signIn,
     signOut,
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {!isLoading && children}
+      {children}
     </AuthContext.Provider>
   );
 };
