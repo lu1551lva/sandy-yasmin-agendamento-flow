@@ -1,207 +1,160 @@
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase, Salon } from "@/lib/supabase";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Session, User } from '@supabase/supabase-js';
-import { useToast } from '@/hooks/use-toast';
-import { Salon } from '@/lib/supabase';
-
-interface AuthContextType {
-  session: Session | null;
-  user: User | null;
-  salon: Salon | null;
-  loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, salonData?: Partial<Salon>) => Promise<{ error: Error | null, user: User | null }>;
+interface AuthContextProps {
+  user: any;
+  isLoggedIn: boolean;
+  isLoading: boolean;
+  signUp: (email: string, password: string, additionalData: any) => Promise<any>;
+  signIn: (email: string, password: string) => Promise<any>;
   signOut: () => Promise<void>;
-  isSuperAdmin: boolean;
-  refreshSalonData: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [salon, setSalon] = useState<Salon | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const { toast } = useToast();
+interface AuthProviderProps {
+  children: ReactNode;
+}
 
-  const fetchSalonData = async (userId: string) => {
-    if (!userId) return;
-
-    const { data, error } = await supabase
-      .from('saloes')
-      .select('*')
-      .eq('id', userId)
-      .single();
-
-    if (error) {
-      console.error('Error fetching salon data:', error);
-      return;
-    }
-
-    setSalon(data);
-    
-    // Check if this is the super admin
-    setIsSuperAdmin(data?.email === 'admin@meusistema.com');
-  };
-
-  const refreshSalonData = async () => {
-    if (user?.id) {
-      await fetchSalonData(user.id);
-    }
-  };
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const setData = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error(error);
-      } else {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          await fetchSalonData(session.user.id);
-        }
-      }
-      setLoading(false);
-    };
+    const session = supabase.auth.getSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
+    setUser(session?.data?.session?.user ?? null);
+    setIsLoggedIn(!!session?.data?.session?.user);
+    setIsLoading(false);
+
+    supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
-        await fetchSalonData(session.user.id);
+        setUser(session.user);
+        setIsLoggedIn(true);
       } else {
-        setSalon(null);
-        setIsSuperAdmin(false);
+        setUser(null);
+        setIsLoggedIn(false);
       }
-      
-      setLoading(false);
     });
-
-    setData();
-
-    return () => subscription.unsubscribe();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
-    try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      
-      if (error) {
-        toast({
-          title: "Erro ao fazer login",
-          description: error.message,
-          variant: "destructive",
-        });
-        return { error };
-      }
-      
-      toast({
-        title: "Login realizado com sucesso",
-        description: "Bem-vindo ao seu painel administrativo",
-      });
-      
-      return { error: null };
-    } catch (error) {
-      console.error('Error signing in:', error);
-      return { error: error as Error };
-    }
-  };
-
-  const signUp = async (email: string, password: string, salonData?: Partial<Salon>) => {
+  const signUp = async (email: string, password: string, additionalData: any) => {
+    setIsLoading(true);
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: additionalData,
+        }
       });
 
       if (error) {
-        toast({
-          title: "Erro ao criar conta",
-          description: error.message,
-          variant: "destructive",
-        });
-        return { error, user: null };
+        console.error("Erro ao registrar:", error);
+        throw error;
       }
 
-      if (data.user && salonData) {
-        // Create salon record tied to this user ID
-        const { error: salonError } = await supabase
-          .from('saloes')
-          .insert({ 
-            id: data.user.id,
-            nome: salonData.nome || '',
-            email: email,
-            telefone: salonData.telefone || '',
-            url_personalizado: salonData.url_personalizado || '',
-            plano: 'trial',
-            trial_expira_em: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-          });
-
-        if (salonError) {
-          toast({
-            title: "Erro ao criar salão",
-            description: salonError.message,
-            variant: "destructive",
-          });
-          return { error: salonError as Error, user: data.user };
+      if (data.user) {
+        setUser(data.user);
+        setIsLoggedIn(true);
+        
+        // Update user metadata
+        const { error: metadataError } = await supabase
+          .from('admins')
+          .insert([
+            { 
+              id: data.user.id, 
+              email: email, 
+              senha: password 
+            }
+          ]);
+          
+        if (metadataError) {
+          console.error("Erro ao inserir metadados do usuário:", metadataError);
+          throw metadataError;
         }
       }
+      
+      return { data, error };
+    } catch (error: any) {
+      console.error("Erro no signUp:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-      toast({
-        title: "Conta criada com sucesso!",
-        description: "Bem-vindo à plataforma",
+  const signIn = async (email: string, password: string) => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
       });
 
-      return { error: null, user: data.user };
-    } catch (error) {
-      console.error('Error signing up:', error);
-      return { error: error as Error, user: null };
+      if (error) {
+        console.error("Erro ao logar:", error);
+        throw error;
+      }
+
+      if (data.user) {
+        setUser(data.user);
+        setIsLoggedIn(true);
+      }
+      
+      return { data, error };
+    } catch (error: any) {
+      console.error("Erro no signIn:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const signOut = async () => {
+    setIsLoading(true);
     try {
-      await supabase.auth.signOut();
-      toast({
-        title: "Logout realizado com sucesso",
-      });
-      setSalon(null);
-      setIsSuperAdmin(false);
-    } catch (error) {
-      console.error('Error signing out:', error);
-      toast({
-        title: "Erro ao fazer logout",
-        description: "Tente novamente mais tarde",
-        variant: "destructive",
-      });
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        console.error("Erro ao deslogar:", error);
+        throw error;
+      }
+
+      setUser(null);
+      setIsLoggedIn(false);
+      navigate('/admin/login');
+    } catch (error: any) {
+      console.error("Erro no signOut:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const value = {
-    session,
+  const value: AuthContextProps = {
     user,
-    salon,
-    loading,
-    signIn,
+    isLoggedIn,
+    isLoading,
     signUp,
+    signIn,
     signOut,
-    isSuperAdmin,
-    refreshSalonData
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
+  return (
+    <AuthContext.Provider value={value}>
+      {!isLoading && children}
+    </AuthContext.Provider>
+  );
+};
 
-export function useAuth() {
+export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
-}
+};

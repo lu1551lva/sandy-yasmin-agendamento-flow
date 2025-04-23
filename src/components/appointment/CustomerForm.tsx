@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { supabase, Client } from "@/lib/supabase";
@@ -5,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft } from "lucide-react";
-import { formatPhoneNumber, validateEmail, validatePhone } from "@/lib/utils";
+import { formatPhoneNumber, validateEmail, validatePhone } from "@/lib/phoneUtils";
 import { useToast } from "@/hooks/use-toast";
 import {
   Form,

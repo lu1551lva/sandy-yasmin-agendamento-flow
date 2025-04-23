@@ -29,6 +29,20 @@ export type AppointmentWithDetails = Appointment & {
   profissional: Professional;
 };
 
+// Define Salon type for Studio Sandy Yasmin
+export interface Salon {
+  id: string;
+  nome: string;
+  url_personalizado?: string;
+  telefone?: string;
+  logo_url?: string;
+  email?: string;
+  data_cadastro?: string;
+  status?: 'ativo' | 'inativo';
+  periodo_teste?: boolean;
+  fim_periodo_teste?: string;
+}
+
 export const DEFAULT_SALON_LOGO = "https://placehold.co/400x400/FFEFEF/D0A638?text=S";
 
 // Helper function to format currency
@@ -83,3 +97,15 @@ export function getWhatsAppTemplates(): Record<string, string> {
   const savedTemplates = localStorage.getItem('whatsappTemplates');
   return savedTemplates ? JSON.parse(savedTemplates) : defaultTemplates;
 }
+
+// Function to get salon by slug - simplified for Studio Sandy Yasmin
+export const getSalonBySlug = async (slug: string): Promise<Salon | null> => {
+  // Since we're returning to a single-tenant app, we'll create a static salon object
+  return {
+    id: "sandy-yasmin-id",
+    nome: "Studio Sandy Yasmin",
+    url_personalizado: "studio-sandy-yasmin",
+    email: "admin@studio.com",
+    status: "ativo",
+  };
+};

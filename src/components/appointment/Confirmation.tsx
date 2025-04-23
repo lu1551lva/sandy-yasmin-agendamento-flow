@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
@@ -10,13 +9,23 @@ import ConfirmationActions from "./ConfirmationActions";
 import ConfirmationSuccess from "./ConfirmationSuccess";
 import { formatDate } from "@/lib/dateUtils";
 
+export interface AppointmentData {
+  service: any;
+  date: string;
+  time: string;
+  client: any;
+  professional_id: string;
+  salon_id?: string;
+}
+
 export interface ConfirmationProps {
-  appointmentData: any;
+  appointmentData: AppointmentData;
   isSubmitting: boolean;
   isComplete: boolean;
-  setIsSubmitting: (value: boolean) => void;
-  setIsComplete: (value: boolean) => void;
+  setIsSubmitting: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsComplete: React.Dispatch<React.SetStateAction<boolean>>;
   prevStep: () => void;
+  salonId?: string;
 }
 
 const Confirmation = ({
@@ -26,6 +35,7 @@ const Confirmation = ({
   setIsSubmitting,
   setIsComplete,
   prevStep,
+  salonId,
 }: ConfirmationProps) => {
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
   const { toast } = useToast();
