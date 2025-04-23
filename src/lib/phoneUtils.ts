@@ -15,6 +15,19 @@ export function formatPhoneNumber(phoneNumber: string): string {
   }
 }
 
+// Format phone for WhatsApp (remove all non-digits and ensure starts with country code)
+export function formatPhoneForWhatsApp(phoneNumber: string): string {
+  // Remove all non-digit characters
+  const cleaned = phoneNumber.replace(/\D/g, '');
+  
+  // Ensure it has the Brazilian country code (55)
+  if (cleaned.startsWith('55')) {
+    return cleaned;
+  } else {
+    return `55${cleaned}`;
+  }
+}
+
 // Validate email format
 export function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

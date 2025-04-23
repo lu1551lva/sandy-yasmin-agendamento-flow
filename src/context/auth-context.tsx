@@ -1,13 +1,12 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase, Salon } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 interface AuthContextProps {
   user: any;
   isLoggedIn: boolean;
   isLoading: boolean;
-  isSuperAdmin?: boolean; // Added missing property
   signUp: (email: string, password: string, additionalData: any) => Promise<any>;
   signIn: (email: string, password: string) => Promise<any>;
   signOut: () => Promise<void>;
@@ -27,16 +26,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     async function getSession() {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      setUser(session?.user ?? null);
-      setIsLoggedIn(!!session?.user);
-      setIsLoading(false);
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        
+        setUser(data?.session?.user ?? null);
+        setIsLoggedIn(!!data?.session?.user);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error getting session:", error);
+        setIsLoading(false);
+      }
     }
     
     getSession();
 
-    supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setUser(session.user);
         setIsLoggedIn(true);
@@ -45,6 +49,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setIsLoggedIn(false);
       }
     });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const signUp = async (email: string, password: string, additionalData: any) => {
@@ -145,7 +151,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     isLoggedIn,
     isLoading,
-    isSuperAdmin: user?.email === "admin@meusistema.com", // Add isSuperAdmin property
     signUp,
     signIn,
     signOut,

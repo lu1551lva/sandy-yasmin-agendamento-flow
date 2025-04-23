@@ -31,19 +31,18 @@ interface DateSelectionProps {
     duracao_em_minutos: number;
     created_at: string;
     ativo: boolean;
-    salao_id?: string;
   };
   selectedDate: Date;
   selectedTime: string;
   updateAppointmentData: (data: Partial<AppointmentData>) => void;
   nextStep: () => void;
   prevStep: () => void;
-  salonId?: string;
 }
 
 interface AppointmentData {
   serviceId: string;
   professionalId: string;
+  professional_name?: string;
   date: string;
   time: string;
   client: {
@@ -60,7 +59,6 @@ const DateAndTimeSelector = ({
   updateAppointmentData,
   nextStep,
   prevStep,
-  salonId,
 }: DateSelectionProps) => {
   const [date, setDate] = useState<Date | undefined>(selectedDate);
   const [time, setTime] = useState(selectedTime || "");
@@ -148,7 +146,7 @@ const DateAndTimeSelector = ({
         const [timeHours, timeMinutes] = timeToAdd.split(":").map(Number);
         timeDate.setHours(timeHours, timeMinutes, 0, 0);
 
-        // Fix the spread arguments issue
+        // Fix the time range check
         const startHoursNum = parseInt(startTime.split(":")[0]);
         const startMinutesNum = parseInt(startTime.split(":")[1]);
         const endHoursNum = parseInt(endTime.split(":")[0]);
@@ -223,6 +221,7 @@ const DateAndTimeSelector = ({
               const holidays = getHolidays();
               return holidays.includes(formattedDate);
             }}
+            locale={ptBR}
           />
           {isDateBlocked && (
             <p className="text-red-500">

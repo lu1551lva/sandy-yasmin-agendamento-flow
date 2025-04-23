@@ -1,48 +1,36 @@
 
-import { formatPhoneForWhatsApp } from "./phoneUtils";
+import { formatPhoneNumber, formatPhoneForWhatsApp } from "./phoneUtils";
 
-// Create WhatsApp link with phone number and message
-export const createWhatsAppLink = (phone: string, message: string = "") => {
-  const formattedPhone = formatPhoneForWhatsApp(phone);
-  const encodedMessage = encodeURIComponent(message);
-  return `https://wa.me/${formattedPhone}${message ? `?text=${encodedMessage}` : ''}`;
-};
+export function createWhatsAppLink(phoneNumber: string, message: string): string {
+  const formattedPhone = formatPhoneForWhatsApp(phoneNumber);
+  return `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
+}
 
-// Format templates with variable substitution
-export const formatWhatsAppTemplate = (template: string, variables: Record<string, string>) => {
-  let formattedTemplate = template;
-  
-  Object.entries(variables).forEach(([key, value]) => {
-    const regex = new RegExp(`{{${key}}}`, 'g');
-    formattedTemplate = formattedTemplate.replace(regex, value);
-  });
-  
-  return formattedTemplate;
-};
+export function getWhatsAppTemplates(): Record<string, string> {
+  const defaultTemplates = {
+    confirmation: `Olá {nome}! Confirmamos seu agendamento no Studio Sandy Yasmin para {servico} no dia {data} às {hora}. Valor: {valor}. Aguardamos sua presença!`,
+    
+    reminder: `Olá {nome}! Passando para lembrar do seu agendamento amanhã às {hora} para {servico}. Caso precise remarcar, entre em contato conosco. Obrigado!`,
+    
+    reschedule: `Olá {nome}! Precisamos remarcar seu agendamento para {servico} que está marcado para {data} às {hora}. Por favor, entre em contato conosco para agendar uma nova data e horário. Agradecemos a compreensão!`,
+    
+    cancellation: `Olá {nome}! Lamentamos informar que precisamos cancelar seu agendamento para {servico} no dia {data} às {hora}. Por favor, entre em contato conosco para mais informações. Pedimos desculpas pelo inconveniente.`,
+    
+    followup: `Olá {nome}! Como foi sua experiência com o serviço {servico} no Studio Sandy Yasmin? Ficaríamos felizes em receber seu feedback. Obrigado pela preferência!`
+  };
 
-// Get WhatsApp templates from local storage or return defaults
-export const getWhatsAppTemplates = () => {
   const savedTemplates = localStorage.getItem('whatsappTemplates');
+  return savedTemplates ? JSON.parse(savedTemplates) : defaultTemplates;
+}
+
+export function formatWhatsAppTemplate(template: string, variables: Record<string, string>): string {
+  let formattedMessage = template;
   
-  if (savedTemplates) {
-    return JSON.parse(savedTemplates);
+  // Replace all variables in the template
+  for (const [key, value] of Object.entries(variables)) {
+    const regex = new RegExp(`{${key}}`, 'g');
+    formattedMessage = formattedMessage.replace(regex, value);
   }
   
-  // Default templates
-  const defaultTemplates = {
-    confirmation: "Olá {{nome}}! Seu agendamento para {{servico}} no dia {{data}} às {{hora}} foi confirmado. Obrigado por agendar conosco!",
-    reminder: "Olá {{nome}}! Lembrando do seu agendamento para {{servico}} amanhã às {{hora}}. Aguardamos você!",
-    cancellation: "Olá {{nome}}! Seu agendamento para {{servico}} no dia {{data}} às {{hora}} foi cancelado conforme solicitado.",
-    followup: "Olá {{nome}}! Como foi o seu atendimento de {{servico}}? Ficaríamos felizes em receber seu feedback."
-  };
-  
-  // Save default templates
-  localStorage.setItem('whatsappTemplates', JSON.stringify(defaultTemplates));
-  
-  return defaultTemplates;
-};
-
-// Save updated templates to local storage
-export const saveWhatsAppTemplates = (templates: Record<string, string>) => {
-  localStorage.setItem('whatsappTemplates', JSON.stringify(templates));
-};
+  return formattedMessage;
+}

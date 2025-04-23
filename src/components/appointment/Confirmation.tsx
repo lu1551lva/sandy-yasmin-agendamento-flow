@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import AppointmentSummary from "./AppointmentSummary";
 import ConfirmationActions from "./ConfirmationActions";
 import ConfirmationSuccess from "./ConfirmationSuccess";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 
 export interface AppointmentData {
   service: any;
@@ -16,8 +16,7 @@ export interface AppointmentData {
   time: string;
   client: any;
   professional_id: string;
-  professional_name?: string; // Added missing property
-  salon_id?: string;
+  professional_name?: string;
 }
 
 export interface ConfirmationProps {
@@ -27,7 +26,6 @@ export interface ConfirmationProps {
   setIsSubmitting: React.Dispatch<React.SetStateAction<boolean>>;
   setIsComplete: React.Dispatch<React.SetStateAction<boolean>>;
   prevStep: () => void;
-  salonId?: string;
 }
 
 const Confirmation = ({
@@ -37,7 +35,6 @@ const Confirmation = ({
   setIsSubmitting,
   setIsComplete,
   prevStep,
-  salonId,
 }: ConfirmationProps) => {
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
   const { toast } = useToast();

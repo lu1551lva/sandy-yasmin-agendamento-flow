@@ -18,7 +18,6 @@ interface DateSelectionProps {
   updateAppointmentData: (data: { date?: Date | null; time?: string | null; professionalId?: string | null; professional_name?: string }) => void;
   nextStep: () => void;
   prevStep: () => void;
-  salonId?: string;
 }
 
 const DateSelection = ({
@@ -29,7 +28,6 @@ const DateSelection = ({
   updateAppointmentData,
   nextStep,
   prevStep,
-  salonId,
 }: DateSelectionProps) => {
   // Main logic outsourced to custom hook 
   const {
@@ -38,7 +36,7 @@ const DateSelection = ({
     professional,
     isDateDisabled,
     refetchAppointments,
-  } = useDateSelectionData(selectedService, selectedDate, professionalId, salonId);
+  } = useDateSelectionData(selectedService, selectedDate, professionalId);
 
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
@@ -68,7 +66,6 @@ const DateSelection = ({
     );
   }
 
-  // Update DateAndTimeSelector to use correct prop names
   return (
     <div>
       <h2 className="text-2xl font-playfair font-semibold mb-6">
@@ -81,8 +78,8 @@ const DateSelection = ({
           selectedTime={selectedTime || ""}
           updateAppointmentData={(data) => {
             if (data.date) {
-              updateAppointmentData({ 
-                date: new Date(data.date), 
+              updateAppointmentData({
+                date: new Date(data.date),
                 time: data.time,
                 professionalId: data.professionalId,
                 professional_name: data.professional_name
@@ -91,7 +88,6 @@ const DateSelection = ({
           }}
           nextStep={nextStep}
           prevStep={prevStep}
-          salonId={salonId}
         />
       )}
     </div>

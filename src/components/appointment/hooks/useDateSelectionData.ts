@@ -9,8 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 export function useDateSelectionData(
   selectedService: Service | null,
   selectedDate: Date | null,
-  professionalId: string | null,
-  salonId?: string // This parameter is now used
+  professionalId: string | null
 ) {
   const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>([]);
   const { toast } = useToast();
@@ -25,14 +24,11 @@ export function useDateSelectionData(
     queryFn: async () => {
       if (!professionalId) return null;
 
-      let query = supabase.from("profissionais").select("*").eq("id", professionalId);
-      
-      // If we have a salon ID, filter by it
-      if (salonId) {
-        query = query.eq("salao_id", salonId);
-      }
-      
-      const { data, error } = await query.single();
+      const { data, error } = await supabase
+        .from("profissionais")
+        .select("*")
+        .eq("id", professionalId)
+        .single();
       
       if (error) throw error;
       return data as Professional;
@@ -50,19 +46,12 @@ export function useDateSelectionData(
     queryFn: async () => {
       if (!professionalId || !selectedDate) return [];
 
-      let query = supabase
+      const { data, error } = await supabase
         .from("agendamentos")
         .select("*")
         .eq("profissional_id", professionalId)
         .eq("data", format(selectedDate, "yyyy-MM-dd"))
         .neq("status", "cancelado");
-
-      // If we have a salon ID, filter by it
-      if (salonId) {
-        query = query.eq("salao_id", salonId);
-      }
-      
-      const { data, error } = await query;
 
       if (error) throw error;
       return data || [];
