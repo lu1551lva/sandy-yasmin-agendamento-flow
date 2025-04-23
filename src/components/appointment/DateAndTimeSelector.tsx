@@ -1,5 +1,7 @@
+
 import { useState, useEffect } from "react";
 import { format, addMinutes, isWithinInterval } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -10,9 +12,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getHolidays } from "@/lib/utils";
+
+interface Professional {
+  id: string;
+  nome: string;
+  dias_atendimento: string[];
+  horario_inicio: string;
+  horario_fim: string;
+}
 
 interface DateSelectionProps {
   selectedService: {
@@ -57,9 +66,7 @@ const DateAndTimeSelector = ({
   const [time, setTime] = useState(selectedTime || "");
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
   const [professionalId, setProfessionalId] = useState("");
-  const [availableProfessionals, setAvailableProfessionals] = useState<
-    { id: string; nome: string }[]
-  >([]);
+  const [availableProfessionals, setAvailableProfessionals] = useState<Professional[]>([]);
   const [isDateBlocked, setIsDateBlocked] = useState(false);
 
   useEffect(() => {
@@ -77,11 +84,12 @@ const DateAndTimeSelector = ({
     const fetchAvailableProfessionals = async () => {
       if (!date || !selectedService) return;
 
-      const dayOfWeek = format(date, "EEEE", { locale: { code: "pt-BR" } });
+      // Using ptBR locale correctly
+      const dayOfWeek = format(date, "EEEE", { locale: ptBR });
       const formattedDay = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
 
-      // Mocked professionals data
-      const mockedProfessionals = [
+      // Mocked professionals data with complete type
+      const mockedProfessionals: Professional[] = [
         {
           id: "1",
           nome: "Sandy Yasmin",
@@ -140,9 +148,21 @@ const DateAndTimeSelector = ({
         const [timeHours, timeMinutes] = timeToAdd.split(":").map(Number);
         timeDate.setHours(timeHours, timeMinutes, 0, 0);
 
+        // Fix the spread arguments issue
+        const startHoursNum = parseInt(startTime.split(":")[0]);
+        const startMinutesNum = parseInt(startTime.split(":")[1]);
+        const endHoursNum = parseInt(endTime.split(":")[0]);
+        const endMinutesNum = parseInt(endTime.split(":")[1]);
+        
+        const startDateTime = new Date(date);
+        startDateTime.setHours(startHoursNum, startMinutesNum, 0, 0);
+        
+        const endDateTime = new Date(date);
+        endDateTime.setHours(endHoursNum, endMinutesNum, 0, 0);
+
         const isTimeWithinRange = isWithinInterval(timeDate, {
-          start: new Date(date.setHours(...startTime.split(":").map(Number))),
-          end: new Date(date.setHours(...endTime.split(":").map(Number))),
+          start: startDateTime,
+          end: endDateTime
         });
 
         if (isTimeWithinRange) {
@@ -170,11 +190,13 @@ const DateAndTimeSelector = ({
     }
 
     const formattedDate = format(date, "yyyy-MM-dd");
+    const selectedProfessional = availableProfessionals.find(p => p.id === professionalId);
 
     updateAppointmentData({
       date: formattedDate,
       time: time,
       professionalId: professionalId,
+      professional_name: selectedProfessional?.nome
     });
     nextStep();
   };

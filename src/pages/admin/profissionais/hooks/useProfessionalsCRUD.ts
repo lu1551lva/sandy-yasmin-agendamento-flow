@@ -1,16 +1,13 @@
-
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, Professional } from "@/lib/supabase";
 import { useAuth } from "@/context/auth-context";
 
 interface UseProfessionalsCRUDProps {
-  setIsDialogOpen: (isOpen: boolean) => void;
-  setIsDeleteDialogOpen: (isOpen: boolean) => void;
+  setIsDialogOpen: (open: boolean) => void;
+  setIsDeleteDialogOpen: (open: boolean) => void;
   resetForm: () => void;
   setCurrentProfessional: (professional: Professional | null) => void;
-  toast: ReturnType<typeof useToast>["toast"];
+  toast: any;
 }
 
 export const useProfessionalsCRUD = ({
@@ -20,69 +17,53 @@ export const useProfessionalsCRUD = ({
   setCurrentProfessional,
   toast,
 }: UseProfessionalsCRUDProps) => {
-  const [professionals, setProfessionals] = useState<Professional[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { salon } = useAuth();
-  const salonId = salon?.id;
 
-  // Get all professionals for this salon
-  const { refetch } = useQuery({
-    queryKey: ["professionals", salonId],
+  // Get professionals
+  const { data: professionals, isLoading } = useQuery({
+    queryKey: ["professionals"],
     queryFn: async () => {
-      if (!salonId) return [];
-      
       const { data, error } = await supabase
         .from("profissionais")
         .select("*")
-        .eq("salao_id", salonId)
         .order("nome");
-        
-      if (error) throw new Error(error.message);
-      setProfessionals(data || []);
-      setIsLoading(false);
-      return data || [];
+
+      if (error) throw error;
+      return data as Professional[];
     },
-    enabled: !!salonId,
   });
 
-  // Create a new professional
+  // Create professional
   const createProfessionalMutation = useMutation({
-    mutationFn: async (professionalData: Omit<Professional, "id" | "created_at">) => {
-      if (!salonId) throw new Error("Salão não encontrado");
-      
+    mutationFn: async (professional: Omit<Professional, "id" | "created_at">) => {
       const { data, error } = await supabase
         .from("profissionais")
-        .insert({
-          ...professionalData,
-          salao_id: salonId,
-        })
-        .select();
-        
+        .insert(professional)
+        .select()
+        .single();
+
       if (error) throw error;
-      return data[0];
+      return data;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["professionals"] });
       toast({
-        title: "Profissional criado",
-        description: "O profissional foi cadastrado com sucesso",
+        title: "Profissional cadastrado com sucesso",
       });
-      
-      resetForm();
       setIsDialogOpen(false);
-      refetch();
+      resetForm();
     },
-    onError: (error) => {
-      console.error("Error creating professional:", error);
+    onError: (error: any) => {
       toast({
-        title: "Erro ao criar profissional",
+        title: "Erro ao cadastrar profissional",
         description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  // Update an existing professional
+  // Update professional
   const updateProfessionalMutation = useMutation({
     mutationFn: async ({
       id,
@@ -91,32 +72,25 @@ export const useProfessionalsCRUD = ({
       id: string;
       professional: Partial<Professional>;
     }) => {
-      if (!salonId) throw new Error("Salão não encontrado");
-      
       const { data, error } = await supabase
         .from("profissionais")
-        .update({
-          ...professional,
-          salao_id: salonId,
-        })
+        .update(professional)
         .eq("id", id)
-        .select();
-        
+        .select()
+        .single();
+
       if (error) throw error;
-      return data[0];
+      return data;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["professionals"] });
       toast({
-        title: "Profissional atualizado",
-        description: "As informações foram atualizadas com sucesso",
+        title: "Profissional atualizado com sucesso",
       });
-      
-      resetForm();
       setIsDialogOpen(false);
-      refetch();
+      resetForm();
     },
-    onError: (error) => {
-      console.error("Error updating professional:", error);
+    onError: (error: any) => {
       toast({
         title: "Erro ao atualizar profissional",
         description: error.message,
@@ -125,31 +99,23 @@ export const useProfessionalsCRUD = ({
     },
   });
 
-  // Delete a professional
+  // Delete professional
   const deleteProfessionalMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("profissionais")
-        .delete()
-        .eq("id", id);
-        
+      const { error } = await supabase.from("profissionais").delete().eq("id", id);
       if (error) throw error;
-      return id;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["professionals"] });
       toast({
-        title: "Profissional removido",
-        description: "O profissional foi removido com sucesso",
+        title: "Profissional excluído com sucesso",
       });
-      
-      setCurrentProfessional(null);
       setIsDeleteDialogOpen(false);
-      refetch();
+      setCurrentProfessional(null);
     },
-    onError: (error) => {
-      console.error("Error deleting professional:", error);
+    onError: (error: any) => {
       toast({
-        title: "Erro ao remover profissional",
+        title: "Erro ao excluir profissional",
         description: error.message,
         variant: "destructive",
       });

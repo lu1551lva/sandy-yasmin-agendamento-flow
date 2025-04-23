@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Service } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { formatDate } from "@/lib/dateUtils";
+import { format } from "date-fns";
 // Custom hook for all logic
 import { useDateSelectionData } from "./hooks/useDateSelectionData";
 // Presentational component
@@ -15,9 +15,10 @@ interface DateSelectionProps {
   selectedDate: Date | null;
   selectedTime: string | null;
   professionalId: string | null;
-  updateAppointmentData: (data: { date: Date | null; time: string | null }) => void;
+  updateAppointmentData: (data: { date?: Date | null; time?: string | null; professionalId?: string | null; professional_name?: string }) => void;
   nextStep: () => void;
   prevStep: () => void;
+  salonId?: string;
 }
 
 const DateSelection = ({
@@ -28,6 +29,7 @@ const DateSelection = ({
   updateAppointmentData,
   nextStep,
   prevStep,
+  salonId,
 }: DateSelectionProps) => {
   // Main logic outsourced to custom hook 
   const {
@@ -36,7 +38,7 @@ const DateSelection = ({
     professional,
     isDateDisabled,
     refetchAppointments,
-  } = useDateSelectionData(selectedService, selectedDate, professionalId);
+  } = useDateSelectionData(selectedService, selectedDate, professionalId, salonId);
 
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
@@ -66,32 +68,32 @@ const DateSelection = ({
     );
   }
 
+  // Update DateAndTimeSelector to use correct prop names
   return (
     <div>
       <h2 className="text-2xl font-playfair font-semibold mb-6">
         Escolha a data e horário
       </h2>
-      <DateAndTimeSelector
-        selectedDate={selectedDate}
-        selectedTime={selectedTime}
-        onSelectDate={handleDateSelect}
-        onSelectTime={handleTimeSelect}
-        availableTimeSlots={availableTimeSlots}
-        loading={loading}
-        professional={professional}
-        isDateDisabled={isDateDisabled}
-      />
-      <div className="mt-8 flex justify-between">
-        <Button variant="outline" onClick={prevStep}>
-          <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
-        </Button>
-        <Button
-          onClick={handleContinue}
-          disabled={!selectedDate || !selectedTime}
-        >
-          Continuar
-        </Button>
-      </div>
+      {selectedService && (
+        <DateAndTimeSelector
+          selectedService={selectedService}
+          selectedDate={selectedDate || new Date()}
+          selectedTime={selectedTime || ""}
+          updateAppointmentData={(data) => {
+            if (data.date) {
+              updateAppointmentData({ 
+                date: new Date(data.date), 
+                time: data.time,
+                professionalId: data.professionalId,
+                professional_name: data.professional_name
+              });
+            }
+          }}
+          nextStep={nextStep}
+          prevStep={prevStep}
+          salonId={salonId}
+        />
+      )}
     </div>
   );
 };

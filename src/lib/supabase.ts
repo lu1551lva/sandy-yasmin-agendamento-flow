@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '@/types/database.types';
 
@@ -41,6 +40,8 @@ export interface Salon {
   status?: 'ativo' | 'inativo';
   periodo_teste?: boolean;
   fim_periodo_teste?: string;
+  plano?: 'trial' | 'ativo' | 'inativo';
+  trial_expira_em?: string;
 }
 
 export const DEFAULT_SALON_LOGO = "https://placehold.co/400x400/FFEFEF/D0A638?text=S";
@@ -107,5 +108,6 @@ export const getSalonBySlug = async (slug: string): Promise<Salon | null> => {
     url_personalizado: "studio-sandy-yasmin",
     email: "admin@studio.com",
     status: "ativo",
+    plano: "ativo"
   };
 };

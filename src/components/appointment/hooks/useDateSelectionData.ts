@@ -10,7 +10,7 @@ export function useDateSelectionData(
   selectedService: Service | null,
   selectedDate: Date | null,
   professionalId: string | null,
-  salonId?: string // Added salonId parameter
+  salonId?: string // This parameter is now used
 ) {
   const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>([]);
   const { toast } = useToast();

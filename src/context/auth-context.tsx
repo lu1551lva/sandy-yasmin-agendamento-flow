@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase, Salon } from "@/lib/supabase";
@@ -6,6 +7,7 @@ interface AuthContextProps {
   user: any;
   isLoggedIn: boolean;
   isLoading: boolean;
+  isSuperAdmin?: boolean; // Added missing property
   signUp: (email: string, password: string, additionalData: any) => Promise<any>;
   signIn: (email: string, password: string) => Promise<any>;
   signOut: () => Promise<void>;
@@ -24,11 +26,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const session = supabase.auth.getSession();
-
-    setUser(session?.data?.session?.user ?? null);
-    setIsLoggedIn(!!session?.data?.session?.user);
-    setIsLoading(false);
+    async function getSession() {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      setUser(session?.user ?? null);
+      setIsLoggedIn(!!session?.user);
+      setIsLoading(false);
+    }
+    
+    getSession();
 
     supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
@@ -139,6 +145,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     isLoggedIn,
     isLoading,
+    isSuperAdmin: user?.email === "admin@meusistema.com", // Add isSuperAdmin property
     signUp,
     signIn,
     signOut,

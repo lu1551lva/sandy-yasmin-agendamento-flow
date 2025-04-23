@@ -1,50 +1,29 @@
 
-// Format phone number to (00) 00000-0000
-export const formatPhoneNumber = (value: string) => {
-  if (!value) return value;
-  const phoneNumber = value.replace(/\D/g, "");
-  if (phoneNumber.length <= 2) {
-    return `(${phoneNumber}`;
-  }
-  if (phoneNumber.length <= 7) {
-    return `(${phoneNumber.slice(0, 2)}) ${phoneNumber.slice(2)}`;
-  }
-  if (phoneNumber.length <= 11) {
-    return `(${phoneNumber.slice(0, 2)}) ${phoneNumber.slice(2, 7)}-${phoneNumber.slice(7)}`;
-  }
-  return `(${phoneNumber.slice(0, 2)}) ${phoneNumber.slice(2, 7)}-${phoneNumber.slice(7, 11)}`;
-};
-
-// Format phone for WhatsApp API (wa.me)
-export const formatPhoneForWhatsApp = (phone: string) => {
-  // Remove all non-numeric characters
-  const numbersOnly = phone.replace(/\D/g, "");
+// Format phone number with mask
+export function formatPhoneNumber(phoneNumber: string): string {
+  // Remove all non-digit characters
+  const cleaned = phoneNumber.replace(/\D/g, '');
   
-  // Check if it already has country code
-  if (numbersOnly.startsWith("55") && (numbersOnly.length === 12 || numbersOnly.length === 13)) {
-    return numbersOnly;
-  }
+  // Check if it's a valid phone number
+  if (cleaned.length < 10) return phoneNumber; // Return original if too short
   
-  // Add Brazil country code if not present
-  return `55${numbersOnly}`;
-};
+  // Format as (XX) XXXXX-XXXX for mobile or (XX) XXXX-XXXX for landline
+  if (cleaned.length === 11) {
+    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`;
+  } else {
+    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6)}`;
+  }
+}
 
 // Validate email format
-export const validateEmail = (email: string) => {
-  if (!email) return false;
-  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return re.test(email);
-};
+export function validateEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
 
-// Validate phone format - accepts with or without formatting
-export const validatePhone = (phone: string) => {
-  if (!phone) return false;
-  
-  // If checking formatted phone
-  const formattedRegex = /^\(\d{2}\) \d{4,5}-\d{0,4}$|^\(\d{2}\) \d{0,5}$|^\(\d{0,2}\)$|^\(\d{0,2}$/;
-  if (formattedRegex.test(phone)) return true;
-  
-  // If checking just numbers (10 or 11 digits with DDD)
-  const numbersOnly = phone.replace(/\D/g, "");
-  return numbersOnly.length >= 10 && numbersOnly.length <= 11;
-};
+// Validate phone number format
+export function validatePhone(phone: string): boolean {
+  const cleaned = phone.replace(/\D/g, '');
+  // Brazilian phone validation: 10 or 11 digits
+  return cleaned.length >= 10 && cleaned.length <= 11;
+}

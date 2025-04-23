@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
@@ -7,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import AppointmentSummary from "./AppointmentSummary";
 import ConfirmationActions from "./ConfirmationActions";
 import ConfirmationSuccess from "./ConfirmationSuccess";
-import { formatDate } from "@/lib/dateUtils";
+import { format } from "date-fns";
 
 export interface AppointmentData {
   service: any;
@@ -15,6 +16,7 @@ export interface AppointmentData {
   time: string;
   client: any;
   professional_id: string;
+  professional_name?: string; // Added missing property
   salon_id?: string;
 }
 
@@ -77,14 +79,12 @@ const Confirmation = ({
         clientId = newClient.id;
       }
 
-      const formattedDate = formatDate(appointmentData.date);
-
       // Create appointment data
       const appointmentRecord = {
         cliente_id: clientId,
         servico_id: appointmentData.service.id,
         profissional_id: appointmentData.professional_id,
-        data: formattedDate,
+        data: appointmentData.date, // Use string directly
         hora: appointmentData.time,
         status: "agendado",
       };
@@ -120,8 +120,14 @@ const Confirmation = ({
         <ConfirmationSuccess
           appointmentId={appointmentId}
           clientPhone={appointmentData.client?.telefone}
-          whatsappMessage={`Olá! Seu agendamento para ${appointmentData.service?.nome} foi confirmado para ${formatDate(appointmentData.date)} às ${appointmentData.time}.`}
-          appointmentData={appointmentData}
+          whatsappMessage={`Olá! Seu agendamento para ${appointmentData.service?.nome} foi confirmado para ${appointmentData.date} às ${appointmentData.time}.`}
+          appointmentData={{
+            service: appointmentData.service,
+            professional_name: appointmentData.professional_name,
+            date: appointmentData.date,
+            time: appointmentData.time,
+            client: appointmentData.client
+          }}
         />
       ) : (
         <div className="space-y-6">
@@ -138,7 +144,13 @@ const Confirmation = ({
             date={appointmentData.date}
             time={appointmentData.time}
             client={appointmentData.client}
-            appointmentData={appointmentData}
+            appointmentData={{
+              service: appointmentData.service,
+              professional_name: appointmentData.professional_name,
+              date: appointmentData.date,
+              time: appointmentData.time,
+              client: appointmentData.client
+            }}
           />
 
           <div className="mt-8 flex flex-col sm:flex-row justify-between gap-4">

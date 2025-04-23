@@ -8,10 +8,12 @@ import CustomerForm from "@/components/appointment/CustomerForm";
 import Confirmation from "@/components/appointment/Confirmation";
 import { Service, Client } from "@/lib/supabase";
 import { Card, CardContent } from "@/components/ui/card";
+import { format } from "date-fns";
 
 type AppointmentData = {
   service: Service | null;
   professional_id: string | null;
+  professional_name?: string | null;
   date: Date | null;
   time: string | null;
   client: Client | null;
@@ -22,6 +24,7 @@ const Appointment = () => {
   const [appointmentData, setAppointmentData] = useState<AppointmentData>({
     service: null,
     professional_id: null,
+    professional_name: null,
     date: null,
     time: null,
     client: null,
@@ -80,9 +83,15 @@ const Appointment = () => {
           />
         );
       case 4:
+        // Convert Date to string for Confirmation component
+        const confirmationData = {
+          ...appointmentData,
+          date: appointmentData.date ? format(appointmentData.date, 'yyyy-MM-dd') : '',
+        };
+        
         return (
           <Confirmation
-            appointmentData={appointmentData}
+            appointmentData={confirmationData}
             isSubmitting={isSubmitting}
             isComplete={isComplete}
             setIsSubmitting={setIsSubmitting}

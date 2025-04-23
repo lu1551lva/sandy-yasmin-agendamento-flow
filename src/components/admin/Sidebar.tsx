@@ -19,7 +19,7 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ salonSlug }: SidebarProps) => {
-  const { signOut, isSuperAdmin } = useAuth();
+  const { signOut } = useAuth();
   
   const baseUrl = salonSlug ? `/admin/${salonSlug}` : '/admin';
 
