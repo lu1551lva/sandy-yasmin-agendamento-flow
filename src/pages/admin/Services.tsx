@@ -2,41 +2,14 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, Service } from "@/lib/supabase";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { Plus } from "lucide-react";
+import ServiceTable from "./services/ServiceTable";
+import ServiceDialog from "./services/ServiceDialog";
+import DeleteServiceDialog from "./services/DeleteServiceDialog";
 import { formatCurrency } from "@/lib/utils";
-import { Plus, Edit, Trash2 } from "lucide-react";
-import ServiceForm from "./services/ServiceForm";
 
 const Services = () => {
   const { toast } = useToast();
@@ -116,7 +89,7 @@ const Services = () => {
 
   // Update service mutation
   const updateServiceMutation = useMutation({
-    mutationFn: async ({ id, service }: { id: string; service: Partial<Service>; }) => {
+    mutationFn: async ({ id, service }: { id: string; service: Partial<Service> }) => {
       try {
         const { data, error } = await supabase
           .from("servicos")
@@ -202,7 +175,7 @@ const Services = () => {
       valor: Number(formData.valor.replace(",", ".")),
       duracao_em_minutos: Number(formData.duracao_em_minutos),
     };
-    
+
     if (isEditing && currentService) {
       updateServiceMutation.mutate({
         id: currentService.id,
@@ -257,109 +230,35 @@ const Services = () => {
           <CardTitle>Gerenciamento de Serviços</CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : services && services.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Valor</TableHead>
-                    <TableHead>Duração</TableHead>
-                    <TableHead className="w-[100px]">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {services.map((service) => (
-                    <TableRow key={service.id}>
-                      <TableCell className="font-medium">{service.nome}</TableCell>
-                      <TableCell>{formatCurrency(service.valor)}</TableCell>
-                      <TableCell>{service.duracao_em_minutos} minutos</TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => handleEdit(service)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => handleDelete(service)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground mb-4">
-                Não há serviços cadastrados.
-              </p>
-              <Button onClick={openNewServiceDialog}>Adicionar Serviço</Button>
-            </div>
-          )}
+          <ServiceTable
+            services={services}
+            isLoading={isLoading}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            openNewServiceDialog={openNewServiceDialog}
+            formatCurrency={formatCurrency}
+          />
         </CardContent>
       </Card>
 
-      {/* Dialog for adding/editing service */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {isEditing ? "Editar Serviço" : "Novo Serviço"}
-            </DialogTitle>
-          </DialogHeader>
-          <ServiceForm 
-            isEditing={isEditing}
-            currentService={currentService}
-            onSubmit={handleSubmit}
-            resetForm={resetForm}
-          />
-        </DialogContent>
-      </Dialog>
+      <ServiceDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        isEditing={isEditing}
+        currentService={currentService}
+        onSubmit={handleSubmit}
+        resetForm={resetForm}
+      />
 
-      {/* Confirmation dialog for deleting service */}
-      <AlertDialog 
+      <DeleteServiceDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Excluir Serviço</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir o serviço{" "}
-              <strong>{currentService?.nome}</strong>? Esta ação não pode ser
-              desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setCurrentService(null)}>
-              Cancelar
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (currentService) {
-                  deleteServiceMutation.mutate(currentService.id);
-                }
-              }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        currentService={currentService}
+        onDelete={() => {
+          if (currentService) deleteServiceMutation.mutate(currentService.id);
+        }}
+        onCancel={() => setCurrentService(null)}
+      />
     </div>
   );
 };
