@@ -16,6 +16,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader, Search, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import CreateSalonDialog from "./components/CreateSalonDialog";
 
 const SaloesList = () => {
   const [salons, setSalons] = useState<Salon[]>([]);
@@ -71,7 +72,7 @@ const SaloesList = () => {
 
   const resetTrial = async (salonId: string) => {
     const trialDate = new Date();
-    trialDate.setDate(trialDate.getDate() + 7);
+    trialDate.setDate(trialDate.getDate() + 30);
     
     const { error } = await supabase
       .from("saloes")
@@ -91,7 +92,7 @@ const SaloesList = () => {
     } else {
       toast({
         title: "Trial reiniciado",
-        description: "O período de trial foi reiniciado para 7 dias.",
+        description: "O período de trial foi reiniciado para 30 dias.",
       });
       fetchSalons();
     }
@@ -107,14 +108,17 @@ const SaloesList = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Gerenciar Salões</h1>
-        <div className="relative w-64">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar salões..."
-            className="pl-8"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+        <div className="flex items-center gap-4">
+          <div className="relative w-64">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar salões..."
+              className="pl-8"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <CreateSalonDialog onSuccess={fetchSalons} />
         </div>
       </div>
 
@@ -133,6 +137,7 @@ const SaloesList = () => {
                   <TableHead>URL</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Trial Expira</TableHead>
+                  <TableHead>Cadastrado em</TableHead>
                   <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -159,6 +164,9 @@ const SaloesList = () => {
                         {salon.plano === "trial" && salon.trial_expira_em
                           ? new Date(salon.trial_expira_em).toLocaleDateString("pt-BR")
                           : "-"}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(salon.data_cadastro).toLocaleDateString("pt-BR")}
                       </TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
@@ -198,7 +206,7 @@ const SaloesList = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
+                    <TableCell colSpan={7} className="text-center py-8">
                       {search ? (
                         <>Nenhum salão encontrado para "{search}".</>
                       ) : (

@@ -140,7 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             telefone: salonData.telefone || '',
             url_personalizado: salonData.url_personalizado || '',
             plano: 'trial',
-            trial_expira_em: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            trial_expira_em: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
           });
 
         if (salonError) {

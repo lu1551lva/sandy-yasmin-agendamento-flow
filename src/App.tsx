@@ -26,6 +26,8 @@ import { initializeDefaultData } from "@/lib/initData";
 import SuperAdminLayout from "./pages/superadmin/SuperAdminLayout";
 import SuperAdminDashboard from "./pages/superadmin/Dashboard";
 import SaloesList from "./pages/superadmin/SaloesList";
+import SuperAdminStatistics from "./pages/superadmin/Statistics";
+import SuperAdminSettings from "./pages/superadmin/Settings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -98,8 +100,8 @@ const App = () => {
               >
                 <Route index element={<SuperAdminDashboard />} />
                 <Route path="saloes" element={<SaloesList />} />
-                <Route path="estatisticas" element={<SuperAdminDashboard />} />
-                <Route path="configuracoes" element={<SuperAdminDashboard />} />
+                <Route path="estatisticas" element={<SuperAdminStatistics />} />
+                <Route path="configuracoes" element={<SuperAdminSettings />} />
               </Route>
 
               {/* Catch-all */}
