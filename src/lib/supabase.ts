@@ -26,6 +26,7 @@ export type Salon = {
   telefone?: string | null;
   plano: 'trial' | 'ativo' | 'inativo';
   trial_expira_em?: string | null;
+  data_cadastro: string; // Added this field
 };
 
 export type Client = Tables['clientes']['Row'];

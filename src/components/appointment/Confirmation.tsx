@@ -17,7 +17,7 @@ export interface ConfirmationProps {
   setIsSubmitting: (value: boolean) => void;
   setIsComplete: (value: boolean) => void;
   prevStep: () => void;
-  salonId?: string; // Added salonId prop
+  salonId?: string;
 }
 
 const Confirmation = ({
@@ -27,7 +27,7 @@ const Confirmation = ({
   setIsSubmitting,
   setIsComplete,
   prevStep,
-  salonId, // Add to parameters
+  salonId,
 }: ConfirmationProps) => {
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
   const { toast } = useToast();
@@ -121,8 +121,10 @@ const Confirmation = ({
     <div>
       {isComplete ? (
         <ConfirmationSuccess
-          appointmentData={appointmentData}
           appointmentId={appointmentId}
+          appointmentData={appointmentData}
+          clientPhone={appointmentData.client?.telefone}
+          whatsappMessage={`Olá! Seu agendamento para ${appointmentData.service?.nome} foi confirmado para ${formatDate(appointmentData.date)} às ${appointmentData.time}.`}
         />
       ) : (
         <div className="space-y-6">
@@ -133,7 +135,14 @@ const Confirmation = ({
             Por favor verifique os detalhes abaixo antes de confirmar.
           </p>
 
-          <AppointmentSummary appointmentData={appointmentData} />
+          <AppointmentSummary 
+            appointmentData={appointmentData}
+            service={appointmentData.service}
+            professionalName={appointmentData.professional_name}
+            date={appointmentData.date}
+            time={appointmentData.time}
+            client={appointmentData.client}
+          />
 
           <div className="mt-8 flex flex-col sm:flex-row justify-between gap-4">
             <Button

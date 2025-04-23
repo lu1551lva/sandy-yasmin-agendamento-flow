@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, Service } from "@/lib/supabase";
@@ -19,7 +18,6 @@ const Services = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [currentService, setCurrentService] = useState<Service | null>(null);
 
-  // Fetch services
   const { data: services, isLoading } = useQuery({
     queryKey: ["services"],
     queryFn: async () => {
@@ -45,7 +43,6 @@ const Services = () => {
     },
   });
 
-  // Create service mutation
   const createServiceMutation = useMutation({
     mutationFn: async (service: Omit<Service, "id" | "created_at">) => {
       try {
@@ -87,7 +84,6 @@ const Services = () => {
     },
   });
 
-  // Update service mutation
   const updateServiceMutation = useMutation({
     mutationFn: async ({ id, service }: { id: string; service: Partial<Service> }) => {
       try {
@@ -130,7 +126,6 @@ const Services = () => {
     },
   });
 
-  // Delete service mutation
   const deleteServiceMutation = useMutation({
     mutationFn: async (id: string) => {
       try {
@@ -168,12 +163,12 @@ const Services = () => {
     },
   });
 
-  // Handle form submit
   const handleSubmit = (formData: any) => {
     const serviceData = {
       nome: formData.nome,
       valor: Number(formData.valor.replace(",", ".")),
       duracao_em_minutos: Number(formData.duracao_em_minutos),
+      ativo: true,
     };
 
     if (isEditing && currentService) {
@@ -186,26 +181,22 @@ const Services = () => {
     }
   };
 
-  // Handle edit service
   const handleEdit = (service: Service) => {
     setCurrentService(service);
     setIsEditing(true);
     setIsDialogOpen(true);
   };
 
-  // Handle delete service
   const handleDelete = (service: Service) => {
     setCurrentService(service);
     setIsDeleteDialogOpen(true);
   };
 
-  // Reset form
   const resetForm = () => {
     setIsEditing(false);
     setCurrentService(null);
   };
 
-  // Open dialog for new service
   const openNewServiceDialog = () => {
     resetForm();
     setIsDialogOpen(true);
