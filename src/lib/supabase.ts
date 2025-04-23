@@ -18,7 +18,16 @@ export type Json =
 
 export type Tables = Database['public']['Tables'];
 
-export type Salon = Tables['saloes']['Row'];
+export type Salon = {
+  id: string;
+  nome: string;
+  email: string;
+  url_personalizado: string;
+  telefone?: string | null;
+  plano: 'trial' | 'ativo' | 'inativo';
+  trial_expira_em?: string | null;
+};
+
 export type Client = Tables['clientes']['Row'];
 export type Professional = Tables['profissionais']['Row'] & { salao_id?: string };
 export type Service = Tables['servicos']['Row'];

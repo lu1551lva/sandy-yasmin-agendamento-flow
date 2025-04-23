@@ -1,7 +1,5 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useQuery } from "@tanstack/react-query";
 import { supabase, Client } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +21,7 @@ interface CustomerFormProps {
   updateAppointmentData: (data: { client: Client | null }) => void;
   nextStep: () => void;
   prevStep: () => void;
+  salonId?: string;
 }
 
 interface ClientForm {
@@ -36,11 +35,11 @@ const CustomerForm = ({
   updateAppointmentData,
   nextStep,
   prevStep,
+  salonId,
 }: CustomerFormProps) => {
   const [isCheckingClient, setIsCheckingClient] = useState(false);
   const { toast } = useToast();
 
-  // Form definition with react-hook-form
   const form = useForm<ClientForm>({
     defaultValues: {
       nome: client?.nome || "",
@@ -59,7 +58,6 @@ const CustomerForm = ({
     setIsCheckingClient(true);
     
     try {
-      // First, check if client exists by email
       const { data: clientsByEmail, error: emailError } = await supabase
         .from("clientes")
         .select("*")
@@ -76,7 +74,6 @@ const CustomerForm = ({
       }
       
       if (clientsByEmail && clientsByEmail.length > 0) {
-        // Client found by email, use this client
         updateAppointmentData({ client: clientsByEmail[0] });
         toast({
           title: "Cliente encontrado",
@@ -87,7 +84,6 @@ const CustomerForm = ({
         return;
       }
       
-      // If not found by email, check by phone
       const formattedPhone = data.telefone;
       const { data: clientsByPhone, error: phoneError } = await supabase
         .from("clientes")
@@ -105,7 +101,6 @@ const CustomerForm = ({
       }
       
       if (clientsByPhone && clientsByPhone.length > 0) {
-        // Client found by phone, use this client
         updateAppointmentData({ client: clientsByPhone[0] });
         toast({
           title: "Cliente encontrado",
@@ -116,12 +111,15 @@ const CustomerForm = ({
         return;
       }
       
-      // Client not found, create new client data object (but don't save to DB yet)
       const newClient: Omit<Client, "id" | "created_at"> = {
         nome: data.nome.trim(),
         telefone: formattedPhone,
         email: data.email.trim().toLowerCase(),
       };
+      
+      if (salonId) {
+        (newClient as any).salao_id = salonId;
+      }
       
       updateAppointmentData({ client: newClient as Client });
       toast({

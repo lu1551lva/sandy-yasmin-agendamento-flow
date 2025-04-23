@@ -21,6 +21,7 @@ export interface Database {
           status: "agendado" | "concluido" | "cancelado" 
           ultima_mensagem_enviada_em: string | null
           created_at: string
+          salao_id?: string
         }
         Insert: {
           id?: string
@@ -32,6 +33,7 @@ export interface Database {
           status?: "agendado" | "concluido" | "cancelado"
           ultima_mensagem_enviada_em?: string | null
           created_at?: string
+          salao_id?: string
         }
         Update: {
           id?: string
@@ -43,6 +45,7 @@ export interface Database {
           status?: "agendado" | "concluido" | "cancelado"
           ultima_mensagem_enviada_em?: string | null
           created_at?: string
+          salao_id?: string
         }
       }
       clientes: {
@@ -52,6 +55,7 @@ export interface Database {
           telefone: string
           email: string
           created_at: string
+          salao_id?: string
         }
         Insert: {
           id?: string
@@ -59,6 +63,7 @@ export interface Database {
           telefone: string
           email: string
           created_at?: string
+          salao_id?: string
         }
         Update: {
           id?: string
@@ -66,6 +71,7 @@ export interface Database {
           telefone?: string
           email?: string
           created_at?: string
+          salao_id?: string
         }
       }
       profissionais: {
@@ -76,6 +82,7 @@ export interface Database {
           horario_inicio: string
           horario_fim: string
           created_at: string
+          salao_id?: string
         }
         Insert: {
           id?: string
@@ -84,6 +91,7 @@ export interface Database {
           horario_inicio: string
           horario_fim: string
           created_at?: string
+          salao_id?: string
         }
         Update: {
           id?: string
@@ -92,6 +100,7 @@ export interface Database {
           horario_inicio?: string
           horario_fim?: string
           created_at?: string
+          salao_id?: string
         }
       }
       servicos: {
@@ -101,6 +110,8 @@ export interface Database {
           valor: number
           duracao_em_minutos: number
           created_at: string
+          ativo: boolean
+          salao_id?: string
         }
         Insert: {
           id?: string
@@ -108,12 +119,48 @@ export interface Database {
           valor: number
           duracao_em_minutos: number
           created_at?: string
+          ativo?: boolean
+          salao_id?: string
         }
         Update: {
           id?: string
           nome?: string
           valor?: number
           duracao_em_minutos?: number
+          created_at?: string
+          ativo?: boolean
+          salao_id?: string
+        }
+      }
+      saloes: {
+        Row: {
+          id: string
+          nome: string
+          email: string
+          telefone?: string
+          url_personalizado: string
+          plano: "trial" | "ativo" | "inativo"
+          trial_expira_em?: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          nome: string
+          email: string
+          telefone?: string
+          url_personalizado: string
+          plano?: "trial" | "ativo" | "inativo"
+          trial_expira_em?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          nome?: string
+          email?: string
+          telefone?: string
+          url_personalizado?: string
+          plano?: "trial" | "ativo" | "inativo"
+          trial_expira_em?: string
           created_at?: string
         }
       }
