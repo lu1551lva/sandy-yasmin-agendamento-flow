@@ -1,13 +1,22 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { supabase, Client } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft } from "lucide-react";
-import { validateEmail, validatePhone, formatPhoneNumber } from "@/lib/utils";
+import { formatPhoneNumber, validateEmail, validatePhone } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
 interface CustomerFormProps {
   client: Client | null;
@@ -16,45 +25,37 @@ interface CustomerFormProps {
   prevStep: () => void;
 }
 
+interface ClientForm {
+  nome: string;
+  telefone: string;
+  email: string;
+}
+
 const CustomerForm = ({
   client,
   updateAppointmentData,
   nextStep,
   prevStep,
 }: CustomerFormProps) => {
-  const [name, setName] = useState(client?.nome || "");
-  const [phone, setPhone] = useState(client?.telefone || "");
-  const [email, setEmail] = useState(client?.email || "");
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [isCheckingClient, setIsCheckingClient] = useState(false);
   const { toast } = useToast();
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-    
-    if (!name.trim()) {
-      newErrors.name = "O nome é obrigatório";
-    }
-    
-    if (!phone.trim()) {
-      newErrors.phone = "O telefone é obrigatório";
-    } else if (!validatePhone(phone)) {
-      newErrors.phone = "Formato de telefone inválido. Use (DDD) XXXXX-XXXX";
-    }
-    
-    if (!email.trim()) {
-      newErrors.email = "O e-mail é obrigatório";
-    } else if (!validateEmail(email)) {
-      newErrors.email = "Formato de e-mail inválido";
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  // Form definition with react-hook-form
+  const form = useForm<ClientForm>({
+    defaultValues: {
+      nome: client?.nome || "",
+      telefone: client?.telefone || "",
+      email: client?.email || "",
+    },
+    mode: "onBlur",
+  });
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
+    const value = e.target.value;
+    field.onChange(formatPhoneNumber(value));
   };
 
-  const handleContinue = async () => {
-    if (!validateForm()) return;
-    
+  const handleContinue = async (data: ClientForm) => {
     setIsCheckingClient(true);
     
     try {
@@ -62,9 +63,17 @@ const CustomerForm = ({
       const { data: clientsByEmail, error: emailError } = await supabase
         .from("clientes")
         .select("*")
-        .eq("email", email.trim().toLowerCase());
+        .eq("email", data.email.trim().toLowerCase());
       
-      if (emailError) throw emailError;
+      if (emailError) {
+        console.error("Erro ao verificar email:", emailError);
+        toast({
+          title: "Erro na verificação",
+          description: "Ocorreu um erro ao verificar seu email. Tente novamente.",
+          variant: "destructive",
+        });
+        throw emailError;
+      }
       
       if (clientsByEmail && clientsByEmail.length > 0) {
         // Client found by email, use this client
@@ -79,13 +88,21 @@ const CustomerForm = ({
       }
       
       // If not found by email, check by phone
-      const formattedPhone = formatPhoneNumber(phone);
+      const formattedPhone = data.telefone;
       const { data: clientsByPhone, error: phoneError } = await supabase
         .from("clientes")
         .select("*")
         .eq("telefone", formattedPhone);
       
-      if (phoneError) throw phoneError;
+      if (phoneError) {
+        console.error("Erro ao verificar telefone:", phoneError);
+        toast({
+          title: "Erro na verificação",
+          description: "Ocorreu um erro ao verificar seu telefone. Tente novamente.",
+          variant: "destructive",
+        });
+        throw phoneError;
+      }
       
       if (clientsByPhone && clientsByPhone.length > 0) {
         // Client found by phone, use this client
@@ -101,12 +118,16 @@ const CustomerForm = ({
       
       // Client not found, create new client data object (but don't save to DB yet)
       const newClient: Omit<Client, "id" | "created_at"> = {
-        nome: name.trim(),
+        nome: data.nome.trim(),
         telefone: formattedPhone,
-        email: email.trim().toLowerCase(),
+        email: data.email.trim().toLowerCase(),
       };
       
       updateAppointmentData({ client: newClient as Client });
+      toast({
+        title: "Dados validados",
+        description: "Seus dados foram validados com sucesso.",
+      });
       nextStep();
     } catch (error: any) {
       console.error("Erro ao verificar cliente:", error);
@@ -120,70 +141,102 @@ const CustomerForm = ({
     }
   };
 
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setPhone(formatPhoneNumber(value));
-  };
-
   return (
     <div>
       <h2 className="text-2xl font-playfair font-semibold mb-6">
         Seus dados
       </h2>
 
-      <div className="space-y-4">
-        <div>
-          <Label htmlFor="name">Nome completo</Label>
-          <Input
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Digite seu nome completo"
-            className={errors.name ? "border-red-500" : ""}
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleContinue)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="nome"
+            rules={{ 
+              required: "O nome é obrigatório",
+              minLength: {
+                value: 3,
+                message: "O nome deve ter pelo menos 3 caracteres"
+              }
+            }}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel htmlFor="name">Nome completo</FormLabel>
+                <FormControl>
+                  <Input
+                    id="name"
+                    placeholder="Digite seu nome completo"
+                    aria-label="Nome completo"
+                    aria-required="true"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-          {errors.name && (
-            <p className="text-red-500 text-sm mt-1">{errors.name}</p>
-          )}
-        </div>
 
-        <div>
-          <Label htmlFor="phone">Telefone com DDD</Label>
-          <Input
-            id="phone"
-            value={phone}
-            onChange={handlePhoneChange}
-            placeholder="(00) 00000-0000"
-            className={errors.phone ? "border-red-500" : ""}
+          <FormField
+            control={form.control}
+            name="telefone"
+            rules={{ 
+              required: "O telefone é obrigatório",
+              validate: value => validatePhone(value) || "Formato de telefone inválido. Use (DDD) XXXXX-XXXX"
+            }}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel htmlFor="phone">Telefone com DDD</FormLabel>
+                <FormControl>
+                  <Input
+                    id="phone"
+                    placeholder="(00) 00000-0000"
+                    aria-label="Telefone com DDD"
+                    aria-required="true"
+                    value={field.value}
+                    onChange={(e) => handlePhoneChange(e, field)}
+                    onBlur={field.onBlur}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-          {errors.phone && (
-            <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
-          )}
-        </div>
 
-        <div>
-          <Label htmlFor="email">E-mail</Label>
-          <Input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="seu@email.com"
-            className={errors.email ? "border-red-500" : ""}
+          <FormField
+            control={form.control}
+            name="email"
+            rules={{ 
+              required: "O e-mail é obrigatório",
+              validate: value => validateEmail(value) || "Formato de e-mail inválido"
+            }}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel htmlFor="email">E-mail</FormLabel>
+                <FormControl>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    aria-label="E-mail"
+                    aria-required="true"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-          {errors.email && (
-            <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-          )}
-        </div>
-      </div>
 
-      <div className="mt-8 flex justify-between">
-        <Button variant="outline" onClick={prevStep}>
-          <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
-        </Button>
-        <Button onClick={handleContinue} disabled={isCheckingClient}>
-          {isCheckingClient ? "Verificando..." : "Continuar"}
-        </Button>
-      </div>
+          <div className="mt-8 flex justify-between">
+            <Button variant="outline" onClick={prevStep} type="button">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
+            </Button>
+            <Button type="submit" disabled={isCheckingClient}>
+              {isCheckingClient ? "Verificando..." : "Continuar"}
+            </Button>
+          </div>
+        </form>
+      </Form>
     </div>
   );
 };

@@ -2,9 +2,29 @@
 import { format, isWeekend, isToday as isTodayFn, isBefore, addDays, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-// Format date to Brazilian format (day/month/year)
+// Format date to standardized Brazilian format (day/month/year)
 export const formatDate = (date: Date) => {
+  return format(date, "dd/MM/yyyy", { locale: ptBR });
+};
+
+// Format time to standardized format
+export const formatTime = (date: Date) => {
+  return format(date, "HH:mm", { locale: ptBR });
+};
+
+// Format date and time for display
+export const formatDateTime = (date: Date) => {
+  return format(date, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+};
+
+// Format date with month name
+export const formatDateWithMonth = (date: Date) => {
   return format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+};
+
+// Format date for weekday display
+export const formatWeekday = (date: Date) => {
+  return format(date, "EEEE", { locale: ptBR });
 };
 
 // Business days and slots
@@ -36,7 +56,7 @@ export const generateTimeSlots = (date: Date, serviceDuration: number, ignoreDat
 
 // --- Holidays ---
 
-// Check if a date is a holiday (apenas para referência)
+// Check if a date is a holiday
 export const isHoliday = (date: Date) => {
   const customHolidays = localStorage.getItem('customHolidays');
   const holidayList = customHolidays ? JSON.parse(customHolidays) : [];

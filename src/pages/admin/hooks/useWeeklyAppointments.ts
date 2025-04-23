@@ -1,7 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
+
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { format, startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns";
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
 interface UseWeeklyAppointmentsProps {
   selectedDate: Date;
@@ -13,10 +16,15 @@ export function useWeeklyAppointments({
   selectedDate,
   professionalFilter,
 }: UseWeeklyAppointmentsProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  // Configuração para começar a semana no domingo (0) seguindo padrão brasileiro
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 0, locale: ptBR });
   const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 0, locale: ptBR });
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
+  // Gerar time slots das 8h às 18h
   const timeSlots = Array.from({ length: 21 }, (_, i) => {
     const hour = Math.floor(i / 2) + 8;
     const minute = (i % 2) * 30;
@@ -25,20 +33,35 @@ export function useWeeklyAppointments({
       .padStart(2, "0")}`;
   });
 
-  const { data: professionals } = useQuery({
+  // Buscar profissionais
+  const { data: professionals, isLoading: isLoadingProfessionals } = useQuery({
     queryKey: ["professionals"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profissionais")
-        .select("*")
-        .order("nome");
+      try {
+        const { data, error } = await supabase
+          .from("profissionais")
+          .select("*")
+          .order("nome");
 
-      if (error) throw error;
-      return data || [];
+        if (error) {
+          toast({
+            title: "Erro ao carregar profissionais",
+            description: error.message,
+            variant: "destructive",
+          });
+          throw error;
+        }
+        return data || [];
+      } catch (err) {
+        console.error("Erro ao buscar profissionais:", err);
+        throw err;
+      }
     },
+    staleTime: 5 * 60 * 1000, // 5 minutos de cache
   });
 
-  const { data: appointments, isLoading } = useQuery({
+  // Buscar agendamentos da semana
+  const { data: appointments, isLoading: isLoadingAppointments } = useQuery({
     queryKey: [
       "week-appointments",
       format(weekStart, "yyyy-MM-dd"),
@@ -46,31 +69,85 @@ export function useWeeklyAppointments({
       professionalFilter,
     ],
     queryFn: async () => {
-      let query = supabase
-        .from("agendamentos")
-        .select(
+      try {
+        let query = supabase
+          .from("agendamentos")
+          .select(
+            `
+            *,
+            cliente:clientes(*),
+            servico:servicos(*),
+            profissional:profissionais(*)
           `
-          *,
-          cliente:clientes(*),
-          servico:servicos(*),
-          profissional:profissionais(*)
-        `
-        )
-        .gte("data", format(weekStart, "yyyy-MM-dd"))
-        .lte("data", format(weekEnd, "yyyy-MM-dd"))
-        .neq("status", "cancelado");
+          )
+          .gte("data", format(weekStart, "yyyy-MM-dd"))
+          .lte("data", format(weekEnd, "yyyy-MM-dd"))
+          .neq("status", "cancelado");
 
-      if (professionalFilter !== "all") {
-        query = query.eq("profissional_id", professionalFilter);
+        if (professionalFilter !== "all") {
+          query = query.eq("profissional_id", professionalFilter);
+        }
+
+        const { data, error } = await query.order("data").order("hora");
+
+        if (error) {
+          toast({
+            title: "Erro ao carregar agendamentos",
+            description: error.message,
+            variant: "destructive",
+          });
+          throw error;
+        }
+        
+        return data || [];
+      } catch (err) {
+        console.error("Erro ao buscar agendamentos:", err);
+        throw err;
       }
-
-      const { data, error } = await query.order("data").order("hora");
-
-      if (error) throw error;
-      return data || [];
     },
   });
 
+  // Prefetch próxima semana quando a semana atual é carregada
+  useEffect(() => {
+    if (!isLoadingAppointments) {
+      const nextWeekStart = addDays(weekStart, 7);
+      const nextWeekEnd = addDays(weekEnd, 7);
+      
+      queryClient.prefetchQuery({
+        queryKey: [
+          "week-appointments",
+          format(nextWeekStart, "yyyy-MM-dd"),
+          format(nextWeekEnd, "yyyy-MM-dd"),
+          professionalFilter,
+        ],
+        queryFn: async () => {
+          let query = supabase
+            .from("agendamentos")
+            .select(
+              `
+              *,
+              cliente:clientes(*),
+              servico:servicos(*),
+              profissional:profissionais(*)
+            `
+            )
+            .gte("data", format(nextWeekStart, "yyyy-MM-dd"))
+            .lte("data", format(nextWeekEnd, "yyyy-MM-dd"))
+            .neq("status", "cancelado");
+
+          if (professionalFilter !== "all") {
+            query = query.eq("profissional_id", professionalFilter);
+          }
+
+          const { data, error } = await query.order("data").order("hora");
+          if (error) throw error;
+          return data || [];
+        },
+      });
+    }
+  }, [isLoadingAppointments, weekStart, weekEnd, professionalFilter, queryClient]);
+
+  // Funções auxiliares para filtrar agendamentos
   const getAppointmentsForDayAndTime = (day: Date, time: string) => {
     if (!appointments) return [];
     const formattedDay = format(day, "yyyy-MM-dd");
@@ -91,7 +168,7 @@ export function useWeeklyAppointments({
   return {
     professionals,
     appointments,
-    isLoading,
+    isLoading: isLoadingProfessionals || isLoadingAppointments,
     weekStart,
     weekEnd,
     weekDays,

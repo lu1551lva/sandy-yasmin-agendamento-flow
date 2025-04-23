@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, Check, Loader, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { formatDate, formatCurrency, createWhatsAppLink } from "@/lib/utils";
+import { formatDate, formatTime, formatPhoneForWhatsApp, createWhatsAppLink } from "@/lib/utils";
 import { format } from "date-fns";
 
 interface ConfirmationProps {
@@ -47,7 +47,14 @@ const Confirmation = ({
         .eq("id", appointmentData.professional_id)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        toast({
+          title: "Erro ao carregar profissional",
+          description: error.message,
+          variant: "destructive",
+        });
+        throw error;
+      }
       return data;
     },
     enabled: !!appointmentData.professional_id,
@@ -78,89 +85,137 @@ const Confirmation = ({
         .eq("data", formattedDate)
         .eq("hora", appointmentData.time)
         .eq("profissional_id", appointmentData.professional_id)
-        .neq("status", "cancelado");
+        .in("status", ["agendado", "concluido"]);
       
-      if (checkError) throw checkError;
+      if (checkError) {
+        toast({
+          title: "Erro ao verificar disponibilidade",
+          description: checkError.message,
+          variant: "destructive",
+        });
+        throw checkError;
+      }
       
       if (existingAppointments && existingAppointments.length > 0) {
-        throw new Error("Este horário já foi reservado. Por favor, escolha outro horário.");
+        toast({
+          title: "Horário indisponível",
+          description: "Este horário já foi reservado. Por favor, escolha outro horário.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
       }
 
       // Determine if we need to create a new client or use an existing one
       let clientId;
       
-      if (appointmentData.client.id) {
-        // Client already exists
-        clientId = appointmentData.client.id;
-      } else {
-        // First check if client exists by email
-        const { data: existingClientByEmail, error: emailCheckError } = await supabase
-          .from("clientes")
-          .select("id")
-          .eq("email", appointmentData.client.email.trim().toLowerCase())
-          .maybeSingle();
-        
-        if (emailCheckError) throw emailCheckError;
-        
-        if (existingClientByEmail) {
-          clientId = existingClientByEmail.id;
+      try {
+        if (appointmentData.client.id) {
+          // Client already exists
+          clientId = appointmentData.client.id;
         } else {
-          // Then check if client exists by phone
-          const { data: existingClientByPhone, error: phoneCheckError } = await supabase
+          // First check if client exists by email
+          const { data: existingClientByEmail, error: emailCheckError } = await supabase
             .from("clientes")
             .select("id")
-            .eq("telefone", appointmentData.client.telefone)
+            .eq("email", appointmentData.client.email.trim().toLowerCase())
             .maybeSingle();
           
-          if (phoneCheckError) throw phoneCheckError;
+          if (emailCheckError) throw emailCheckError;
           
-          if (existingClientByPhone) {
-            clientId = existingClientByPhone.id;
+          if (existingClientByEmail) {
+            clientId = existingClientByEmail.id;
           } else {
-            // Only if client doesn't exist by either email or phone, create new client
-            const { data: newClient, error: createError } = await supabase
+            // Then check if client exists by phone
+            const formattedPhone = appointmentData.client.telefone;
+            const { data: existingClientByPhone, error: phoneCheckError } = await supabase
               .from("clientes")
-              .insert({
-                nome: appointmentData.client.nome,
-                telefone: appointmentData.client.telefone,
-                email: appointmentData.client.email.trim().toLowerCase(),
-              })
               .select("id")
-              .single();
+              .eq("telefone", formattedPhone)
+              .maybeSingle();
             
-            if (createError) {
-              console.error("Erro ao criar cliente:", createError);
-              throw new Error("Erro ao criar cliente. O e-mail ou telefone pode já estar em uso.");
+            if (phoneCheckError) throw phoneCheckError;
+            
+            if (existingClientByPhone) {
+              clientId = existingClientByPhone.id;
+            } else {
+              // Only if client doesn't exist by either email or phone, create new client
+              const { data: newClient, error: createError } = await supabase
+                .from("clientes")
+                .insert({
+                  nome: appointmentData.client.nome,
+                  telefone: formattedPhone,
+                  email: appointmentData.client.email.trim().toLowerCase(),
+                })
+                .select("id")
+                .single();
+              
+              if (createError) {
+                console.error("Erro ao criar cliente:", createError);
+                toast({
+                  title: "Erro ao criar cliente",
+                  description: "O e-mail ou telefone pode já estar em uso.",
+                  variant: "destructive",
+                });
+                throw new Error("Erro ao criar cliente. O e-mail ou telefone pode já estar em uso.");
+              }
+              
+              clientId = newClient.id;
             }
-            
-            clientId = newClient.id;
           }
         }
-      }
 
-      // Create the appointment
-      const { data: newAppointment, error: appointmentError } = await supabase
-        .from("agendamentos")
-        .insert({
-          cliente_id: clientId,
-          servico_id: appointmentData.service.id,
-          profissional_id: appointmentData.professional_id,
-          data: formattedDate,
-          hora: appointmentData.time,
-          status: "agendado",
-        })
-        .select("id")
-        .single();
-      
-      if (appointmentError) throw appointmentError;
-      
-      setAppointmentId(newAppointment.id);
-      setIsComplete(true);
-      
-      toast({
-        title: "Agendamento confirmado!",
-        description: "Seu horário foi reservado com sucesso.",
-      });
+        // Final availability check before creating appointment
+        const { data: latestCheck, error: latestCheckError } = await supabase
+          .from("agendamentos")
+          .select("*")
+          .eq("data", formattedDate)
+          .eq("hora", appointmentData.time)
+          .eq("profissional_id", appointmentData.professional_id)
+          .in("status", ["agendado", "concluido"]);
+        
+        if (latestCheckError) throw latestCheckError;
+        
+        if (latestCheck && latestCheck.length > 0) {
+          toast({
+            title: "Horário indisponível",
+            description: "Este horário foi reservado por outro cliente enquanto você completava o formulário. Por favor, escolha outro horário.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Create the appointment
+        const { data: newAppointment, error: appointmentError } = await supabase
+          .from("agendamentos")
+          .insert({
+            cliente_id: clientId,
+            servico_id: appointmentData.service.id,
+            profissional_id: appointmentData.professional_id,
+            data: formattedDate,
+            hora: appointmentData.time,
+            status: "agendado",
+          })
+          .select("id")
+          .single();
+        
+        if (appointmentError) throw appointmentError;
+        
+        setAppointmentId(newAppointment.id);
+        setIsComplete(true);
+        
+        toast({
+          title: "Agendamento confirmado!",
+          description: "Seu horário foi reservado com sucesso.",
+        });
+      } catch (error: any) {
+        console.error("Erro ao processar cliente:", error);
+        toast({
+          title: "Erro ao processar dados do cliente",
+          description: error.message || "Ocorreu um erro ao processar seus dados. Tente novamente.",
+          variant: "destructive",
+        });
+      }
     } catch (error: any) {
       console.error("Erro ao criar agendamento:", error);
       toast({
@@ -212,7 +267,7 @@ const Confirmation = ({
             
             <div className="flex justify-between">
               <span className="text-gray-600">Valor:</span>
-              <span className="font-medium">{formatCurrency(appointmentData.service.valor)}</span>
+              <span className="font-medium">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(appointmentData.service.valor)}</span>
             </div>
             
             <div className="flex justify-between">

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, Service } from "@/lib/supabase";
 import {
@@ -21,8 +21,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-  DialogClose,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -35,11 +33,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import { Plus, Edit, Trash2 } from "lucide-react";
+import ServiceForm from "./services/ServiceForm";
 
 const Services = () => {
   const { toast } = useToast();
@@ -48,38 +45,56 @@ const Services = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentService, setCurrentService] = useState<Service | null>(null);
-  const [formData, setFormData] = useState({
-    nome: "",
-    valor: "",
-    duracao_em_minutos: "",
-  });
-  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Fetch services
   const { data: services, isLoading } = useQuery({
     queryKey: ["services"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("servicos")
-        .select("*")
-        .order("nome");
+      try {
+        const { data, error } = await supabase
+          .from("servicos")
+          .select("*")
+          .order("nome");
 
-      if (error) throw error;
-      return data as Service[];
+        if (error) {
+          toast({
+            title: "Erro ao carregar serviços",
+            description: error.message,
+            variant: "destructive",
+          });
+          throw error;
+        }
+        return data as Service[];
+      } catch (error: any) {
+        console.error("Erro ao buscar serviços:", error);
+        throw error;
+      }
     },
   });
 
   // Create service mutation
   const createServiceMutation = useMutation({
     mutationFn: async (service: Omit<Service, "id" | "created_at">) => {
-      const { data, error } = await supabase
-        .from("servicos")
-        .insert(service)
-        .select()
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from("servicos")
+          .insert(service)
+          .select()
+          .single();
 
-      if (error) throw error;
-      return data;
+        if (error) {
+          toast({
+            title: "Erro ao cadastrar serviço",
+            description: error.message,
+            variant: "destructive",
+          });
+          throw error;
+        }
+        return data;
+      } catch (error: any) {
+        console.error("Erro ao criar serviço:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["services"] });
@@ -101,22 +116,28 @@ const Services = () => {
 
   // Update service mutation
   const updateServiceMutation = useMutation({
-    mutationFn: async ({
-      id,
-      service,
-    }: {
-      id: string;
-      service: Partial<Service>;
-    }) => {
-      const { data, error } = await supabase
-        .from("servicos")
-        .update(service)
-        .eq("id", id)
-        .select()
-        .single();
+    mutationFn: async ({ id, service }: { id: string; service: Partial<Service>; }) => {
+      try {
+        const { data, error } = await supabase
+          .from("servicos")
+          .update(service)
+          .eq("id", id)
+          .select()
+          .single();
 
-      if (error) throw error;
-      return data;
+        if (error) {
+          toast({
+            title: "Erro ao atualizar serviço",
+            description: error.message,
+            variant: "destructive",
+          });
+          throw error;
+        }
+        return data;
+      } catch (error: any) {
+        console.error("Erro ao atualizar serviço:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["services"] });
@@ -139,10 +160,22 @@ const Services = () => {
   // Delete service mutation
   const deleteServiceMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("servicos").delete().eq("id", id);
+      try {
+        const { error } = await supabase.from("servicos").delete().eq("id", id);
 
-      if (error) throw error;
-      return id;
+        if (error) {
+          toast({
+            title: "Erro ao excluir serviço",
+            description: error.message,
+            variant: "destructive",
+          });
+          throw error;
+        }
+        return id;
+      } catch (error: any) {
+        console.error("Erro ao excluir serviço:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["services"] });
@@ -163,38 +196,7 @@ const Services = () => {
   });
 
   // Handle form submit
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate form
-    const newErrors: Record<string, string> = {};
-    
-    if (!formData.nome.trim()) {
-      newErrors.nome = "O nome do serviço é obrigatório";
-    }
-    
-    if (!formData.valor.trim()) {
-      newErrors.valor = "O valor do serviço é obrigatório";
-    } else if (isNaN(Number(formData.valor.replace(",", ".")))) {
-      newErrors.valor = "O valor deve ser um número válido";
-    }
-    
-    if (!formData.duracao_em_minutos.trim()) {
-      newErrors.duracao_em_minutos = "A duração do serviço é obrigatória";
-    } else if (
-      isNaN(Number(formData.duracao_em_minutos)) || 
-      Number(formData.duracao_em_minutos) <= 0
-    ) {
-      newErrors.duracao_em_minutos = "A duração deve ser um número válido maior que zero";
-    }
-    
-    setErrors(newErrors);
-    
-    if (Object.keys(newErrors).length > 0) {
-      return;
-    }
-    
-    // Prepare service data
+  const handleSubmit = (formData: any) => {
     const serviceData = {
       nome: formData.nome,
       valor: Number(formData.valor.replace(",", ".")),
@@ -214,11 +216,6 @@ const Services = () => {
   // Handle edit service
   const handleEdit = (service: Service) => {
     setCurrentService(service);
-    setFormData({
-      nome: service.nome,
-      valor: String(service.valor),
-      duracao_em_minutos: String(service.duracao_em_minutos),
-    });
     setIsEditing(true);
     setIsDialogOpen(true);
   };
@@ -231,12 +228,6 @@ const Services = () => {
 
   // Reset form
   const resetForm = () => {
-    setFormData({
-      nome: "",
-      valor: "",
-      duracao_em_minutos: "",
-    });
-    setErrors({});
     setIsEditing(false);
     setCurrentService(null);
   };
@@ -249,19 +240,19 @@ const Services = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-semibold mb-2">Serviços</h1>
           <p className="text-muted-foreground">
             Gerencie os serviços oferecidos pelo salão
           </p>
         </div>
-        <Button onClick={openNewServiceDialog} className="flex items-center gap-2">
+        <Button onClick={openNewServiceDialog} className="flex items-center gap-2 w-full sm:w-auto">
           <Plus className="h-4 w-4" /> Novo Serviço
         </Button>
       </div>
 
-      <Card>
+      <Card className="shadow-sm">
         <CardHeader>
           <CardTitle>Gerenciamento de Serviços</CardTitle>
         </CardHeader>
@@ -329,62 +320,12 @@ const Services = () => {
               {isEditing ? "Editar Serviço" : "Novo Serviço"}
             </DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <Label htmlFor="nome">Nome do Serviço</Label>
-              <Input
-                id="nome"
-                value={formData.nome}
-                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                placeholder="Ex: Design de Sobrancelha"
-                className={errors.nome ? "border-red-500" : ""}
-              />
-              {errors.nome && (
-                <p className="text-red-500 text-sm">{errors.nome}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="valor">Valor (R$)</Label>
-              <Input
-                id="valor"
-                value={formData.valor}
-                onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
-                placeholder="Ex: 40.00"
-                className={errors.valor ? "border-red-500" : ""}
-              />
-              {errors.valor && (
-                <p className="text-red-500 text-sm">{errors.valor}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="duracao">Duração (minutos)</Label>
-              <Input
-                id="duracao"
-                value={formData.duracao_em_minutos}
-                onChange={(e) =>
-                  setFormData({ ...formData, duracao_em_minutos: e.target.value })
-                }
-                placeholder="Ex: 30"
-                className={errors.duracao_em_minutos ? "border-red-500" : ""}
-              />
-              {errors.duracao_em_minutos && (
-                <p className="text-red-500 text-sm">{errors.duracao_em_minutos}</p>
-              )}
-            </div>
-
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button" variant="outline" onClick={resetForm}>
-                  Cancelar
-                </Button>
-              </DialogClose>
-              <Button type="submit">
-                {isEditing ? "Atualizar" : "Cadastrar"}
-              </Button>
-            </DialogFooter>
-          </form>
+          <ServiceForm 
+            isEditing={isEditing}
+            currentService={currentService}
+            onSubmit={handleSubmit}
+            resetForm={resetForm}
+          />
         </DialogContent>
       </Dialog>
 

@@ -1,3 +1,4 @@
+
 // Re-export utility functions from their specific files to maintain backward compatibility
 // This allows existing imports to keep working without changing all references
 
@@ -7,6 +8,10 @@ export { cn } from "./classnames";
 // Re-export date utilities
 export { 
   formatDate, 
+  formatTime,
+  formatDateTime,
+  formatDateWithMonth,
+  formatWeekday,
   generateTimeSlots, 
   isHoliday, 
   getHolidays, 
@@ -16,7 +21,8 @@ export {
 
 // Re-export phone utilities
 export { 
-  formatPhoneNumber, 
+  formatPhoneNumber,
+  formatPhoneForWhatsApp, 
   validateEmail, 
   validatePhone 
 } from "./phoneUtils";
@@ -25,7 +31,8 @@ export {
 export { 
   createWhatsAppLink, 
   formatWhatsAppTemplate, 
-  getWhatsAppTemplates 
+  getWhatsAppTemplates,
+  saveWhatsAppTemplates 
 } from "./whatsappUtils";
 
 // Re-export currency utilities
