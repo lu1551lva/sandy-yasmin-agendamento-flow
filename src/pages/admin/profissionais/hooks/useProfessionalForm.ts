@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import type { Professional } from "@/lib/supabase";
 

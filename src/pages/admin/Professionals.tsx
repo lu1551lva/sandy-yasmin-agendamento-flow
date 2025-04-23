@@ -4,25 +4,45 @@ import ProfessionalTable from "./components/ProfessionalTable";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, Professional } from "@/lib/supabase";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ProfessionalFormDialog from "./profissionais/ProfessionalFormDialog";
 import ProfessionalDeleteDialog from "./profissionais/ProfessionalDeleteDialog";
 import { Button } from "@/components/ui/button";
 import { useProfessionalForm } from "./profissionais/hooks/useProfessionalForm";
+
+// Função utilitária para obter o salão autenticado pelo localStorage (ou contexto futuramente)
+function getAuthSalao() {
+  const raw = localStorage.getItem("salaoAuth");
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
 
 const Professionals = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [professionalToDelete, setProfessionalToDelete] = useState<Professional | null>(null);
+  const [salaoId, setSalaoId] = useState<string | null>(null);
 
+  // Busca o salao_id autenticado ao montar o componente
+  useEffect(() => {
+    const salao = getAuthSalao();
+    setSalaoId(salao?.id || null);
+  }, []);
+
+  // Buscar profissionais do salão autenticado
   const { data: professionals, isLoading } = useQuery({
-    queryKey: ["professionals"],
+    enabled: !!salaoId,
+    queryKey: ["professionals", salaoId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profissionais")
         .select("*")
-        .order("nome");
+        .eq("salao_id", salaoId);
       if (error) throw error;
       return data as Professional[];
     },
@@ -30,16 +50,17 @@ const Professionals = () => {
 
   const createProfessionalMutation = useMutation({
     mutationFn: async (data: Omit<Professional, "id" | "created_at">) => {
+      if (!salaoId) throw new Error("Salão não autenticado");
       const { data: result, error } = await supabase
         .from("profissionais")
-        .insert(data)
+        .insert({ ...data, salao_id: salaoId })
         .select()
         .single();
       if (error) throw error;
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["professionals"] });
+      queryClient.invalidateQueries({ queryKey: ["professionals", salaoId] });
       toast({ title: "Profissional cadastrada" });
     },
     onError: (error) => {
@@ -53,17 +74,19 @@ const Professionals = () => {
 
   const updateProfessionalMutation = useMutation({
     mutationFn: async ({ id, ...data }: Partial<Professional> & { id: string }) => {
+      if (!salaoId) throw new Error("Salão não autenticado");
       const { data: result, error } = await supabase
         .from("profissionais")
-        .update(data)
+        .update({ ...data, salao_id: salaoId })
         .eq("id", id)
+        .eq("salao_id", salaoId)
         .select()
         .single();
       if (error) throw error;
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["professionals"] });
+      queryClient.invalidateQueries({ queryKey: ["professionals", salaoId] });
       toast({ title: "Profissional atualizada" });
     },
     onError: (error) => {
@@ -77,11 +100,13 @@ const Professionals = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("profissionais").delete().eq("id", id);
+      if (!salaoId) throw new Error("Salão não autenticado");
+      const { error } = await supabase.from("profissionais").delete()
+        .eq("id", id).eq("salao_id", salaoId);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["professionals"] });
+      queryClient.invalidateQueries({ queryKey: ["professionals", salaoId] });
       toast({ title: "Profissional excluída" });
       setDeleteOpen(false);
       setProfessionalToDelete(null);
@@ -103,9 +128,7 @@ const Professionals = () => {
         createProfessionalMutation.mutate(data);
       }
     },
-    () => {
-      /* onCancel - nothing extra for now */
-    }
+    () => {}
   );
 
   function handleDelete(prof: Professional) {
@@ -113,7 +136,7 @@ const Professionals = () => {
     setDeleteOpen(true);
   }
 
-  // Formatação dos dias de atendimento (exemplo simples)
+  // Função para exibir abreviatura dos dias de atendimento
   const formatDiasAtendimento = (dias: string[]) => {
     const abrev: Record<string, string> = {
       segunda: "Seg",
@@ -128,6 +151,11 @@ const Professionals = () => {
     if (dias.length === 7) return "Todos os dias";
     return dias.map((dia) => abrev[dia] || dia).join(", ");
   };
+
+  // Bloquear uso se trial expirou (exemplo, pode sofisticar depois)
+  if (!salaoId) {
+    return <div className="text-center mt-10 text-destructive">Acesso negado. Faça login novamente.</div>;
+  }
 
   return (
     <div className="space-y-6">

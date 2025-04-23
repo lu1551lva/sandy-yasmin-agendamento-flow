@@ -1,6 +1,3 @@
-
-// Updated to use correct Supabase URL and key, and export all expected types.
-
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '@/types/database.types';
 
@@ -21,7 +18,7 @@ export type Json =
 export type Tables = Database['public']['Tables'];
 
 export type Client = Tables['clientes']['Row'];
-export type Professional = Tables['profissionais']['Row'];
+export type Professional = Tables['profissionais']['Row'] & { salao_id?: string };
 export type Service = Tables['servicos']['Row'];
 export type Appointment = Tables['agendamentos']['Row'];
 
