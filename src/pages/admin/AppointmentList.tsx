@@ -26,15 +26,32 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { format, isToday, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { formatDate, formatCurrency, createWhatsAppLink } from "@/lib/utils";
+import { 
+  formatDate, 
+  formatCurrency, 
+  createWhatsAppLink, 
+  formatWhatsAppTemplate,
+  getWhatsAppTemplates
+} from "@/lib/utils";
 import { CalendarIcon, Check, Copy, Loader, MoreHorizontal, Send, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -43,7 +60,14 @@ const AppointmentList = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [professionalFilter, setProfessionalFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
+  const [customMessage, setCustomMessage] = useState("");
+  const [messageType, setMessageType] = useState("confirmation");
+  const [isWhatsAppDialogOpen, setIsWhatsAppDialogOpen] = useState(false);
   const { toast } = useToast();
+
+  // Get WhatsApp templates
+  const whatsAppTemplates = getWhatsAppTemplates();
 
   // Fetch appointments
   const { data: appointments, isLoading, refetch } = useQuery({
@@ -133,19 +157,61 @@ const AppointmentList = () => {
     }
   };
 
-  // Create WhatsApp message for confirmation
-  const createConfirmationMessage = (appointment: any) => {
-    return `Olá ${appointment.cliente.nome}! Confirmamos seu agendamento no Studio Sandy Yasmin para ${appointment.servico.nome} no dia ${formatDate(parseISO(appointment.data))} às ${appointment.hora}. Aguardamos sua presença!`;
+  // Format message with appointment data
+  const formatMessage = (appointment: any, templateType: string) => {
+    const template = whatsAppTemplates[templateType as keyof typeof whatsAppTemplates];
+    
+    return formatWhatsAppTemplate(template, {
+      nome: appointment.cliente.nome.split(' ')[0],
+      servico: appointment.servico.nome,
+      data: formatDate(parseISO(appointment.data)),
+      hora: appointment.hora,
+      valor: formatCurrency(appointment.servico.valor),
+    });
   };
 
-  // Create WhatsApp message for rescheduling
-  const createReschedulingMessage = (appointment: any) => {
-    return `Olá ${appointment.cliente.nome}! Precisamos remarcar seu agendamento para ${appointment.servico.nome}. Por favor, entre em contato conosco para agendar uma nova data e horário. Agradecemos a compreensão!`;
+  // Open WhatsApp dialog
+  const openWhatsAppDialog = (appointment: any, type: string) => {
+    setSelectedAppointment(appointment);
+    setMessageType(type);
+    setCustomMessage(formatMessage(appointment, type));
+    setIsWhatsAppDialogOpen(true);
   };
 
-  // Create WhatsApp message for cancellation
-  const createCancellationMessage = (appointment: any) => {
-    return `Olá ${appointment.cliente.nome}! Infelizmente, precisamos cancelar seu agendamento para ${appointment.servico.nome} no dia ${formatDate(parseISO(appointment.data))} às ${appointment.hora}. Por favor, entre em contato conosco para mais informações.`;
+  // Send WhatsApp message
+  const sendWhatsAppMessage = async () => {
+    if (!selectedAppointment) return;
+    
+    try {
+      // Update last message timestamp
+      await supabase
+        .from("agendamentos")
+        .update({ ultima_mensagem_enviada_em: new Date().toISOString() })
+        .eq("id", selectedAppointment.id);
+      
+      // Open WhatsApp in new window
+      window.open(
+        createWhatsAppLink(selectedAppointment.cliente.telefone, customMessage),
+        "_blank"
+      );
+      
+      setIsWhatsAppDialogOpen(false);
+      
+      toast({
+        title: "WhatsApp aberto",
+        description: "A mensagem foi preparada para envio no WhatsApp.",
+      });
+    } catch (error) {
+      console.error("Error updating message timestamp:", error);
+      
+      // Still open WhatsApp even if update fails
+      window.open(
+        createWhatsAppLink(selectedAppointment.cliente.telefone, customMessage),
+        "_blank"
+      );
+      
+      setIsWhatsAppDialogOpen(false);
+    }
   };
 
   // Copy message to clipboard
@@ -155,23 +221,6 @@ const AppointmentList = () => {
       title: "Mensagem copiada",
       description: "A mensagem foi copiada para a área de transferência.",
     });
-  };
-
-  // Open WhatsApp
-  const openWhatsApp = (phone: string, message: string) => {
-    window.open(createWhatsAppLink(phone, message), "_blank");
-  };
-
-  // Update message sent timestamp
-  const updateMessageTimestamp = async (id: string) => {
-    try {
-      await supabase
-        .from("agendamentos")
-        .update({ ultima_mensagem_enviada_em: new Date().toISOString() })
-        .eq("id", id);
-    } catch (error) {
-      console.error("Error updating message timestamp:", error);
-    }
   };
 
   // Get status badge color
@@ -205,7 +254,7 @@ const AppointmentList = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-semibold mb-2">Agendamentos</h1>
+        <h1 className="text-3xl font-semibold mb-2 font-playfair">Agendamentos</h1>
         <p className="text-muted-foreground">
           Gerencie todos os agendamentos do salão
         </p>
@@ -241,6 +290,7 @@ const AppointmentList = () => {
                     onSelect={setSelectedDate}
                     initialFocus
                     locale={ptBR}
+                    className="pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
@@ -289,6 +339,74 @@ const AppointmentList = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* WhatsApp Message Dialog */}
+      <Dialog open={isWhatsAppDialogOpen} onOpenChange={setIsWhatsAppDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Enviar mensagem WhatsApp</DialogTitle>
+            <DialogDescription>
+              Personalize a mensagem antes de enviar via WhatsApp
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Tabs defaultValue={messageType} value={messageType} onValueChange={setMessageType}>
+            <TabsList className="grid grid-cols-3 mb-4">
+              <TabsTrigger value="confirmation">Confirmação</TabsTrigger>
+              <TabsTrigger value="reschedule">Reagendamento</TabsTrigger>
+              <TabsTrigger value="cancellation">Cancelamento</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="confirmation" className="space-y-4">
+              <Textarea 
+                value={customMessage} 
+                onChange={(e) => setCustomMessage(e.target.value)}
+                className="min-h-[150px]"
+              />
+              <div className="flex justify-end">
+                <Button variant="outline" size="sm" onClick={() => setCustomMessage(formatMessage(selectedAppointment, 'confirmation'))}>
+                  Restaurar modelo
+                </Button>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="reschedule" className="space-y-4">
+              <Textarea 
+                value={customMessage} 
+                onChange={(e) => setCustomMessage(e.target.value)}
+                className="min-h-[150px]"
+              />
+              <div className="flex justify-end">
+                <Button variant="outline" size="sm" onClick={() => setCustomMessage(formatMessage(selectedAppointment, 'reschedule'))}>
+                  Restaurar modelo
+                </Button>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="cancellation" className="space-y-4">
+              <Textarea 
+                value={customMessage} 
+                onChange={(e) => setCustomMessage(e.target.value)}
+                className="min-h-[150px]"
+              />
+              <div className="flex justify-end">
+                <Button variant="outline" size="sm" onClick={() => setCustomMessage(formatMessage(selectedAppointment, 'cancellation'))}>
+                  Restaurar modelo
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
+          
+          <DialogFooter className="flex items-center justify-between">
+            <Button variant="outline" onClick={() => copyToClipboard(customMessage)}>
+              <Copy className="h-4 w-4 mr-2" /> Copiar
+            </Button>
+            <Button onClick={sendWhatsAppMessage}>
+              <Send className="h-4 w-4 mr-2" /> Abrir WhatsApp
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Appointments list */}
       <Card>
@@ -371,30 +489,21 @@ const AppointmentList = () => {
                             <DropdownMenuLabel>WhatsApp</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             
-                            <DropdownMenuItem onClick={() => {
-                              openWhatsApp(appointment.cliente.telefone, createConfirmationMessage(appointment));
-                              updateMessageTimestamp(appointment.id);
-                            }}>
+                            <DropdownMenuItem onClick={() => openWhatsAppDialog(appointment, 'confirmation')}>
                               <Send className="h-4 w-4 mr-2" /> Enviar confirmação
                             </DropdownMenuItem>
                             
-                            <DropdownMenuItem onClick={() => {
-                              openWhatsApp(appointment.cliente.telefone, createReschedulingMessage(appointment));
-                              updateMessageTimestamp(appointment.id);
-                            }}>
+                            <DropdownMenuItem onClick={() => openWhatsAppDialog(appointment, 'reschedule')}>
                               <Send className="h-4 w-4 mr-2" /> Enviar reagendamento
                             </DropdownMenuItem>
                             
-                            <DropdownMenuItem onClick={() => {
-                              openWhatsApp(appointment.cliente.telefone, createCancellationMessage(appointment));
-                              updateMessageTimestamp(appointment.id);
-                            }}>
+                            <DropdownMenuItem onClick={() => openWhatsAppDialog(appointment, 'cancellation')}>
                               <Send className="h-4 w-4 mr-2" /> Enviar cancelamento
                             </DropdownMenuItem>
                             
                             <DropdownMenuSeparator />
                             
-                            <DropdownMenuItem onClick={() => copyToClipboard(createConfirmationMessage(appointment))}>
+                            <DropdownMenuItem onClick={() => copyToClipboard(formatMessage(appointment, 'confirmation'))}>
                               <Copy className="h-4 w-4 mr-2" /> Copiar mensagem
                             </DropdownMenuItem>
                           </DropdownMenuContent>

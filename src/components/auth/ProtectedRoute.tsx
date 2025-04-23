@@ -11,10 +11,12 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { isLoggedIn } = useAdminAuth();
   const location = useLocation();
 
+  // Check if the admin is logged in
   if (isLoggedIn) {
     return <>{children}</>;
   }
 
+  // If not logged in, redirect to the login page with the current location
   return <Navigate to="/admin/login" state={{ from: location }} replace />;
 };
 

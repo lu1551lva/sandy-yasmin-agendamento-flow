@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase, Client } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -28,23 +28,6 @@ const CustomerForm = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isCheckingClient, setIsCheckingClient] = useState(false);
   const { toast } = useToast();
-
-  // Check if client already exists by email
-  const { data: existingClients, refetch: checkExistingClient } = useQuery({
-    queryKey: ["clients", email],
-    queryFn: async () => {
-      if (!email) return [];
-      
-      const { data, error } = await supabase
-        .from("clientes")
-        .select("*")
-        .eq("email", email);
-      
-      if (error) throw error;
-      return data as Client[];
-    },
-    enabled: false, // Don't run on mount, only when explicitly called
-  });
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -75,29 +58,54 @@ const CustomerForm = ({
     setIsCheckingClient(true);
     
     try {
-      // Check if client already exists
-      await checkExistingClient();
+      // First, check if client exists by email
+      const { data: clientsByEmail, error: emailError } = await supabase
+        .from("clientes")
+        .select("*")
+        .eq("email", email.trim().toLowerCase());
       
-      if (existingClients && existingClients.length > 0) {
-        // Use existing client data
-        const existingClient = existingClients[0];
-        updateAppointmentData({ client: existingClient });
+      if (emailError) throw emailError;
+      
+      if (clientsByEmail && clientsByEmail.length > 0) {
+        // Client found by email, use this client
+        updateAppointmentData({ client: clientsByEmail[0] });
         toast({
           title: "Cliente encontrado",
           description: "Utilizaremos seus dados já cadastrados.",
           duration: 3000,
         });
-      } else {
-        // Create new client data object
-        const newClient: Omit<Client, "id" | "created_at"> = {
-          nome: name.trim(),
-          telefone: formatPhoneNumber(phone),
-          email: email.trim().toLowerCase(),
-        };
-        
-        updateAppointmentData({ client: newClient as Client });
+        nextStep();
+        return;
       }
       
+      // If not found by email, check by phone
+      const { data: clientsByPhone, error: phoneError } = await supabase
+        .from("clientes")
+        .select("*")
+        .eq("telefone", formatPhoneNumber(phone));
+      
+      if (phoneError) throw phoneError;
+      
+      if (clientsByPhone && clientsByPhone.length > 0) {
+        // Client found by phone, use this client
+        updateAppointmentData({ client: clientsByPhone[0] });
+        toast({
+          title: "Cliente encontrado",
+          description: "Utilizaremos seus dados já cadastrados.",
+          duration: 3000,
+        });
+        nextStep();
+        return;
+      }
+      
+      // Client not found, create new client data object
+      const newClient: Omit<Client, "id" | "created_at"> = {
+        nome: name.trim(),
+        telefone: formatPhoneNumber(phone),
+        email: email.trim().toLowerCase(),
+      };
+      
+      updateAppointmentData({ client: newClient as Client });
       nextStep();
     } catch (error) {
       console.error("Error checking client:", error);

@@ -68,28 +68,6 @@ const Confirmation = ({
     setIsSubmitting(true);
 
     try {
-      // Check if the client already exists
-      let clientId = null;
-      
-      if (appointmentData.client.id) {
-        // Client already exists
-        clientId = appointmentData.client.id;
-      } else {
-        // Insert new client
-        const { data: newClient, error: clientError } = await supabase
-          .from("clientes")
-          .insert({
-            nome: appointmentData.client.nome,
-            telefone: appointmentData.client.telefone,
-            email: appointmentData.client.email,
-          })
-          .select("id")
-          .single();
-        
-        if (clientError) throw clientError;
-        clientId = newClient.id;
-      }
-
       // Format date for database
       const formattedDate = format(appointmentData.date, "yyyy-MM-dd");
 
@@ -106,6 +84,54 @@ const Confirmation = ({
       
       if (existingAppointments && existingAppointments.length > 0) {
         throw new Error("Este horário já foi reservado. Por favor, escolha outro horário.");
+      }
+
+      // Determine if we need to create a new client or use an existing one
+      let clientId;
+      
+      if (appointmentData.client.id) {
+        // Client already exists
+        clientId = appointmentData.client.id;
+      } else {
+        // Check if client exists by email
+        const { data: existingByEmail, error: emailError } = await supabase
+          .from("clientes")
+          .select("id")
+          .eq("email", appointmentData.client.email.toLowerCase())
+          .maybeSingle();
+        
+        if (emailError) throw emailError;
+        
+        if (existingByEmail) {
+          clientId = existingByEmail.id;
+        } else {
+          // Check if client exists by phone
+          const { data: existingByPhone, error: phoneError } = await supabase
+            .from("clientes")
+            .select("id")
+            .eq("telefone", appointmentData.client.telefone)
+            .maybeSingle();
+          
+          if (phoneError) throw phoneError;
+          
+          if (existingByPhone) {
+            clientId = existingByPhone.id;
+          } else {
+            // Insert new client
+            const { data: newClient, error: clientError } = await supabase
+              .from("clientes")
+              .insert({
+                nome: appointmentData.client.nome,
+                telefone: appointmentData.client.telefone,
+                email: appointmentData.client.email.toLowerCase(),
+              })
+              .select("id")
+              .single();
+            
+            if (clientError) throw clientError;
+            clientId = newClient.id;
+          }
+        }
       }
 
       // Create the appointment
