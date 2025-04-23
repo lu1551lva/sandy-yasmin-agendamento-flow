@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, Professional } from "@/lib/supabase";
@@ -49,13 +48,13 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2 } from "lucide-react";
 
 const DIAS_SEMANA = [
+  { id: "domingo", label: "Domingo" },
   { id: "segunda", label: "Segunda-feira" },
   { id: "terca", label: "Terça-feira" },
   { id: "quarta", label: "Quarta-feira" },
   { id: "quinta", label: "Quinta-feira" },
   { id: "sexta", label: "Sexta-feira" },
   { id: "sabado", label: "Sábado" },
-  { id: "domingo", label: "Domingo" },
 ];
 
 const HORARIOS = Array.from({ length: 25 }, (_, i) => {
