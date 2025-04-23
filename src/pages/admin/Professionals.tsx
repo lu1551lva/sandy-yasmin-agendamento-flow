@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, Professional } from "@/lib/supabase";
@@ -7,22 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,18 +19,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import ProfessionalForm from "./components/ProfessionalForm";
 import ProfessionalTable from "./components/ProfessionalTable";
 
@@ -58,11 +34,6 @@ const DIAS_SEMANA = [
   { id: "sexta", label: "Sexta-feira" },
   { id: "sabado", label: "Sábado" },
 ];
-
-const HORARIOS = Array.from({ length: 25 }, (_, i) => {
-  const hour = String(i).padStart(2, "0");
-  return `${hour}:00`;
-});
 
 const Professionals = () => {
   const { toast } = useToast();
@@ -141,15 +112,20 @@ const Professionals = () => {
       id: string;
       professional: Partial<Professional>;
     }) => {
-      const { data, error } = await supabase
-        .from("profissionais")
-        .update(professional)
-        .eq("id", id)
-        .select()
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from("profissionais")
+          .update(professional)
+          .eq("id", id)
+          .select()
+          .single();
 
-      if (error) throw error;
-      return data;
+        if (error) throw error;
+        return data;
+      } catch (error) {
+        console.error("Erro completo:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["professionals"] });
@@ -161,9 +137,10 @@ const Professionals = () => {
       resetForm();
     },
     onError: (error) => {
+      console.error("Erro na mutation:", error);
       toast({
         title: "Erro ao atualizar profissional",
-        description: String(error),
+        description: String(error instanceof Error ? error.message : "Erro desconhecido"),
         variant: "destructive",
       });
     },
@@ -249,7 +226,7 @@ const Professionals = () => {
     setCurrentProfessional(professional);
     setFormData({
       nome: professional.nome,
-      dias_atendimento: professional.dias_atendimento,
+      dias_atendimento: professional.dias_atendimento || [],
       horario_inicio: professional.horario_inicio,
       horario_fim: professional.horario_fim,
     });

@@ -5,6 +5,7 @@ import {
   DialogTitle,
   DialogFooter,
   DialogClose,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,6 +58,11 @@ const ProfessionalForm: React.FC<ProfessionalFormProps> = ({
     <DialogContent className="max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle>{isEditing ? "Editar Profissional" : "Nova Profissional"}</DialogTitle>
+        <DialogDescription>
+          {isEditing 
+            ? "Atualize as informações da profissional conforme necessário."
+            : "Preencha os dados para cadastrar uma nova profissional."}
+        </DialogDescription>
       </DialogHeader>
       <form onSubmit={onSubmit} className="space-y-4 mt-4">
         <div className="space-y-2">

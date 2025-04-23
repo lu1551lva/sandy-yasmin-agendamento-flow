@@ -43,12 +43,12 @@ const ScheduleListView = ({
                     <div className="flex justify-between items-start">
                       <div>
                         <div className="font-semibold text-lg">{appointment.hora}</div>
-                        <div>{appointment.cliente.nome}</div>
-                        <div className="text-gray-600">{appointment.servico.nome}</div>
+                        <div>{appointment.cliente?.nome || "Cliente não encontrado"}</div>
+                        <div className="text-gray-600">{appointment.servico?.nome || "Serviço não encontrado"}</div>
                       </div>
                       <div className="text-sm text-gray-500">
-                        <div>{appointment.profissional.nome}</div>
-                        <div>{appointment.servico.duracao_em_minutos} min</div>
+                        <div>{appointment.profissional?.nome || "Profissional não encontrado"}</div>
+                        <div>{appointment.servico?.duracao_em_minutos || "?"} min</div>
                       </div>
                     </div>
                   </div>
