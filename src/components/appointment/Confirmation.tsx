@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
@@ -73,8 +74,8 @@ const Confirmation = ({
         clientId = newClient.id;
       }
 
-    // Modify the date formatting to use a single argument
-    const formattedDate = formatDate(appointmentData.date);
+      // Modify the date formatting to use a single argument
+      const formattedDate = formatDate(appointmentData.date);
 
       // Create appointment data
       const appointmentRecord = {
@@ -121,9 +122,9 @@ const Confirmation = ({
       {isComplete ? (
         <ConfirmationSuccess
           appointmentId={appointmentId}
-          appointmentData={appointmentData}
           clientPhone={appointmentData.client?.telefone}
           whatsappMessage={`Olá! Seu agendamento para ${appointmentData.service?.nome} foi confirmado para ${formatDate(appointmentData.date)} às ${appointmentData.time}.`}
+          appointmentData={appointmentData}
         />
       ) : (
         <div className="space-y-6">
@@ -135,12 +136,12 @@ const Confirmation = ({
           </p>
 
           <AppointmentSummary 
-            appointmentData={appointmentData}
             service={appointmentData.service}
             professionalName={appointmentData.professional_name}
             date={appointmentData.date}
             time={appointmentData.time}
             client={appointmentData.client}
+            appointmentData={appointmentData}
           />
 
           <div className="mt-8 flex flex-col sm:flex-row justify-between gap-4">

@@ -1,26 +1,38 @@
 
+import React from 'react';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 
-interface ConfirmationActionsProps {
-  isSubmitting: boolean;
+export interface ConfirmationActionsProps {
   onConfirm: () => void;
-  onBack?: () => void;  // Make this optional since it's not used in Confirmation.tsx
-  className?: string;   // Add className prop
+  isSubmitting: boolean;
+  className?: string; // Added className prop
 }
 
-const ConfirmationActions = ({ isSubmitting, onConfirm, onBack, className }: ConfirmationActionsProps) => (
-  <div className={className}>
-    <Button onClick={onConfirm} disabled={isSubmitting} className="w-full">
+const ConfirmationActions = ({ 
+  onConfirm, 
+  isSubmitting,
+  className
+}: ConfirmationActionsProps) => {
+  return (
+    <Button
+      onClick={onConfirm}
+      disabled={isSubmitting}
+      className={className}
+    >
       {isSubmitting ? (
-        <>
-          <Loader className="mr-2 h-4 w-4 animate-spin" /> Processando...
-        </>
+        <span className="flex items-center gap-2">
+          <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+          Confirmando...
+        </span>
       ) : (
-        "Confirmar agendamento"
+        <span className="flex items-center gap-2">
+          <CheckCircle className="h-4 w-4" />
+          Confirmar Agendamento
+        </span>
       )}
     </Button>
-  </div>
-);
+  );
+};
 
 export default ConfirmationActions;

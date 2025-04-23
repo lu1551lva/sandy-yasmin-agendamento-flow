@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, Service } from "@/lib/supabase";
@@ -168,7 +169,7 @@ const Services = () => {
       nome: formData.nome,
       valor: Number(formData.valor.replace(",", ".")),
       duracao_em_minutos: Number(formData.duracao_em_minutos),
-      ativo: true,
+      ativo: true, // Add the missing ativo field
     };
 
     if (isEditing && currentService) {
