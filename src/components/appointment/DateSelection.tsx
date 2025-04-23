@@ -18,7 +18,6 @@ interface DateSelectionProps {
   updateAppointmentData: (data: { date: Date | null; time: string | null }) => void;
   nextStep: () => void;
   prevStep: () => void;
-  salonId?: string; // Added salonId prop
 }
 
 const DateSelection = ({
@@ -29,7 +28,6 @@ const DateSelection = ({
   updateAppointmentData,
   nextStep,
   prevStep,
-  salonId, // Add the prop to the component parameters
 }: DateSelectionProps) => {
   // Main logic outsourced to custom hook 
   const {
@@ -38,7 +36,7 @@ const DateSelection = ({
     professional,
     isDateDisabled,
     refetchAppointments,
-  } = useDateSelectionData(selectedService, selectedDate, professionalId, salonId); // Pass salonId to the hook
+  } = useDateSelectionData(selectedService, selectedDate, professionalId);
 
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {

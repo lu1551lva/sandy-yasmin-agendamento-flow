@@ -18,19 +18,8 @@ export type Json =
 
 export type Tables = Database['public']['Tables'];
 
-export type Salon = {
-  id: string;
-  nome: string;
-  email: string;
-  url_personalizado: string;
-  telefone?: string | null;
-  plano: 'trial' | 'ativo' | 'inativo';
-  trial_expira_em?: string | null;
-  data_cadastro: string; // Added this field
-};
-
 export type Client = Tables['clientes']['Row'];
-export type Professional = Tables['profissionais']['Row'] & { salao_id?: string };
+export type Professional = Tables['profissionais']['Row'];
 export type Service = Tables['servicos']['Row'];
 export type Appointment = Tables['agendamentos']['Row'];
 
@@ -38,43 +27,59 @@ export type AppointmentWithDetails = Appointment & {
   cliente: Client;
   servico: Service;
   profissional: Professional;
-  salao?: Salon;
 };
 
 export const DEFAULT_SALON_LOGO = "https://placehold.co/400x400/FFEFEF/D0A638?text=S";
 
-// Helper function to get salon by URL slug
-export async function getSalonBySlug(slug: string): Promise<Salon | null> {
-  if (!slug) return null;
-  
-  const { data, error } = await supabase
-    .from('saloes')
-    .select('*')
-    .eq('url_personalizado', slug)
-    .single();
-  
-  if (error || !data) return null;
-  return data;
+// Helper function to format currency
+export function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  }).format(value);
 }
 
-// Check if a salon's trial has expired
-export function hasTrialExpired(salon: Salon | null): boolean {
-  if (!salon) return true;
-  if (salon.plano !== 'trial') return false;
+// Helper function to create WhatsApp link
+export function createWhatsAppLink(phone: string, message: string): string {
+  // Remove non-numeric characters from phone
+  const formattedPhone = phone.replace(/\D/g, '');
   
-  const today = new Date();
-  const trialEndDate = salon.trial_expira_em ? new Date(salon.trial_expira_em) : null;
+  // Ensure it's properly formatted with country code
+  const whatsappPhone = formattedPhone.startsWith('55') 
+    ? formattedPhone 
+    : `55${formattedPhone}`;
   
-  if (!trialEndDate) return false;
-  return today > trialEndDate;
+  // Create the URL
+  return `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(message)}`;
 }
 
-// Check if a salon is active (either in valid trial or active status)
-export function isSalonActive(salon: Salon | null): boolean {
-  if (!salon) return false;
+// Helper function to format WhatsApp message template with variables
+export function formatWhatsAppTemplate(template: string, variables: Record<string, string>): string {
+  let formattedMessage = template;
   
-  if (salon.plano === 'ativo') return true;
-  if (salon.plano === 'trial' && !hasTrialExpired(salon)) return true;
+  // Replace all variables in the template
+  for (const [key, value] of Object.entries(variables)) {
+    const regex = new RegExp(`{${key}}`, 'g');
+    formattedMessage = formattedMessage.replace(regex, value);
+  }
   
-  return false;
+  return formattedMessage;
+}
+
+// Helper function to get WhatsApp templates
+export function getWhatsAppTemplates(): Record<string, string> {
+  const defaultTemplates = {
+    confirmation: `Olá {nome}! Confirmamos seu agendamento no Studio Sandy Yasmin para {servico} no dia {data} às {hora}. Valor: {valor}. Aguardamos sua presença!`,
+    
+    reminder: `Olá {nome}! Passando para lembrar do seu agendamento amanhã às {hora} para {servico}. Caso precise remarcar, entre em contato conosco. Obrigado!`,
+    
+    reschedule: `Olá {nome}! Precisamos remarcar seu agendamento para {servico} que está marcado para {data} às {hora}. Por favor, entre em contato conosco para agendar uma nova data e horário. Agradecemos a compreensão!`,
+    
+    cancellation: `Olá {nome}! Lamentamos informar que precisamos cancelar seu agendamento para {servico} no dia {data} às {hora}. Por favor, entre em contato conosco para mais informações. Pedimos desculpas pelo inconveniente.`,
+    
+    followup: `Olá {nome}! Como foi sua experiência com o serviço {servico} no Studio Sandy Yasmin? Ficaríamos felizes em receber seu feedback. Obrigado pela preferência!`
+  };
+
+  const savedTemplates = localStorage.getItem('whatsappTemplates');
+  return savedTemplates ? JSON.parse(savedTemplates) : defaultTemplates;
 }

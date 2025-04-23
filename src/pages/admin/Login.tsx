@@ -1,43 +1,27 @@
 
-import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { useAuth } from '@/context/auth-context';
 import { Logo } from '@/components/common/Logo';
 import { Loader, ArrowLeft } from 'lucide-react';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn, user, salon } = useAuth();
+  const { login } = useAdminAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   
-  const from = location.state?.from?.pathname || '/admin/dashboard';
-  
-  // Redirect if already logged in
-  useEffect(() => {
-    if (user && salon) {
-      // For super admin
-      if (salon.email === 'admin@meusistema.com') {
-        navigate('/superadmin');
-      } else {
-        // For regular salon admin
-        navigate(`/admin/${salon.url_personalizado}`);
-      }
-    }
-  }, [user, salon, navigate]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
     try {
-      await signIn(email, password);
+      await login(email, password);
     } catch (error) {
       console.error('Erro no login:', error);
     } finally {
@@ -60,7 +44,7 @@ const AdminLogin = () => {
           <div className="flex justify-center mb-4">
             <Logo />
           </div>
-          <CardTitle className="text-2xl font-playfair">Acesso Administrativo</CardTitle>
+          <CardTitle className="text-2xl font-playfair">Studio Sandy Yasmin</CardTitle>
           <CardDescription>
             Entre com suas credenciais de administrador
           </CardDescription>
@@ -72,7 +56,7 @@ const AdminLogin = () => {
               <Input
                 id="email"
                 type="email"
-                placeholder="contato@seusalao.com"
+                placeholder="admin@studio.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
@@ -102,17 +86,8 @@ const AdminLogin = () => {
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <div className="text-xs text-muted-foreground text-center w-full">
-            <p className="mb-1">Acessos para teste:</p>
-            <p>Super Admin: admin@meusistema.com / admin123</p>
-            <p>Salão Demo: admin@studioyasmin.com / admin123</p>
-          </div>
-          <div className="text-center w-full">
-            <p className="text-sm text-muted-foreground">
-              Não tem uma conta?{' '}
-              <Button variant="link" className="p-0 h-auto" onClick={() => navigate('/registrar')}>
-                Registre-se
-              </Button>
-            </p>
+            <p className="mb-1">Credenciais de acesso:</p>
+            <p>Email: admin@studio.com / Senha: admin123</p>
           </div>
         </CardFooter>
       </Card>

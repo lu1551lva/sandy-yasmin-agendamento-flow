@@ -41,14 +41,31 @@ export const useAdminAuth = (): AdminAuthState => {
 
   const login = async (email: string, password: string) => {
     try {
-      const { data, error } = await supabase
-        .from('admins')
-        .select('*')
-        .eq('email', email)
-        .eq('senha', password)
-        .maybeSingle();
-
-      if (error || !data) {
+      // Fixed credentials for Studio Sandy Yasmin
+      const validEmail = 'admin@studio.com';
+      const validPassword = 'admin123';
+      
+      if (email === validEmail && password === validPassword) {
+        // Set admin token with 24 hour expiry
+        const token = Math.random().toString(36).substring(2);
+        const expiryTime = new Date().getTime() + (24 * 60 * 60 * 1000); // 24 hours
+        
+        localStorage.setItem('adminLoggedIn', 'true');
+        localStorage.setItem('adminToken', token);
+        localStorage.setItem('adminTokenExpiry', expiryTime.toString());
+        
+        setIsLoggedIn(true);
+        
+        // Redirect to admin dashboard
+        navigate('/admin');
+        
+        toast({
+          title: 'Login realizado com sucesso',
+          description: 'Bem-vindo ao painel administrativo',
+        });
+        
+        return true;
+      } else {
         toast({
           title: 'Erro de Login',
           description: 'E-mail ou senha inválidos',
@@ -56,26 +73,6 @@ export const useAdminAuth = (): AdminAuthState => {
         });
         return false;
       }
-
-      // Set admin token with 24 hour expiry
-      const token = Math.random().toString(36).substring(2);
-      const expiryTime = new Date().getTime() + (24 * 60 * 60 * 1000); // 24 hours
-      
-      localStorage.setItem('adminLoggedIn', 'true');
-      localStorage.setItem('adminToken', token);
-      localStorage.setItem('adminTokenExpiry', expiryTime.toString());
-      
-      setIsLoggedIn(true);
-      
-      // Redirect to admin dashboard
-      navigate('/admin');
-      
-      toast({
-        title: 'Login realizado com sucesso',
-        description: 'Bem-vindo ao painel administrativo',
-      });
-      
-      return true;
     } catch (err) {
       console.error('Erro ao tentar fazer login:', err);
       toast({
