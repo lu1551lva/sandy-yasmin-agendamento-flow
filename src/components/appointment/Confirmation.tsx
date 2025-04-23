@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase, Service, AppointmentWithDetails } from "@/lib/supabase";
@@ -8,6 +7,9 @@ import { ArrowLeft, Check, Loader, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate, formatTime, formatPhoneForWhatsApp, createWhatsAppLink } from "@/lib/utils";
 import { format } from "date-fns";
+import AppointmentSummary from "./AppointmentSummary";
+import ConfirmationActions from "./ConfirmationActions";
+import ConfirmationSuccess from "./ConfirmationSuccess";
 
 interface ConfirmationProps {
   appointmentData: {
@@ -35,7 +37,6 @@ const Confirmation = ({
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Fetch professional data
   const { data: professional } = useQuery({
     queryKey: ["professional", appointmentData.professional_id],
     queryFn: async () => {
@@ -75,10 +76,8 @@ const Confirmation = ({
     setIsSubmitting(true);
 
     try {
-      // Format date for database
       const formattedDate = format(appointmentData.date, "yyyy-MM-dd");
 
-      // Check if this time slot is still available
       const { data: existingAppointments, error: checkError } = await supabase
         .from("agendamentos")
         .select("*")
@@ -106,15 +105,12 @@ const Confirmation = ({
         return;
       }
 
-      // Determine if we need to create a new client or use an existing one
       let clientId;
       
       try {
         if (appointmentData.client.id) {
-          // Client already exists
           clientId = appointmentData.client.id;
         } else {
-          // First check if client exists by email
           const { data: existingClientByEmail, error: emailCheckError } = await supabase
             .from("clientes")
             .select("id")
@@ -126,7 +122,6 @@ const Confirmation = ({
           if (existingClientByEmail) {
             clientId = existingClientByEmail.id;
           } else {
-            // Then check if client exists by phone
             const formattedPhone = appointmentData.client.telefone;
             const { data: existingClientByPhone, error: phoneCheckError } = await supabase
               .from("clientes")
@@ -139,7 +134,6 @@ const Confirmation = ({
             if (existingClientByPhone) {
               clientId = existingClientByPhone.id;
             } else {
-              // Only if client doesn't exist by either email or phone, create new client
               const { data: newClient, error: createError } = await supabase
                 .from("clientes")
                 .insert({
@@ -165,7 +159,6 @@ const Confirmation = ({
           }
         }
 
-        // Final availability check before creating appointment
         const { data: latestCheck, error: latestCheckError } = await supabase
           .from("agendamentos")
           .select("*")
@@ -185,7 +178,6 @@ const Confirmation = ({
           return;
         }
         
-        // Create the appointment
         const { data: newAppointment, error: appointmentError } = await supabase
           .from("agendamentos")
           .insert({
@@ -254,113 +246,28 @@ const Confirmation = ({
       <h2 className="text-2xl font-playfair font-semibold mb-6">
         {isComplete ? "Agendamento Confirmado!" : "Confirmar Agendamento"}
       </h2>
-
       <Card className="mb-6 bg-secondary/30">
         <CardContent className="pt-6">
-          <h3 className="font-medium text-lg mb-4">Resumo do agendamento</h3>
-          
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Serviço:</span>
-              <span className="font-medium">{appointmentData.service.nome}</span>
-            </div>
-            
-            <div className="flex justify-between">
-              <span className="text-gray-600">Valor:</span>
-              <span className="font-medium">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(appointmentData.service.valor)}</span>
-            </div>
-            
-            <div className="flex justify-between">
-              <span className="text-gray-600">Data:</span>
-              <span className="font-medium">{formatDate(appointmentData.date)}</span>
-            </div>
-            
-            <div className="flex justify-between">
-              <span className="text-gray-600">Horário:</span>
-              <span className="font-medium">{appointmentData.time}</span>
-            </div>
-            
-            <div className="flex justify-between">
-              <span className="text-gray-600">Duração:</span>
-              <span className="font-medium">{appointmentData.service.duracao_em_minutos} minutos</span>
-            </div>
-            
-            <div className="flex justify-between">
-              <span className="text-gray-600">Profissional:</span>
-              <span className="font-medium">{professional?.nome || "Profissional padrão"}</span>
-            </div>
-          </div>
-
-          <hr className="my-4" />
-
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Nome:</span>
-              <span className="font-medium">{appointmentData.client.nome}</span>
-            </div>
-            
-            <div className="flex justify-between">
-              <span className="text-gray-600">Telefone:</span>
-              <span className="font-medium">{appointmentData.client.telefone}</span>
-            </div>
-            
-            <div className="flex justify-between">
-              <span className="text-gray-600">E-mail:</span>
-              <span className="font-medium">{appointmentData.client.email}</span>
-            </div>
-          </div>
+          <AppointmentSummary
+            service={appointmentData.service}
+            professionalName={professional?.nome}
+            date={appointmentData.date}
+            time={appointmentData.time}
+            client={appointmentData.client}
+          />
         </CardContent>
       </Card>
-
       {isComplete ? (
-        <div className="text-center space-y-4">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-600 mb-2">
-            <Check className="h-8 w-8" />
-          </div>
-          <p className="text-lg">Seu agendamento foi confirmado com sucesso!</p>
-          <p className="text-gray-500">
-            Enviamos um e-mail com os detalhes do seu agendamento.
-          </p>
-          
-          <div className="mt-6">
-            <Button 
-              className="w-full sm:w-auto" 
-              onClick={() => {
-                window.open(
-                  createWhatsAppLink(appointmentData.client.telefone, createWhatsAppMessage()),
-                  "_blank"
-                );
-              }}
-            >
-              <Send className="mr-2 h-4 w-4" /> Enviar confirmação via WhatsApp
-            </Button>
-          </div>
-          
-          <div className="mt-4">
-            <Button
-              variant="outline"
-              className="w-full sm:w-auto"
-              onClick={() => window.location.href = "/agendar"}
-            >
-              Fazer novo agendamento
-            </Button>
-          </div>
-        </div>
+        <ConfirmationSuccess
+          clientPhone={appointmentData.client.telefone}
+          whatsappMessage={createWhatsAppMessage()}
+        />
       ) : (
-        <div className="flex justify-between">
-          <Button variant="outline" onClick={prevStep} disabled={isSubmitting}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
-          </Button>
-          <Button onClick={handleConfirm} disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader className="mr-2 h-4 w-4 animate-spin" /> Processando...
-              </>
-            ) : (
-              "Confirmar agendamento"
-            )}
-          </Button>
-        </div>
+        <ConfirmationActions
+          isSubmitting={isSubmitting}
+          onConfirm={handleConfirm}
+          onBack={prevStep}
+        />
       )}
     </div>
   );
