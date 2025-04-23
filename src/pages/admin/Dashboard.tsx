@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Users, Check, X } from "lucide-react";
 import { format, startOfToday, endOfToday, startOfMonth, endOfMonth } from "date-fns";
-import { ptBR } from "date-fns/locale"; // Import pt-BR locale properly
+import { ptBR } from "date-fns/locale";
 
 const Dashboard = () => {
   // Query for today's appointments

@@ -17,7 +17,7 @@ const AdminLogin = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  const from = location.state?.from?.pathname || '/admin';
+  const from = location.state?.from?.pathname || '/admin/dashboard';
   
   // Redirect if already logged in
   useEffect(() => {
@@ -34,8 +34,16 @@ const AdminLogin = () => {
     const finalEmail = email || 'admin@studio.com';
     const finalPassword = password || 'admin123';
     
-    await login(finalEmail, finalPassword);
-    setIsLoading(false);
+    try {
+      const success = await login(finalEmail, finalPassword);
+      if (success) {
+        navigate('/admin/dashboard');
+      }
+    } catch (error) {
+      console.error('Erro no login:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

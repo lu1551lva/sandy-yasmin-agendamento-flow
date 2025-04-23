@@ -1,4 +1,5 @@
 
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,6 +19,7 @@ import Professionals from "./pages/admin/Professionals";
 import Services from "./pages/admin/Services";
 import WhatsAppMessages from "./pages/admin/WhatsAppMessages";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import { initializeDefaultData } from "@/lib/initData";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,45 +31,57 @@ const queryClient = new QueryClient({
   },
 });
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Public Routes */}
-            <Route element={<PublicLayout />}>
-              <Route path="/" element={<Navigate to="/agendar" replace />} />
-              <Route path="/agendar" element={<Appointment />} />
-            </Route>
+const App = () => {
+  // Initialize default data
+  useEffect(() => {
+    const initData = async () => {
+      await initializeDefaultData();
+    };
+    
+    initData();
+  }, []);
 
-            {/* Admin Routes */}
-            <Route path="/admin/login" element={<AdminLogin />} />
-            <Route 
-              path="/admin" 
-              element={
-                <ProtectedRoute>
-                  <AdminLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<Dashboard />} />
-              <Route path="agendamentos" element={<AppointmentList />} />
-              <Route path="agenda-semanal" element={<WeeklySchedule />} />
-              <Route path="profissionais" element={<Professionals />} />
-              <Route path="servicos" element={<Services />} />
-              <Route path="mensagens" element={<WhatsAppMessages />} />
-            </Route>
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Public Routes */}
+              <Route element={<PublicLayout />}>
+                <Route path="/" element={<Navigate to="/agendar" replace />} />
+                <Route path="/agendar" element={<Appointment />} />
+              </Route>
 
-            {/* Catch-all */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+              {/* Admin Routes */}
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route 
+                path="/admin" 
+                element={
+                  <ProtectedRoute>
+                    <AdminLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<Navigate to="/admin/dashboard" replace />} />
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="agendamentos" element={<AppointmentList />} />
+                <Route path="agenda-semanal" element={<WeeklySchedule />} />
+                <Route path="profissionais" element={<Professionals />} />
+                <Route path="servicos" element={<Services />} />
+                <Route path="mensagens" element={<WhatsAppMessages />} />
+              </Route>
+
+              {/* Catch-all */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

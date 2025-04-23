@@ -93,42 +93,46 @@ const Confirmation = ({
         // Client already exists
         clientId = appointmentData.client.id;
       } else {
-        // Check if client exists by email
-        const { data: existingByEmail, error: emailError } = await supabase
+        // First check if client exists by email
+        const { data: existingClientByEmail, error: emailCheckError } = await supabase
           .from("clientes")
           .select("id")
-          .eq("email", appointmentData.client.email.toLowerCase())
+          .eq("email", appointmentData.client.email.trim().toLowerCase())
           .maybeSingle();
         
-        if (emailError) throw emailError;
+        if (emailCheckError) throw emailCheckError;
         
-        if (existingByEmail) {
-          clientId = existingByEmail.id;
+        if (existingClientByEmail) {
+          clientId = existingClientByEmail.id;
         } else {
-          // Check if client exists by phone
-          const { data: existingByPhone, error: phoneError } = await supabase
+          // Then check if client exists by phone
+          const { data: existingClientByPhone, error: phoneCheckError } = await supabase
             .from("clientes")
             .select("id")
             .eq("telefone", appointmentData.client.telefone)
             .maybeSingle();
           
-          if (phoneError) throw phoneError;
+          if (phoneCheckError) throw phoneCheckError;
           
-          if (existingByPhone) {
-            clientId = existingByPhone.id;
+          if (existingClientByPhone) {
+            clientId = existingClientByPhone.id;
           } else {
-            // Insert new client
-            const { data: newClient, error: clientError } = await supabase
+            // Only if client doesn't exist by either email or phone, create new client
+            const { data: newClient, error: createError } = await supabase
               .from("clientes")
               .insert({
                 nome: appointmentData.client.nome,
                 telefone: appointmentData.client.telefone,
-                email: appointmentData.client.email.toLowerCase(),
+                email: appointmentData.client.email.trim().toLowerCase(),
               })
               .select("id")
               .single();
             
-            if (clientError) throw clientError;
+            if (createError) {
+              console.error("Erro ao criar cliente:", createError);
+              throw new Error("Erro ao criar cliente. O e-mail ou telefone pode já estar em uso.");
+            }
+            
             clientId = newClient.id;
           }
         }

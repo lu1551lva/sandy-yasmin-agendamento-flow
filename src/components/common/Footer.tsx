@@ -50,9 +50,9 @@ export const Footer = () => {
             
             <Link 
               to="/admin/login" 
-              className="text-xs text-gray-500 hover:text-primary mt-2 transition-colors"
+              className="text-xs text-primary hover:text-primary/80 mt-2 transition-colors font-medium"
             >
-              Acesso Administrativo
+              Área Administrativa
             </Link>
           </div>
         </div>

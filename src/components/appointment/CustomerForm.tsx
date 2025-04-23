@@ -79,10 +79,11 @@ const CustomerForm = ({
       }
       
       // If not found by email, check by phone
+      const formattedPhone = formatPhoneNumber(phone);
       const { data: clientsByPhone, error: phoneError } = await supabase
         .from("clientes")
         .select("*")
-        .eq("telefone", formatPhoneNumber(phone));
+        .eq("telefone", formattedPhone);
       
       if (phoneError) throw phoneError;
       
@@ -98,17 +99,17 @@ const CustomerForm = ({
         return;
       }
       
-      // Client not found, create new client data object
+      // Client not found, create new client data object (but don't save to DB yet)
       const newClient: Omit<Client, "id" | "created_at"> = {
         nome: name.trim(),
-        telefone: formatPhoneNumber(phone),
+        telefone: formattedPhone,
         email: email.trim().toLowerCase(),
       };
       
       updateAppointmentData({ client: newClient as Client });
       nextStep();
-    } catch (error) {
-      console.error("Error checking client:", error);
+    } catch (error: any) {
+      console.error("Erro ao verificar cliente:", error);
       toast({
         title: "Erro ao verificar dados",
         description: "Ocorreu um erro ao verificar seus dados. Tente novamente.",
