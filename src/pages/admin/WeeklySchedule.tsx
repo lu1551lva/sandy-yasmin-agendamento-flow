@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase, AppointmentWithDetails } from "@/lib/supabase";
@@ -33,19 +32,16 @@ const WeeklySchedule = () => {
   const [viewType, setViewType] = useState<"grid" | "list">("grid");
   const [professionalFilter, setProfessionalFilter] = useState<string>("all");
   
-  // Get start and end of current week
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 0 });
   const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 0 });
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
-  // Hard-coded time slots for the grid (8:00 to 18:00, 30 min intervals)
   const timeSlots = Array.from({ length: 21 }, (_, i) => {
     const hour = Math.floor(i / 2) + 8;
     const minute = (i % 2) * 30;
     return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
   });
 
-  // Fetch professionals 
   const { data: professionals } = useQuery({
     queryKey: ["professionals"],
     queryFn: async () => {
@@ -59,7 +55,6 @@ const WeeklySchedule = () => {
     },
   });
 
-  // Fetch appointments for the selected week
   const { data: appointments, isLoading } = useQuery({
     queryKey: ["week-appointments", format(weekStart, "yyyy-MM-dd"), format(weekEnd, "yyyy-MM-dd"), professionalFilter],
     queryFn: async () => {
@@ -86,7 +81,6 @@ const WeeklySchedule = () => {
     },
   });
 
-  // Group appointments by day and time for grid view
   const getAppointmentsForDayAndTime = (day: Date, time: string) => {
     if (!appointments) return [];
     
@@ -98,7 +92,6 @@ const WeeklySchedule = () => {
     );
   };
 
-  // Get appointments for a specific day (list view)
   const getAppointmentsForDay = (day: Date) => {
     if (!appointments) return [];
     
@@ -111,7 +104,6 @@ const WeeklySchedule = () => {
   const renderGridView = () => (
     <div className="overflow-x-auto">
       <div className="min-w-[900px]">
-        {/* Header row with days */}
         <div className="grid grid-cols-8 gap-2 mb-2">
           <div className="font-semibold text-sm p-2 bg-gray-100 rounded"></div>
           {weekDays.map((day) => (
@@ -128,7 +120,6 @@ const WeeklySchedule = () => {
           ))}
         </div>
 
-        {/* Time slots and appointments */}
         {timeSlots.map((time) => (
           <div key={time} className="grid grid-cols-8 gap-2 mb-2">
             <div className="text-xs font-medium p-2 bg-gray-50 rounded flex items-center justify-center">

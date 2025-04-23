@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Users, Check, X } from "lucide-react";
 import { format, startOfToday, endOfToday, startOfMonth, endOfMonth } from "date-fns";
+import { ptBR } from "date-fns/locale"; // Import pt-BR locale properly
 
 const Dashboard = () => {
   // Query for today's appointments
@@ -90,7 +91,7 @@ const Dashboard = () => {
               {isLoading ? "-" : todayAppointments?.length || 0}
             </div>
             <p className="text-xs text-muted-foreground">
-              {format(new Date(), "dd 'de' MMMM", { locale: require("date-fns/locale/pt-BR") })}
+              {format(new Date(), "dd 'de' MMMM", { locale: ptBR })}
             </p>
           </CardContent>
         </Card>
