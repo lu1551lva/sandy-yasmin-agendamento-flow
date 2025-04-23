@@ -1,0 +1,65 @@
+
+import { format, isToday } from "date-fns";
+import { cn, formatDate } from "@/lib/utils";
+
+interface Props {
+  weekDays: Date[];
+  getAppointmentsForDay: (day: Date) => any[];
+}
+
+const ScheduleListView = ({
+  weekDays,
+  getAppointmentsForDay,
+}: Props) => {
+  return (
+    <div className="space-y-6">
+      {weekDays.map((day) => {
+        const dayAppointments = getAppointmentsForDay(day);
+        const formattedDay = formatDate(day);
+        const isCurrentDay = isToday(day);
+
+        return (
+          <div key={day.toString()}>
+            <h3
+              className={cn(
+                "font-semibold mb-3 pb-2 border-b",
+                isCurrentDay ? "text-primary" : ""
+              )}
+            >
+              {isCurrentDay ? "Hoje - " : ""}
+              {formattedDay}
+            </h3>
+            {dayAppointments.length === 0 ? (
+              <div className="text-gray-500 py-3 text-center">
+                Nenhum agendamento para este dia
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {dayAppointments.map((appointment: any) => (
+                  <div
+                    key={appointment.id}
+                    className="p-3 border rounded-lg bg-white shadow-sm"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-semibold text-lg">{appointment.hora}</div>
+                        <div>{appointment.cliente.nome}</div>
+                        <div className="text-gray-600">{appointment.servico.nome}</div>
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        <div>{appointment.profissional.nome}</div>
+                        <div>{appointment.servico.duracao_em_minutos} min</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+export default ScheduleListView;
