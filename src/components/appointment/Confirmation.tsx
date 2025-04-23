@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
@@ -8,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import AppointmentSummary from "./AppointmentSummary";
 import ConfirmationActions from "./ConfirmationActions";
 import ConfirmationSuccess from "./ConfirmationSuccess";
-import { formatDate } from "@/lib/dateUtils";
+import { formatDate } from "@/lib/dateUtils";  // Ensure correct import
 
 export interface ConfirmationProps {
   appointmentData: any;
@@ -74,8 +73,8 @@ const Confirmation = ({
         clientId = newClient.id;
       }
 
-      // Format the date
-      const formattedDate = formatDate(appointmentData.date, "yyyy-MM-dd");
+    // Modify the date formatting to use a single argument
+    const formattedDate = formatDate(appointmentData.date);
 
       // Create appointment data
       const appointmentRecord = {
