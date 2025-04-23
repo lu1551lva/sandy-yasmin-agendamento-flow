@@ -46,6 +46,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2 } from "lucide-react";
+import ProfessionalForm from "./components/ProfessionalForm";
+import ProfessionalTable from "./components/ProfessionalTable";
 
 const DIAS_SEMANA = [
   { id: "domingo", label: "Domingo" },
@@ -77,7 +79,6 @@ const Professionals = () => {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Fetch professionals
   const { data: professionals, isLoading } = useQuery({
     queryKey: ["professionals"],
     queryFn: async () => {
@@ -91,10 +92,8 @@ const Professionals = () => {
     },
   });
 
-  // Create professional mutation
   const createProfessionalMutation = useMutation({
     mutationFn: async (professional: Omit<Professional, "id" | "created_at">) => {
-      // Check if Sandy Yasmin is already added
       if (professional.nome.toLowerCase() === "sandy yasmin") {
         const { data: existingProfessional } = await supabase
           .from("profissionais")
@@ -134,7 +133,6 @@ const Professionals = () => {
     },
   });
 
-  // Update professional mutation
   const updateProfessionalMutation = useMutation({
     mutationFn: async ({
       id,
@@ -171,7 +169,6 @@ const Professionals = () => {
     },
   });
 
-  // Delete professional mutation
   const deleteProfessionalMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("profissionais").delete().eq("id", id);
@@ -197,11 +194,9 @@ const Professionals = () => {
     },
   });
 
-  // Handle form submit
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate form
     const newErrors: Record<string, string> = {};
     
     if (!formData.nome.trim()) {
@@ -220,7 +215,6 @@ const Professionals = () => {
       newErrors.horario_fim = "O horário de fim é obrigatório";
     }
 
-    // Ensure end time is later than start time
     const startHour = parseInt(formData.horario_inicio.split(":")[0]);
     const endHour = parseInt(formData.horario_fim.split(":")[0]);
     
@@ -234,7 +228,6 @@ const Professionals = () => {
       return;
     }
     
-    // Prepare professional data
     const professionalData = {
       nome: formData.nome,
       dias_atendimento: formData.dias_atendimento,
@@ -252,7 +245,6 @@ const Professionals = () => {
     }
   };
 
-  // Handle edit professional
   const handleEdit = (professional: Professional) => {
     setCurrentProfessional(professional);
     setFormData({
@@ -265,13 +257,11 @@ const Professionals = () => {
     setIsDialogOpen(true);
   };
 
-  // Handle delete professional
   const handleDelete = (professional: Professional) => {
     setCurrentProfessional(professional);
     setIsDeleteDialogOpen(true);
   };
 
-  // Reset form
   const resetForm = () => {
     setFormData({
       nome: "",
@@ -284,7 +274,6 @@ const Professionals = () => {
     setCurrentProfessional(null);
   };
 
-  // Toggle day selection
   const toggleDay = (day: string) => {
     setFormData((prev) => {
       const days = [...prev.dias_atendimento];
@@ -302,13 +291,11 @@ const Professionals = () => {
     });
   };
 
-  // Open dialog for new professional
   const openNewProfessionalDialog = () => {
     resetForm();
     setIsDialogOpen(true);
   };
 
-  // Helper to format working days
   const formatDiasAtendimento = (dias: string[]) => {
     if (dias.length === 0) return "Sem dias definidos";
     if (dias.length === 7) return "Todos os dias";
@@ -345,194 +332,31 @@ const Professionals = () => {
           <CardTitle>Gerenciamento de Profissionais</CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : professionals && professionals.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Dias de Atendimento</TableHead>
-                    <TableHead>Horários</TableHead>
-                    <TableHead className="w-[100px]">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {professionals.map((professional) => (
-                    <TableRow key={professional.id}>
-                      <TableCell className="font-medium">
-                        {professional.nome}
-                      </TableCell>
-                      <TableCell>
-                        {formatDiasAtendimento(professional.dias_atendimento)}
-                      </TableCell>
-                      <TableCell>
-                        {professional.horario_inicio} às {professional.horario_fim}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => handleEdit(professional)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => handleDelete(professional)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground mb-4">
-                Não há profissionais cadastradas.
-              </p>
-              <Button onClick={openNewProfessionalDialog}>
-                Adicionar Profissional
-              </Button>
-            </div>
-          )}
+          <ProfessionalTable
+            professionals={professionals || []}
+            isLoading={isLoading}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            formatDiasAtendimento={formatDiasAtendimento}
+            onAddProfessional={openNewProfessionalDialog}
+          />
         </CardContent>
       </Card>
 
-      {/* Dialog for adding/editing professional */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {isEditing ? "Editar Profissional" : "Nova Profissional"}
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <Label htmlFor="nome">Nome da Profissional</Label>
-              <Input
-                id="nome"
-                value={formData.nome}
-                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                placeholder="Ex: Sandy Yasmin"
-                className={errors.nome ? "border-red-500" : ""}
-              />
-              {errors.nome && (
-                <p className="text-red-500 text-sm">{errors.nome}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label>Dias de Atendimento</Label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {DIAS_SEMANA.map((dia) => (
-                  <div key={dia.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`dia-${dia.id}`}
-                      checked={formData.dias_atendimento.includes(dia.id)}
-                      onCheckedChange={() => toggleDay(dia.id)}
-                    />
-                    <label
-                      htmlFor={`dia-${dia.id}`}
-                      className="text-sm cursor-pointer"
-                    >
-                      {dia.label}
-                    </label>
-                  </div>
-                ))}
-              </div>
-              {errors.dias_atendimento && (
-                <p className="text-red-500 text-sm">{errors.dias_atendimento}</p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="horario_inicio">Horário de Início</Label>
-                <Select
-                  value={formData.horario_inicio}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, horario_inicio: value })
-                  }
-                >
-                  <SelectTrigger
-                    id="horario_inicio"
-                    className={errors.horario_inicio ? "border-red-500" : ""}
-                  >
-                    <SelectValue placeholder="Selecione o horário" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {HORARIOS.filter((h) => {
-                      const hour = parseInt(h.split(":")[0]);
-                      return hour < 18; // Only show hours before 18:00 for start time
-                    }).map((hora) => (
-                      <SelectItem key={`inicio-${hora}`} value={hora}>
-                        {hora}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.horario_inicio && (
-                  <p className="text-red-500 text-sm">{errors.horario_inicio}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="horario_fim">Horário de Término</Label>
-                <Select
-                  value={formData.horario_fim}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, horario_fim: value })
-                  }
-                >
-                  <SelectTrigger
-                    id="horario_fim"
-                    className={errors.horario_fim ? "border-red-500" : ""}
-                  >
-                    <SelectValue placeholder="Selecione o horário" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {HORARIOS.filter((h) => {
-                      const hour = parseInt(h.split(":")[0]);
-                      const startHour = parseInt(formData.horario_inicio.split(":")[0]);
-                      return hour > startHour; // Only show hours after start time
-                    }).map((hora) => (
-                      <SelectItem key={`fim-${hora}`} value={hora}>
-                        {hora}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.horario_fim && (
-                  <p className="text-red-500 text-sm">{errors.horario_fim}</p>
-                )}
-              </div>
-            </div>
-
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button" variant="outline" onClick={resetForm}>
-                  Cancelar
-                </Button>
-              </DialogClose>
-              <Button type="submit">
-                {isEditing ? "Atualizar" : "Cadastrar"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
+        <ProfessionalForm
+          formData={formData}
+          errors={errors}
+          isEditing={isEditing}
+          onInputChange={(field, value) => setFormData(prev => ({
+            ...prev, [field]: value,
+          }))}
+          onToggleDay={toggleDay}
+          onSubmit={handleSubmit}
+          onReset={resetForm}
+        />
       </Dialog>
 
-      {/* Confirmation dialog for deleting professional */}
       <AlertDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
