@@ -1,4 +1,3 @@
-
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { format, isWeekend, isToday as isTodayFn } from "date-fns";
@@ -23,7 +22,7 @@ export const formatDate = (date: Date) => {
   });
 };
 
-// Check if a date is a holiday
+// Check if a date is a holiday (apenas para referência, não bloqueia mais os atendimentos)
 export const isHoliday = (date: Date) => {
   // Recupera os feriados customizados do localStorage
   const customHolidays = localStorage.getItem('customHolidays');
@@ -31,32 +30,15 @@ export const isHoliday = (date: Date) => {
   
   // Verifica se existe um feriado personalizado para essa data
   const dateString = format(date, "yyyy-MM-dd");
-  if (holidayList.includes(dateString)) {
-    return true;
-  }
   
-  // Example fixed holidays - agora só para referência, não bloqueia atendimento
-  const fixedHolidays = [
-    "01-01", // Ano Novo
-    "04-21", // Tiradentes
-    "05-01", // Dia do Trabalho
-    "09-07", // Independência
-    "10-12", // Nossa Senhora Aparecida
-    "11-02", // Finados
-    "11-15", // Proclamação da República
-    "12-25", // Natal
-  ];
-
-  const monthDay = format(date, "MM-dd");
-  
-  // Por padrão, não bloqueamos mais os feriados fixos
-  return false;
+  // Apenas retorna se é feriado para referência, não bloqueia mais os atendimentos
+  return holidayList.includes(dateString);
 };
 
 // Generate available time slots
 export const generateTimeSlots = (date: Date, serviceDuration: number, ignoreDateRestrictions = false) => {
   // Se ignoreDateRestrictions for true, geramos slots independente do dia
-  // Caso contrário, verificamos se é fim de semana
+  // Caso contrário, verificamos se é fim de semana (esta lógica é mantida apenas para backward compatibility)
   if (!ignoreDateRestrictions && isWeekend(date)) {
     return [];
   }

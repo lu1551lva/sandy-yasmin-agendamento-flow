@@ -113,25 +113,35 @@ const Professionals = () => {
       professional: Partial<Professional>;
     }) => {
       try {
+        // Corrigindo a mutação update de profissional para rastrear melhor os erros
+        console.log("Atualizando profissional:", id, professional);
+        
         const { data, error } = await supabase
           .from("profissionais")
           .update(professional)
           .eq("id", id)
-          .select()
-          .single();
-
-        if (error) throw error;
-        return data;
-      } catch (error) {
-        console.error("Erro completo:", error);
-        throw error;
+          .select();
+        
+        if (error) {
+          console.error("Erro na atualização:", error);
+          throw error;
+        }
+        
+        if (!data || data.length === 0) {
+          throw new Error("Profissional não encontrado ou nenhuma modificação feita");
+        }
+        
+        return data[0];
+      } catch (error: any) {
+        console.error("Erro completo na atualização:", error);
+        throw new Error(error.message || "Erro ao atualizar profissional");
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["professionals"] });
       toast({
         title: "Profissional atualizada",
-        description: "A profissional foi atualizada com sucesso.",
+        description: `Profissional ${data.nome} foi atualizada com sucesso.`,
       });
       setIsDialogOpen(false);
       resetForm();

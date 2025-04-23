@@ -1,5 +1,6 @@
 
 import { format, isToday } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { cn, formatDate } from "@/lib/utils";
 
 interface Props {
@@ -17,6 +18,7 @@ const ScheduleListView = ({
         const dayAppointments = getAppointmentsForDay(day);
         const formattedDay = formatDate(day);
         const isCurrentDay = isToday(day);
+        const diaDaSemana = format(day, "EEEE", { locale: ptBR });
 
         return (
           <div key={day.toString()}>
@@ -27,7 +29,7 @@ const ScheduleListView = ({
               )}
             >
               {isCurrentDay ? "Hoje - " : ""}
-              {formattedDay}
+              {diaDaSemana}, {formattedDay}
             </h3>
             {dayAppointments.length === 0 ? (
               <div className="text-gray-500 py-3 text-center">

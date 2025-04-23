@@ -1,6 +1,7 @@
 
 import { cn, formatDate } from "@/lib/utils";
 import { format, isToday } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface Props {
   weekDays: Date[];
@@ -26,8 +27,8 @@ const ScheduleGridView = ({
                 isToday(day) ? "bg-primary/20" : "bg-gray-100"
               )}
             >
-              <div>{format(day, "EEE")}</div>
-              <div>{format(day, "dd/MM")}</div>
+              <div>{format(day, "EEEE", { locale: ptBR })}</div>
+              <div>{format(day, "dd/MM", { locale: ptBR })}</div>
             </div>
           ))}
         </div>
@@ -53,8 +54,8 @@ const ScheduleGridView = ({
                       key={appointment.id}
                       className="bg-white p-2 rounded shadow-sm mb-1 border-l-2 border-primary"
                     >
-                      <div className="font-semibold truncate">{appointment.cliente.nome}</div>
-                      <div className="text-gray-600 truncate">{appointment.servico.nome}</div>
+                      <div className="font-semibold truncate">{appointment.cliente?.nome || "Cliente não encontrado"}</div>
+                      <div className="text-gray-600 truncate">{appointment.servico?.nome || "Serviço não encontrado"}</div>
                     </div>
                   ))}
                 </div>

@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface UseWeeklyAppointmentsProps {
   selectedDate: Date;
@@ -13,8 +14,8 @@ export function useWeeklyAppointments({
   selectedDate,
   professionalFilter,
 }: UseWeeklyAppointmentsProps) {
-  const weekStart = startOfWeek(selectedDate, { weekStartsOn: 0 });
-  const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 0 });
+  const weekStart = startOfWeek(selectedDate, { weekStartsOn: 0, locale: ptBR });
+  const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 0, locale: ptBR });
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
   const timeSlots = Array.from({ length: 21 }, (_, i) => {

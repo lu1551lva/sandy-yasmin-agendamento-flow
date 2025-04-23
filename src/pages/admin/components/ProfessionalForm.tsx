@@ -145,7 +145,7 @@ const ProfessionalForm: React.FC<ProfessionalFormProps> = ({
               <SelectContent>
                 {HORARIOS.filter((h) => {
                   const hour = parseInt(h.split(":")[0]);
-                  const startHour = parseInt(formData.horario_inicio.split(":")[0]);
+                  const startHour = parseInt(formData.horario_inicio.split(":")[0] || "0");
                   return hour > startHour;
                 }).map((hora) => (
                   <SelectItem key={`fim-${hora}`} value={hora}>
@@ -160,7 +160,7 @@ const ProfessionalForm: React.FC<ProfessionalFormProps> = ({
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="pt-4">
           <DialogClose asChild>
             <Button type="button" variant="outline" onClick={onReset}>
               Cancelar

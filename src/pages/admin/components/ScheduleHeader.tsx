@@ -39,7 +39,7 @@ const ScheduleHeader = ({
           <PopoverTrigger asChild>
             <Button variant="outline" className="justify-start text-left">
               <CalendarIcon className="mr-2 h-4 w-4" />
-              {format(selectedDate, "dd/MM/yyyy")}
+              {format(selectedDate, "dd/MM/yyyy", { locale: ptBR })}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0 pointer-events-auto">

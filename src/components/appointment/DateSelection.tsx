@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { format, addDays, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { generateTimeSlots, isHoliday, formatDate } from "@/lib/utils";
+import { generateTimeSlots, formatDate } from "@/lib/utils";
 import { Loader, ArrowLeft } from "lucide-react";
 
 interface DateSelectionProps {
@@ -119,29 +119,24 @@ const DateSelection = ({
       const diaSemana = format(date, "EEEE", { locale: ptBR });
       const mapDias: Record<string, string> = {
         domingo: "domingo",
-        segunda: "segunda-feira",
-        terca: "terça-feira",
-        quarta: "quarta-feira",
-        quinta: "quinta-feira",
-        sexta: "sexta-feira",
-        sabado: "sábado"
+        "segunda-feira": "segunda",
+        "terça-feira": "terca",
+        "quarta-feira": "quarta",
+        "quinta-feira": "quinta",
+        "sexta-feira": "sexta",
+        sábado: "sabado"
       };
 
       // Converte o dia da semana para o formato que está armazenado no banco
-      let diaFormatado = diaSemana;
-      for (const [key, value] of Object.entries(mapDias)) {
-        if (value === diaSemana) {
-          diaFormatado = key;
-          break;
-        }
-      }
-
+      let diaFormatado = mapDias[diaSemana];
+      
       // Verifica se o profissional não atende neste dia
       if (!professional.dias_atendimento.includes(diaFormatado)) {
         return true;
       }
     }
 
+    // Não desabilita mais os feriados, conforme requisito
     return false;
   };
 
