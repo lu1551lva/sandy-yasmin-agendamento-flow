@@ -1,3 +1,4 @@
+
 import { Plus } from "lucide-react";
 import ProfessionalTable from "./components/ProfessionalTable";
 import { useToast } from "@/hooks/use-toast";
@@ -12,9 +13,14 @@ const PAGE_SIZE = 10;
 const Professionals = () => {
   const { toast } = useToast();
   const [currentPage, setCurrentPage] = useState(1);
-  const professionalState = useProfessionals({ page: currentPage, pageSize: PAGE_SIZE });
+  const professionalState = useProfessionals({ 
+    page: currentPage, 
+    pageSize: PAGE_SIZE 
+  });
 
-  const totalPages = Math.ceil((professionalState.professionals?.length || 0) / PAGE_SIZE);
+  const totalPages = professionalState.professionals 
+    ? Math.ceil(professionalState.professionals.total / PAGE_SIZE)
+    : 0;
 
   // Função para exibir abreviatura dos dias de atendimento
   const formatDiasAtendimento = (dias: string[]) => {
@@ -57,7 +63,7 @@ const Professionals = () => {
       
       <div className="bg-white rounded-lg shadow">
         <ProfessionalTable
-          professionals={professionalState.professionals || []}
+          professionals={professionalState.professionals?.data || []}
           isLoading={professionalState.isLoading}
           onEdit={professionalState.handleEdit}
           onDelete={professionalState.handleDelete}

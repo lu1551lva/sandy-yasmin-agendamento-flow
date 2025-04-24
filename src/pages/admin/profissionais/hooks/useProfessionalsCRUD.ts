@@ -5,12 +5,20 @@ import { useUpdateProfessional } from "./useUpdateProfessional";
 import { useDeleteProfessional } from "./useDeleteProfessional";
 import type { UseProfessionalCRUDProps } from "../types/professional-types";
 
-export function useProfessionalsCRUD(props: UseProfessionalCRUDProps) {
+interface UseProfessionalsCRUDProps extends UseProfessionalCRUDProps {
+  page: number;
+  pageSize: number;
+}
+
+export function useProfessionalsCRUD(props: UseProfessionalsCRUDProps) {
   // Fetch all professionals
   const { 
     data: professionals, 
     isLoading 
-  } = useFetchProfessionals();
+  } = useFetchProfessionals({
+    page: props.page,
+    pageSize: props.pageSize
+  });
 
   // Create professional
   const createProfessionalMutation = useCreateProfessional({

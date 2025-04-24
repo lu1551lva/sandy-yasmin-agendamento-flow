@@ -6,13 +6,20 @@ import { useDialogState } from "./hooks/useDialogState";
 import { useFormHandlers } from "./hooks/useFormHandlers";
 import { Professional } from "@/lib/supabase";
 
-export const useProfessionals = () => {
-  const toast = useToast();
+interface UseProfessionalsProps {
+  page: number;
+  pageSize: number;
+}
+
+export const useProfessionals = ({ page, pageSize }: UseProfessionalsProps) => {
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   
   const dialogState = useDialogState();
   
   const crud = useProfessionalsCRUD({
+    page,
+    pageSize,
     setIsDialogOpen: dialogState.setIsDialogOpen,
     setIsDeleteDialogOpen: dialogState.setIsDeleteDialogOpen,
     resetForm: dialogState.resetForm,

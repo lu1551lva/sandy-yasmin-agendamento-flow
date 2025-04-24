@@ -7,7 +7,7 @@ interface UseFetchProfessionalsProps {
   pageSize: number;
 }
 
-interface ProfessionalsResponse {
+export interface ProfessionalsResponse {
   data: Professional[];
   total: number;
 }
