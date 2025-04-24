@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { format, addMinutes, isWithinInterval } from "date-fns";
+import { format, addMinutes, isWithinInterval, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
