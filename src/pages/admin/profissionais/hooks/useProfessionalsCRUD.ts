@@ -1,160 +1,199 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, Professional } from "@/lib/supabase";
+import { ToastProps } from "@/components/ui/toast";
 
-interface UseProfessionalsCRUDProps {
+export interface UseProfessionalsCRUDProps {
   setIsDialogOpen: (isOpen: boolean) => void;
   setIsDeleteDialogOpen: (isOpen: boolean) => void;
   resetForm: () => void;
   setCurrentProfessional: (professional: Professional | null) => void;
   toast: {
-    toast: (props: { title: string; description?: string; variant?: "default" | "destructive" }) => void;
+    toast: (props: ToastProps) => void;
   };
 }
 
-export function useProfessionalsCRUD({
+export interface ProfessionalInput {
+  nome: string;
+  dias_atendimento: string[];
+  horario_inicio: string;
+  horario_fim: string;
+}
+
+export const useProfessionalsCRUD = ({
   setIsDialogOpen,
   setIsDeleteDialogOpen,
   resetForm,
   setCurrentProfessional,
   toast,
-}: UseProfessionalsCRUDProps) {
+}: UseProfessionalsCRUDProps) => {
   const queryClient = useQueryClient();
 
+  // Fetch professionals
   const { data: professionals = [], isLoading } = useQuery({
     queryKey: ["professionals"],
     queryFn: async () => {
-      console.log("Fetching professionals...");
-      const { data, error } = await supabase
-        .from("profissionais")
-        .select("*")
-        .order("nome");
+      console.log("Fetching professionals from Supabase");
+      try {
+        const { data, error } = await supabase
+          .from("profissionais")
+          .select("*")
+          .order("nome");
 
-      if (error) {
-        console.error("Error fetching professionals:", error);
-        throw error;
+        if (error) {
+          console.error("Error fetching professionals:", error);
+          throw error;
+        }
+
+        console.log("Professionals fetched successfully:", data);
+        return data as Professional[];
+      } catch (error) {
+        console.error("Error in fetchProfessionals:", error);
+        toast.toast({
+          title: "Erro ao carregar profissionais",
+          variant: "destructive",
+        });
+        return [];
       }
-
-      // Log the professionals data structure for debugging
-      console.log("Professionals data structure:", data);
-      
-      return data as Professional[];
     },
   });
 
+  // Create professional
   const createProfessionalMutation = useMutation({
-    mutationFn: async (professionalData: Omit<Professional, "id" | "created_at">) => {
-      console.log("Creating professional with data:", professionalData);
+    mutationFn: async (professional: ProfessionalInput) => {
+      console.log("Creating professional with data:", professional);
       
       // Ensure dias_atendimento is an array of strings
-      const diasAtendimento = Array.isArray(professionalData.dias_atendimento) 
-        ? professionalData.dias_atendimento 
-        : [];
+      let diasAtendimento = professional.dias_atendimento;
+      if (!Array.isArray(diasAtendimento)) {
+        console.error("dias_atendimento is not an array:", diasAtendimento);
+        diasAtendimento = [];
+      }
       
-      const { data, error } = await supabase
-        .from("profissionais")
-        .insert({
-          ...professionalData,
-          dias_atendimento: diasAtendimento
-        })
-        .select()
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from("profissionais")
+          .insert({
+            nome: professional.nome,
+            dias_atendimento: diasAtendimento,
+            horario_inicio: professional.horario_inicio,
+            horario_fim: professional.horario_fim,
+          })
+          .select()
+          .single();
 
-      if (error) throw error;
-      return data;
+        if (error) {
+          console.error("Error creating professional:", error);
+          throw error;
+        }
+        
+        console.log("Professional created successfully:", data);
+        return data;
+      } catch (error: any) {
+        console.error("Error in createProfessional:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["professionals"] });
       setIsDialogOpen(false);
       resetForm();
       toast.toast({
-        title: "Profissional criado com sucesso",
-        variant: "default",
+        title: "Profissional cadastrado com sucesso",
       });
     },
     onError: (error: any) => {
-      console.error("Error creating professional:", error);
-      // Log the full error to console for debugging
-      console.error("Full error details:", JSON.stringify(error));
+      console.error("Mutation error:", error);
       toast.toast({
-        title: "Erro ao criar profissional",
-        description: error.message || JSON.stringify(error),
+        title: "Erro ao cadastrar profissional",
         variant: "destructive",
       });
     },
   });
 
+  // Update professional
   const updateProfessionalMutation = useMutation({
     mutationFn: async ({
       id,
       professional,
     }: {
       id: string;
-      professional: Partial<Professional>;
+      professional: ProfessionalInput;
     }) => {
       console.log("Updating professional with ID:", id);
       console.log("Update data:", professional);
       
-      // Ensure dias_atendimento is an array of strings if provided
-      const professionalData = { ...professional };
-      
-      if (professionalData.dias_atendimento) {
-        if (typeof professionalData.dias_atendimento === 'object' && !Array.isArray(professionalData.dias_atendimento)) {
-          // Convert object format {day: boolean} to string array ["day1", "day2"]
-          console.log("Converting dias_atendimento from object to array");
-          const diasObject = professionalData.dias_atendimento as unknown as Record<string, boolean>;
-          professionalData.dias_atendimento = Object.entries(diasObject)
-            .filter(([_, selected]) => selected)
-            .map(([day]) => day);
-        } else if (!Array.isArray(professionalData.dias_atendimento)) {
-          // Fallback to empty array if it's not an object or an array
-          console.log("Setting dias_atendimento to empty array");
-          professionalData.dias_atendimento = [];
-        }
+      // Ensure dias_atendimento is an array of strings
+      let diasAtendimento = professional.dias_atendimento;
+      if (!Array.isArray(diasAtendimento)) {
+        console.error("dias_atendimento is not an array:", diasAtendimento);
+        diasAtendimento = [];
       }
       
-      console.log("Processed update data:", professionalData);
-      
-      const { data, error } = await supabase
-        .from("profissionais")
-        .update(professionalData)
-        .eq("id", id)
-        .select()
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from("profissionais")
+          .update({
+            nome: professional.nome,
+            dias_atendimento: diasAtendimento,
+            horario_inicio: professional.horario_inicio,
+            horario_fim: professional.horario_fim,
+          })
+          .eq("id", id)
+          .select()
+          .single();
 
-      if (error) {
-        console.error("Supabase update error:", error);
+        if (error) {
+          console.error("Error updating professional:", error);
+          throw error;
+        }
+        
+        console.log("Professional updated successfully:", data);
+        return data;
+      } catch (error: any) {
+        console.error("Error in updateProfessional:", error);
         throw error;
       }
-      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["professionals"] });
       setIsDialogOpen(false);
+      setCurrentProfessional(null);
       resetForm();
       toast.toast({
         title: "Profissional atualizado com sucesso",
-        variant: "default",
       });
     },
     onError: (error: any) => {
-      console.error("Error updating professional:", error);
-      // Log the full error to console for debugging
-      console.error("Full error details:", JSON.stringify(error));
+      console.error("Update mutation error:", error);
       toast.toast({
         title: "Erro ao atualizar profissional",
-        description: error.message || JSON.stringify(error),
         variant: "destructive",
       });
     },
   });
 
+  // Delete professional
   const deleteProfessionalMutation = useMutation({
     mutationFn: async (id: string) => {
       console.log("Deleting professional with ID:", id);
-      const { error } = await supabase.from("profissionais").delete().eq("id", id);
-      if (error) throw error;
-      return id;
+      try {
+        const { error } = await supabase
+          .from("profissionais")
+          .delete()
+          .eq("id", id);
+
+        if (error) {
+          console.error("Error deleting professional:", error);
+          throw error;
+        }
+        
+        console.log("Professional deleted successfully");
+        return true;
+      } catch (error: any) {
+        console.error("Error in deleteProfessional:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["professionals"] });
@@ -162,16 +201,12 @@ export function useProfessionalsCRUD({
       setCurrentProfessional(null);
       toast.toast({
         title: "Profissional excluído com sucesso",
-        variant: "default",
       });
     },
     onError: (error: any) => {
-      console.error("Error deleting professional:", error);
-      // Log the full error to console for debugging
-      console.error("Full error details:", JSON.stringify(error));
+      console.error("Delete mutation error:", error);
       toast.toast({
         title: "Erro ao excluir profissional",
-        description: error.message || JSON.stringify(error),
         variant: "destructive",
       });
     },
@@ -184,4 +219,4 @@ export function useProfessionalsCRUD({
     updateProfessionalMutation,
     deleteProfessionalMutation,
   };
-}
+};

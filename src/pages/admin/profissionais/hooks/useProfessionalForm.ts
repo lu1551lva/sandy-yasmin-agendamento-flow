@@ -57,6 +57,7 @@ export function useProfessionalForm(
   };
 
   const openForCreate = () => {
+    console.log("Opening form for creating new professional");
     setForm(initialForm);
     setEditingId(null);
     setErrors({});
@@ -64,6 +65,7 @@ export function useProfessionalForm(
   };
 
   const closeDialog = () => {
+    console.log("Closing professional form dialog");
     setOpen(false);
     setForm(initialForm);
     setEditingId(null);
