@@ -7,6 +7,7 @@ import { TimeSelector } from "@/components/shared/date-time/TimeSelector";
 import { useTimeSlots } from "@/components/shared/date-time/hooks/useTimeSlots";
 import { useAppointmentData } from "./hooks/useAppointmentData";
 import { useProfessionals } from "./hooks/useProfessionals";
+import { useDateValidation } from "./hooks/useDateValidation";
 import { useState } from "react";
 
 interface DateSelectionProps {
@@ -42,6 +43,9 @@ const DateAndTimeSelector = ({
   // Find the selected professional
   const selectedProfessional = professionals.find(p => p.id === professionalId);
   
+  // Use the new date validation hook
+  const dateValidation = useDateValidation(selectedProfessional);
+  
   // Generate available time slots
   const availableTimes = useTimeSlots({
     date,
@@ -49,6 +53,12 @@ const DateAndTimeSelector = ({
     professional: selectedProfessional,
     appointments
   });
+
+  const onDateSelect = (newDate: Date | undefined) => {
+    if (newDate && dateValidation.validateDate(newDate)) {
+      handleDateSelect(newDate);
+    }
+  };
 
   const onContinue = () => {
     if (handleContinue()) {
@@ -71,8 +81,14 @@ const DateAndTimeSelector = ({
       <div className="space-y-6">
         <DateSelector 
           date={date} 
-          onDateChange={handleDateSelect}
+          onDateChange={onDateSelect}
         />
+        
+        {dateValidation.error && (
+          <div className="text-destructive text-sm">
+            {dateValidation.error}
+          </div>
+        )}
         
         <ProfessionalSelector
           isLoading={isLoading}
