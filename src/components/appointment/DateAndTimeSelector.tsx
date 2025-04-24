@@ -1,4 +1,5 @@
 
+import React, { useState, useEffect } from "react";
 import { Service } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { DateSelector } from "@/components/shared/date-time/DateSelector";
@@ -8,7 +9,6 @@ import { useTimeSlots } from "@/components/shared/date-time/hooks/useTimeSlots";
 import { useAppointmentData } from "./hooks/useAppointmentData";
 import { useProfessionals } from "./hooks/useProfessionals";
 import { useDateValidation } from "./hooks/useDateValidation";
-import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 interface DateSelectionProps {
@@ -64,7 +64,7 @@ const DateAndTimeSelector = ({
         toast({
           title: "Data selecionada é um feriado",
           description: "O agendamento é permitido, mas verifique o funcionamento do estabelecimento nesta data.",
-          variant: "warning",
+          variant: "default", // Changed from "warning" to "default"
         });
       }
       
