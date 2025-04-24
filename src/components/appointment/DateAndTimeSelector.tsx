@@ -13,15 +13,8 @@ import {
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getHolidays } from "@/lib/utils";
-
-interface Professional {
-  id: string;
-  nome: string;
-  dias_atendimento: string[];
-  horario_inicio: string;
-  horario_fim: string;
-}
+import { supabase, Professional } from "@/lib/supabase";
+import { Loader } from "lucide-react";
 
 interface DateSelectionProps {
   selectedService: {
@@ -65,55 +58,92 @@ const DateAndTimeSelector = ({
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
   const [professionalId, setProfessionalId] = useState("");
   const [availableProfessionals, setAvailableProfessionals] = useState<Professional[]>([]);
-  const [isDateBlocked, setIsDateBlocked] = useState(false);
+  const [isLoadingProfessionals, setIsLoadingProfessionals] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const checkDateBlocked = () => {
-      if (!date) return false;
-      const formattedDate = format(date, "yyyy-MM-dd");
-      const holidays = getHolidays();
-      return holidays.includes(formattedDate);
-    };
+  // Modified to always allow dates regardless of holidays
+  const fetchProfessionals = async () => {
+    if (!date || !selectedService) return;
 
-    setIsDateBlocked(checkDateBlocked());
-  }, [date]);
+    setIsLoadingProfessionals(true);
+    setError(null);
+    
+    try {
+      console.log("Buscando profissionais disponíveis para a data:", date);
+      // Get day name in Portuguese
+      const dayName = format(date, "EEEE", { locale: ptBR });
+      
+      // Convert dayName to match dias_atendimento format 
+      const dayMap: { [key: string]: string } = {
+        'domingo': 'domingo',
+        'segunda-feira': 'segunda', 
+        'terça-feira': 'terca',
+        'quarta-feira': 'quarta',
+        'quinta-feira': 'quinta',
+        'sexta-feira': 'sexta',
+        'sábado': 'sabado'
+      };
+      
+      const normalizedDay = dayMap[dayName];
+      console.log(`Dia da semana normalizado: ${normalizedDay}`);
+      
+      // Consulta todos os profissionais - removido filtro de salao_id
+      const { data, error } = await supabase
+        .from("profissionais")
+        .select("*");
 
-  useEffect(() => {
-    const fetchAvailableProfessionals = async () => {
-      if (!date || !selectedService) return;
+      if (error) {
+        console.error("Erro ao buscar profissionais:", error);
+        throw error;
+      }
 
-      // Using ptBR locale correctly
-      const dayOfWeek = format(date, "EEEE", { locale: ptBR });
-      const formattedDay = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
+      if (!data || data.length === 0) {
+        console.log("Nenhum profissional encontrado");
+        setAvailableProfessionals([]);
+        return;
+      }
 
-      // Mocked professionals data with complete type
-      const mockedProfessionals: Professional[] = [
-        {
-          id: "1",
-          nome: "Sandy Yasmin",
-          dias_atendimento: ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"],
-          horario_inicio: "09:00",
-          horario_fim: "18:00",
-        },
-        {
-          id: "2",
-          nome: "Outro Profissional",
-          dias_atendimento: ["Quarta", "Quinta", "Sexta"],
-          horario_inicio: "10:00",
-          horario_fim: "16:00",
-        },
-      ];
+      console.log(`Profissionais encontrados (${data.length}):`, data);
+      
+      // Filter professionals who work on the selected day
+      const available = data.filter((professional) => {
+        // Check if dias_atendimento is an array
+        if (!Array.isArray(professional.dias_atendimento)) {
+          console.warn(`Profissional ${professional.nome} (${professional.id}) com dias_atendimento inválidos:`, professional.dias_atendimento);
+          return false;
+        }
+        
+        const works = professional.dias_atendimento.includes(normalizedDay);
+        console.log(`Profissional ${professional.nome} trabalha no dia ${normalizedDay}? ${works ? 'Sim' : 'Não'}`);
+        return works;
+      });
 
-      const available = mockedProfessionals.filter((professional) =>
-        professional.dias_atendimento.includes(formattedDay)
-      );
-
+      console.log(`Profissionais disponíveis (${available.length}):`, available);
       setAvailableProfessionals(available);
-    };
+    } catch (err) {
+      console.error("Erro ao buscar profissionais:", err);
+      setError("Erro ao carregar os profissionais. Por favor, tente novamente.");
+    } finally {
+      setIsLoadingProfessionals(false);
+    }
+  };
 
-    fetchAvailableProfessionals();
+  // Busca os profissionais quando a data é selecionada
+  useEffect(() => {
+    fetchProfessionals();
   }, [date, selectedService]);
 
+  // Reseta o profissional selecionado quando a lista de disponíveis muda
+  useEffect(() => {
+    if (availableProfessionals.length > 0 && !professionalId) {
+      // Opcionalmente, selecionar automaticamente o primeiro profissional
+      // setProfessionalId(availableProfessionals[0].id);
+    } else if (availableProfessionals.length === 0) {
+      setProfessionalId("");
+    }
+  }, [availableProfessionals]);
+
+  // Gera os horários disponíveis para o profissional selecionado
   useEffect(() => {
     const generateAvailableTimes = () => {
       if (!date || !selectedService || !professionalId) return [];
@@ -124,9 +154,13 @@ const DateAndTimeSelector = ({
 
       if (!selectedProfessional) return [];
 
+      console.log(`Gerando horários para profissional: ${selectedProfessional.nome}`);
+      
       const startTime = selectedProfessional.horario_inicio;
       const endTime = selectedProfessional.horario_fim;
       const serviceDuration = selectedService.duracao_em_minutos;
+
+      console.log(`Horário início: ${startTime}, fim: ${endTime}, duração: ${serviceDuration} min`);
 
       let currentTime = startTime;
       const times = [];
@@ -175,6 +209,7 @@ const DateAndTimeSelector = ({
         currentTime = format(nextTime, "HH:mm");
       }
 
+      console.log(`Horários disponíveis: ${times.join(', ')}`);
       return times;
     };
 
@@ -199,6 +234,15 @@ const DateAndTimeSelector = ({
     nextStep();
   };
 
+  const handleDateChange = (newDate: Date | undefined) => {
+    if (newDate) {
+      setDate(newDate);
+      // Reset professional and time when date changes
+      setProfessionalId("");
+      setTime("");
+    }
+  };
+
   return (
     <div>
       <h2 className="text-2xl font-playfair font-semibold mb-6">
@@ -214,20 +258,16 @@ const DateAndTimeSelector = ({
           <Calendar
             mode="single"
             selected={date}
-            onSelect={setDate}
+            onSelect={handleDateChange}
             disabled={(date) => {
-              if (!date) return false;
-              const formattedDate = format(date, "yyyy-MM-dd");
-              const holidays = getHolidays();
-              return holidays.includes(formattedDate);
+              // Só desabilitar datas no passado
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              return date ? isBefore(date, today) : false;
             }}
             locale={ptBR}
+            className="pointer-events-auto"
           />
-          {isDateBlocked && (
-            <p className="text-red-500">
-              Esta data está bloqueada. Por favor, selecione outra data.
-            </p>
-          )}
         </CardContent>
       </Card>
 
@@ -238,18 +278,31 @@ const DateAndTimeSelector = ({
         </CardHeader>
         <CardContent className="grid gap-4">
           <Label htmlFor="professional">Profissional</Label>
-          <Select onValueChange={setProfessionalId}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Selecione um profissional" />
-            </SelectTrigger>
-            <SelectContent>
-              {availableProfessionals.map((professional) => (
-                <SelectItem key={professional.id} value={professional.id}>
-                  {professional.nome}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {isLoadingProfessionals ? (
+            <div className="flex items-center justify-center py-2">
+              <Loader className="h-6 w-6 animate-spin" />
+              <span className="ml-2">Carregando profissionais...</span>
+            </div>
+          ) : error ? (
+            <div className="text-destructive py-2">{error}</div>
+          ) : availableProfessionals.length === 0 ? (
+            <div className="text-amber-600 py-2">
+              Nenhum profissional disponível para esta data. Por favor, selecione outra data.
+            </div>
+          ) : (
+            <Select onValueChange={setProfessionalId} value={professionalId}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Selecione um profissional" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableProfessionals.map((professional) => (
+                  <SelectItem key={professional.id} value={professional.id}>
+                    {professional.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </CardContent>
       </Card>
 
@@ -260,18 +313,28 @@ const DateAndTimeSelector = ({
         </CardHeader>
         <CardContent className="grid gap-4">
           <Label htmlFor="time">Horário</Label>
-          <Select onValueChange={setTime}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Selecione um horário" />
-            </SelectTrigger>
-            <SelectContent>
-              {availableTimes.map((time) => (
-                <SelectItem key={time} value={time}>
-                  {time}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {!professionalId ? (
+            <div className="text-amber-600 py-2">
+              Selecione um profissional para ver os horários disponíveis.
+            </div>
+          ) : availableTimes.length === 0 ? (
+            <div className="text-amber-600 py-2">
+              Nenhum horário disponível para este profissional nesta data.
+            </div>
+          ) : (
+            <Select onValueChange={setTime} value={time}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Selecione um horário" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableTimes.map((time) => (
+                  <SelectItem key={time} value={time}>
+                    {time}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </CardContent>
       </Card>
 

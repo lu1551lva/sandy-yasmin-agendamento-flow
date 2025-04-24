@@ -24,13 +24,18 @@ export function useDateSelectionData(
     queryFn: async () => {
       if (!professionalId) return null;
 
+      console.log("Buscando profissional com ID:", professionalId);
       const { data, error } = await supabase
         .from("profissionais")
         .select("*")
         .eq("id", professionalId)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao buscar profissional:", error);
+        throw error;
+      }
+      console.log("Profissional encontrado:", data);
       return data as Professional;
     },
     enabled: !!professionalId
@@ -59,9 +64,9 @@ export function useDateSelectionData(
     enabled: !!professionalId && !!selectedDate
   });
 
-  // Function to check if a date should be disabled
+  // Function to check if a date should be disabled - MODIFICADA PARA PERMITIR TODOS OS DIAS
   const isDateDisabled = (date: Date) => {
-    // Always enable today and future dates
+    // Always enable today and future dates - MANTIDO
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (isBefore(date, today)) return true;
@@ -84,6 +89,8 @@ export function useDateSelectionData(
     };
     
     const normalizedDay = dayMap[dayName];
+    console.log(`Verificando dia ${dayName} (${normalizedDay}) para data ${date.toISOString().split('T')[0]}`);
+    console.log("Dias de atendimento do profissional:", professional.dias_atendimento);
     
     // Check if professional works on this day
     const isWorkDay = professional.dias_atendimento.includes(normalizedDay);
@@ -99,6 +106,7 @@ export function useDateSelectionData(
 
     // Check if the professional works on the selected date
     if (isDateDisabled(selectedDate)) {
+      console.log(`Data ${selectedDate.toISOString().split('T')[0]} está desativada para o profissional`);
       setAvailableTimeSlots([]);
       return;
     }
@@ -107,6 +115,8 @@ export function useDateSelectionData(
     const generateTimeSlots = () => {
       const { horario_inicio, horario_fim } = professional;
       const serviceDuration = selectedService.duracao_em_minutos;
+
+      console.log(`Gerando horários disponíveis entre ${horario_inicio} e ${horario_fim} com duração de ${serviceDuration} minutos`);
 
       // Parse start and end hours
       const [startHour, startMinute] = horario_inicio.split(':').map(Number);
@@ -139,7 +149,8 @@ export function useDateSelectionData(
           currentHour += 1;
         }
       }
-
+      
+      console.log(`Horários disponíveis: ${slots.join(', ')}`);
       return slots;
     };
 
@@ -149,6 +160,7 @@ export function useDateSelectionData(
   // Handle errors
   useEffect(() => {
     if (professionalError) {
+      console.error("Erro ao carregar profissional:", professionalError);
       toast({
         title: "Erro ao carregar profissional",
         description: "Não foi possível carregar os dados do profissional",
