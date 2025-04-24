@@ -7,23 +7,38 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Logo } from '@/components/common/Logo';
 import { Loader, ArrowLeft } from 'lucide-react';
-import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { useAuth } from '@/context/auth-context';
+import { useToast } from '@/hooks/use-toast';
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAdminAuth();
+  const { signIn } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
     try {
-      await login(email, password);
+      const { error } = await signIn(email, password);
+      
+      if (error) {
+        toast({
+          title: "Erro de login",
+          description: "E-mail ou senha inválidos. Tente novamente.",
+          variant: "destructive"
+        });
+      }
     } catch (error) {
       console.error('Erro no login:', error);
+      toast({
+        title: "Erro no sistema",
+        description: "Ocorreu um erro ao processar seu login.",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }

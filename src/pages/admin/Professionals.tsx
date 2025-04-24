@@ -4,45 +4,25 @@ import ProfessionalTable from "./components/ProfessionalTable";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, Professional } from "@/lib/supabase";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import ProfessionalFormDialog from "./profissionais/ProfessionalFormDialog";
 import ProfessionalDeleteDialog from "./profissionais/ProfessionalDeleteDialog";
 import { Button } from "@/components/ui/button";
 import { useProfessionalForm } from "./profissionais/hooks/useProfessionalForm";
-
-// Função utilitária para obter o salão autenticado pelo localStorage (ou contexto futuramente)
-function getAuthSalao() {
-  const raw = localStorage.getItem("salaoAuth");
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
 
 const Professionals = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [professionalToDelete, setProfessionalToDelete] = useState<Professional | null>(null);
-  const [salaoId, setSalaoId] = useState<string | null>(null);
 
-  // Busca o salao_id autenticado ao montar o componente
-  useEffect(() => {
-    const salao = getAuthSalao();
-    setSalaoId(salao?.id || null);
-  }, []);
-
-  // Buscar profissionais do salão autenticado
+  // Buscar todos os profissionais sem verificar salão específico
   const { data: professionals, isLoading } = useQuery({
-    enabled: !!salaoId,
-    queryKey: ["professionals", salaoId],
+    queryKey: ["professionals"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profissionais")
-        .select("*")
-        .eq("salao_id", salaoId);
+        .select("*");
       if (error) throw error;
       return data as Professional[];
     },
@@ -50,17 +30,16 @@ const Professionals = () => {
 
   const createProfessionalMutation = useMutation({
     mutationFn: async (data: Omit<Professional, "id" | "created_at">) => {
-      if (!salaoId) throw new Error("Salão não autenticado");
       const { data: result, error } = await supabase
         .from("profissionais")
-        .insert({ ...data, salao_id: salaoId })
+        .insert({ ...data })
         .select()
         .single();
       if (error) throw error;
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["professionals", salaoId] });
+      queryClient.invalidateQueries({ queryKey: ["professionals"] });
       toast({ title: "Profissional cadastrada" });
     },
     onError: (error) => {
@@ -74,19 +53,17 @@ const Professionals = () => {
 
   const updateProfessionalMutation = useMutation({
     mutationFn: async ({ id, ...data }: Partial<Professional> & { id: string }) => {
-      if (!salaoId) throw new Error("Salão não autenticado");
       const { data: result, error } = await supabase
         .from("profissionais")
-        .update({ ...data, salao_id: salaoId })
+        .update({ ...data })
         .eq("id", id)
-        .eq("salao_id", salaoId)
         .select()
         .single();
       if (error) throw error;
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["professionals", salaoId] });
+      queryClient.invalidateQueries({ queryKey: ["professionals"] });
       toast({ title: "Profissional atualizada" });
     },
     onError: (error) => {
@@ -100,13 +77,12 @@ const Professionals = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      if (!salaoId) throw new Error("Salão não autenticado");
       const { error } = await supabase.from("profissionais").delete()
-        .eq("id", id).eq("salao_id", salaoId);
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["professionals", salaoId] });
+      queryClient.invalidateQueries({ queryKey: ["professionals"] });
       toast({ title: "Profissional excluída" });
       setDeleteOpen(false);
       setProfessionalToDelete(null);
@@ -151,11 +127,6 @@ const Professionals = () => {
     if (dias.length === 7) return "Todos os dias";
     return dias.map((dia) => abrev[dia] || dia).join(", ");
   };
-
-  // Bloquear uso se trial expirou (exemplo, pode sofisticar depois)
-  if (!salaoId) {
-    return <div className="text-center mt-10 text-destructive">Acesso negado. Faça login novamente.</div>;
-  }
 
   return (
     <div className="space-y-6">

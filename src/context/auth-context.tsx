@@ -60,7 +60,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const signUp = async (email: string, password: string, userData?: any) => {
     // For Studio Sandy Yasmin, we don't allow signup
     return { 
-      error: "Registro não permitido. Este é um aplicativo de inquilino único.", 
+      error: "Registro não permitido. Este é um aplicativo exclusivo para o Studio Sandy Yasmin.", 
       user: null 
     };
   };

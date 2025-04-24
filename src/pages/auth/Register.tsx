@@ -15,7 +15,7 @@ const Register = () => {
   useEffect(() => {
     toast({
       title: "Registro não disponível",
-      description: "Este é um aplicativo de inquilino único para Studio Sandy Yasmin. Por favor faça login com as credenciais fornecidas.",
+      description: "Este é um aplicativo exclusivo para Studio Sandy Yasmin. Por favor faça login com as credenciais fornecidas.",
       variant: "destructive"
     });
     navigate('/admin/login');

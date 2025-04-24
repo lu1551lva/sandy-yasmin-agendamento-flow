@@ -17,7 +17,9 @@ import WeeklySchedule from "./pages/admin/WeeklySchedule";
 import Professionals from "./pages/admin/Professionals";
 import Services from "./pages/admin/Services";
 import WhatsAppMessages from "./pages/admin/WhatsAppMessages";
-import ProtectedRoute from "./components/auth/ProtectedRoute";
+import { AuthProvider } from "./context/auth-context";
+import Register from "./pages/auth/Register";
+import Login from "./pages/auth/Login";
 import { initializeDefaultData } from "@/lib/initData";
 
 const queryClient = new QueryClient({
@@ -43,39 +45,39 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
         <BrowserRouter>
-          <Routes>
-            {/* Public Routes */}
-            <Route element={<PublicLayout />}>
-              <Route path="/" element={<Navigate to="/agendar" replace />} />
-              <Route path="/agendar" element={<Appointment />} />
-            </Route>
+          <AuthProvider>
+            <Toaster />
+            <Sonner />
+            <Routes>
+              {/* Public Routes */}
+              <Route element={<PublicLayout />}>
+                <Route path="/" element={<Navigate to="/agendar" replace />} />
+                <Route path="/agendar" element={<Appointment />} />
+              </Route>
 
-            {/* Auth Routes */}
-            <Route path="/admin/login" element={<AdminLogin />} />
+              {/* Auth Routes */}
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin/register" element={<Register />} />
 
-            {/* Admin Routes */}
-            <Route 
-              path="/admin" 
-              element={
-                <ProtectedRoute>
-                  <AdminLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<Dashboard />} />
-              <Route path="agendamentos" element={<AppointmentList />} />
-              <Route path="agenda-semanal" element={<WeeklySchedule />} />
-              <Route path="profissionais" element={<Professionals />} />
-              <Route path="servicos" element={<Services />} />
-              <Route path="mensagens" element={<WhatsAppMessages />} />
-            </Route>
+              {/* Auth Routes (legacy) */}
+              <Route path="/auth/login" element={<Login />} />
+              <Route path="/auth/register" element={<Register />} />
 
-            {/* Catch-all */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+              {/* Admin Routes */}
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<Dashboard />} />
+                <Route path="agendamentos" element={<AppointmentList />} />
+                <Route path="agenda-semanal" element={<WeeklySchedule />} />
+                <Route path="profissionais" element={<Professionals />} />
+                <Route path="servicos" element={<Services />} />
+                <Route path="mensagens" element={<WhatsAppMessages />} />
+              </Route>
+
+              {/* Catch-all */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

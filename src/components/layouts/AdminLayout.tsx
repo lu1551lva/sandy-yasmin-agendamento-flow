@@ -1,17 +1,22 @@
 
-import { Outlet } from "react-router-dom";
+import { Outlet, Navigate } from "react-router-dom";
 import AdminSidebar from "../admin/AdminSidebar";
 import AdminHeader from "../admin/AdminHeader";
-import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useAuth } from "@/context/auth-context";
 
 const AdminLayout = () => {
-  const { logout } = useAdminAuth();
+  const { isLoggedIn, signOut } = useAuth();
+  
+  // Proteger o layout administrativo
+  if (!isLoggedIn) {
+    return <Navigate to="/admin/login" replace />;
+  }
 
   return (
     <div className="flex h-screen overflow-hidden">
       <AdminSidebar />
       <div className="flex flex-col flex-1 overflow-hidden">
-        <AdminHeader onLogout={logout} />
+        <AdminHeader onLogout={signOut} />
         <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6">
           <Outlet />
         </main>
