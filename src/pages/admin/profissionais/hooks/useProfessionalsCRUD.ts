@@ -1,7 +1,6 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, Professional } from "@/lib/supabase";
-import { ToastProps } from "@/components/ui/toast";
 
 interface UseProfessionalsCRUDProps {
   setIsDialogOpen: (isOpen: boolean) => void;
@@ -9,7 +8,7 @@ interface UseProfessionalsCRUDProps {
   resetForm: () => void;
   setCurrentProfessional: (professional: Professional | null) => void;
   toast: {
-    toast: (props: ToastProps) => void;
+    toast: (props: { title?: string; variant?: "default" | "destructive" }) => void;
   };
 }
 
@@ -86,9 +85,10 @@ export function useProfessionalsCRUD({
     },
     onError: (error: any) => {
       console.error("Error details:", error);
+      // Log the full error to console for debugging
+      console.error("Full error:", JSON.stringify(error));
       toast.toast({
-        title: "Erro ao criar profissional",
-        description: error.message || JSON.stringify(error),
+        title: `Erro ao criar profissional: ${error.message || JSON.stringify(error)}`,
         variant: "destructive",
       });
     },
@@ -141,9 +141,10 @@ export function useProfessionalsCRUD({
     },
     onError: (error: any) => {
       console.error("Error details:", error);
+      // Log the full error to console for debugging
+      console.error("Full error:", JSON.stringify(error));
       toast.toast({
-        title: "Erro ao atualizar",
-        description: error.message || JSON.stringify(error),
+        title: `Erro ao atualizar: ${error.message || JSON.stringify(error)}`,
         variant: "destructive",
       });
     },
@@ -180,9 +181,10 @@ export function useProfessionalsCRUD({
     },
     onError: (error: any) => {
       console.error("Error details:", error);
+      // Log the full error to console for debugging
+      console.error("Full error:", JSON.stringify(error));
       toast.toast({
-        title: "Erro ao excluir",
-        description: error.message || JSON.stringify(error),
+        title: `Erro ao excluir: ${error.message || JSON.stringify(error)}`,
         variant: "destructive",
       });
     },
