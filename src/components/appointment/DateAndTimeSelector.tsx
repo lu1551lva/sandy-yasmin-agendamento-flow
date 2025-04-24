@@ -8,7 +8,8 @@ import { useTimeSlots } from "@/components/shared/date-time/hooks/useTimeSlots";
 import { useAppointmentData } from "./hooks/useAppointmentData";
 import { useProfessionals } from "./hooks/useProfessionals";
 import { useDateValidation } from "./hooks/useDateValidation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface DateSelectionProps {
   selectedService: Service;
@@ -39,6 +40,7 @@ const DateAndTimeSelector = ({
 
   const { professionals, isLoading, error } = useProfessionals(date);
   const [appointments, setAppointments] = useState<any[]>([]);
+  const { toast } = useToast();
 
   // Find the selected professional
   const selectedProfessional = professionals.find(p => p.id === professionalId);
@@ -54,9 +56,21 @@ const DateAndTimeSelector = ({
     appointments
   });
 
+  // When selecting a date, validate it and show appropriate messages
   const onDateSelect = (newDate: Date | undefined) => {
-    if (newDate && dateValidation.validateDate(newDate)) {
-      handleDateSelect(newDate);
+    if (newDate) {
+      // Check if the date is a holiday (just for information)
+      if (dateValidation.isHoliday(newDate)) {
+        toast({
+          title: "Data selecionada é um feriado",
+          description: "O agendamento é permitido, mas verifique o funcionamento do estabelecimento nesta data.",
+          variant: "warning",
+        });
+      }
+      
+      if (dateValidation.validateDate(newDate)) {
+        handleDateSelect(newDate);
+      }
     }
   };
 

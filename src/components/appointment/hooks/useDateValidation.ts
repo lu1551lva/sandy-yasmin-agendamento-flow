@@ -1,6 +1,6 @@
 
 import { useState, useCallback } from "react";
-import { format, isWeekend, isBefore } from "date-fns";
+import { format, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { getHolidays } from "@/lib/utils";
 import { Professional } from "@/lib/supabase";
@@ -15,7 +15,7 @@ export const useDateValidation = (professional: Professional | undefined) => {
     return holidays.includes(dateString);
   }, []);
 
-  const isProfessionalAvailable = useCallback((date: Date) => {
+  const isDayAllowed = useCallback((date: Date) => {
     if (!professional || !date) return false;
 
     const dayName = format(date, "EEEE", { locale: ptBR });
@@ -30,15 +30,13 @@ export const useDateValidation = (professional: Professional | undefined) => {
     };
 
     const normalizedDay = dayMap[dayName];
-    console.log("Checking availability for:", {
-      dayName,
-      normalizedDay,
-      professionalDays: professional.dias_atendimento
-    });
-
+    
     return Array.isArray(professional.dias_atendimento) && 
            professional.dias_atendimento.includes(normalizedDay);
   }, [professional]);
+
+  // Alias for backward compatibility
+  const isProfessionalAvailable = isDayAllowed;
 
   const isPastDate = useCallback((date: Date) => {
     if (!date) return false;
@@ -46,6 +44,18 @@ export const useDateValidation = (professional: Professional | undefined) => {
     today.setHours(0, 0, 0, 0);
     return isBefore(date, today);
   }, []);
+
+  const getValidationMessage = useCallback((date: Date): string | null => {
+    if (!date) return "Por favor, selecione uma data";
+    
+    if (isPastDate(date)) return "Não é possível selecionar datas passadas";
+    
+    if (isHoliday(date)) return "Esta data é um feriado (permitido, mas observe que pode haver alterações no funcionamento)";
+    
+    if (professional && !isDayAllowed(date)) return `O profissional não atende às ${format(date, 'EEEE', { locale: ptBR })}s`;
+    
+    return null;
+  }, [isPastDate, isHoliday, isDayAllowed, professional]);
 
   const validateDate = useCallback((date: Date) => {
     if (!date) {
@@ -64,14 +74,14 @@ export const useDateValidation = (professional: Professional | undefined) => {
       // We don't set error here as per requirement: feriados não bloqueiam agendamentos
     }
 
-    if (professional && !isProfessionalAvailable(date)) {
-      setError("O profissional não atende neste dia");
+    if (professional && !isDayAllowed(date)) {
+      setError(`O profissional não atende às ${format(date, 'EEEE', { locale: ptBR })}s`);
       return false;
     }
 
     setError(null);
     return true;
-  }, [isHoliday, isProfessionalAvailable, isPastDate, professional]);
+  }, [isHoliday, isDayAllowed, isPastDate, professional]);
 
   // Create a disabled dates function for the calendar component
   const getDisabledDates = useCallback((date: Date) => {
@@ -80,18 +90,20 @@ export const useDateValidation = (professional: Professional | undefined) => {
     
     // Only disable days when professional is not available if we have a professional selected
     if (professional) {
-      return !isProfessionalAvailable(date);
+      return !isDayAllowed(date);
     }
     
     return false;
-  }, [isPastDate, isProfessionalAvailable, professional]);
+  }, [isPastDate, isDayAllowed, professional]);
 
   return {
     error,
     isHoliday,
     isProfessionalAvailable,
+    isDayAllowed,
     isPastDate,
     validateDate,
-    getDisabledDates
+    getDisabledDates,
+    getValidationMessage
   };
 };
