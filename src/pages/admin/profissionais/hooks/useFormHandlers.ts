@@ -1,7 +1,9 @@
 
 import { Professional } from "@/lib/supabase";
 import { ProfessionalFormData, ProfessionalFormField } from "../types/professional-state";
-import { validateProfessionalForm } from "../professionalUtils";
+import { useEditProfessional } from "./useEditProfessional";
+import { useFormInputs } from "./useFormInputs";
+import { useFormValidation } from "./useFormValidation";
 
 interface UseFormHandlersProps {
   formData: ProfessionalFormData;
@@ -20,50 +22,24 @@ export function useFormHandlers({
   setIsEditing,
   setIsDialogOpen,
 }: UseFormHandlersProps) {
-  const handleEdit = (professional: Professional) => {
-    console.log("Editando profissional:", professional);
-    
-    const diasAtendimento = Array.isArray(professional.dias_atendimento)
-      ? professional.dias_atendimento
-      : [];
-    
-    setCurrentProfessional(professional);
-    setFormData({
-      nome: professional.nome || "",
-      dias_atendimento: diasAtendimento,
-      horario_inicio: professional.horario_inicio || "08:00",
-      horario_fim: professional.horario_fim || "18:00",
-    });
-    setIsEditing(true);
-    setIsDialogOpen(true);
-  };
+  const { handleEdit } = useEditProfessional({
+    setCurrentProfessional,
+    setFormData,
+    setIsEditing,
+    setIsDialogOpen,
+  });
 
-  const handleChange = (field: ProfessionalFormField, value: any) => {
-    setFormData({ ...formData, [field]: value });
-    
-    if (field in formData) {
-      setErrors({});
-    }
-  };
+  const { handleChange, toggleDay } = useFormInputs({
+    formData,
+    setFormData,
+    setErrors,
+  });
 
-  const toggleDay = (day: string) => {
-    const days = Array.isArray(formData.dias_atendimento) 
-      ? [...formData.dias_atendimento] 
-      : [];
-    
-    const newDays = days.includes(day)
-      ? days.filter(d => d !== day)
-      : [...days, day];
-    
-    setFormData({ ...formData, dias_atendimento: newDays });
-    setErrors({});
-  };
+  const { validateForm: validateFormImpl } = useFormValidation({
+    setErrors,
+  });
 
-  const validateForm = () => {
-    const errors = validateProfessionalForm(formData);
-    setErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
+  const validateForm = () => validateFormImpl(formData);
 
   const openNewProfessionalDialog = () => {
     setCurrentProfessional(null);
