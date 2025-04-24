@@ -1,7 +1,6 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, Professional } from "@/lib/supabase";
-import type { UseToastReturn } from "@/hooks/use-toast";
+import { UseToastReturn } from "@/hooks/use-toast";
 
 interface UseProfessionalCRUDProps {
   setIsDialogOpen: (open: boolean) => void;

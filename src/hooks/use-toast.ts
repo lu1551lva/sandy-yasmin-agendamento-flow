@@ -5,6 +5,17 @@ import type {
   ToastProps,
 } from "@/components/ui/toast"
 
+// Add a type for the UseToast return value
+export type UseToastReturn = {
+  toast: (props: Toast) => {
+    id: string;
+    dismiss: () => void;
+    update: (props: ToasterToast) => void;
+  };
+  dismiss: (toastId?: string) => void;
+  toasts: ToasterToast[];
+}
+
 const TOAST_LIMIT = 1
 const TOAST_REMOVE_DELAY = 1000000
 
