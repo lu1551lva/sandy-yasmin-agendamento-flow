@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/classnames";
 
 interface TimeSelectorProps {
   professionalId: string;
@@ -23,7 +23,6 @@ export const TimeSelector = ({
         <CardDescription>Escolha um horário disponível.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
-        <Label htmlFor="time">Horário</Label>
         {!professionalId ? (
           <div className="text-amber-600 py-2">
             Selecione um profissional para ver os horários disponíveis.
@@ -33,18 +32,21 @@ export const TimeSelector = ({
             Nenhum horário disponível para este profissional nesta data.
           </div>
         ) : (
-          <Select onValueChange={onTimeSelect} value={selectedTime}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Selecione um horário" />
-            </SelectTrigger>
-            <SelectContent>
-              {availableTimes.map((time) => (
-                <SelectItem key={time} value={time}>
-                  {time}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+            {availableTimes.map((time) => (
+              <Button
+                key={time}
+                variant={selectedTime === time ? "default" : "outline"}
+                className={cn(
+                  "h-12 w-full",
+                  selectedTime === time ? "bg-primary text-primary-foreground" : ""
+                )}
+                onClick={() => onTimeSelect(time)}
+              >
+                {time}
+              </Button>
+            ))}
+          </div>
         )}
       </CardContent>
     </Card>

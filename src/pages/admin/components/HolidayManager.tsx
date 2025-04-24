@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format, parse, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { getHolidays, addHoliday, removeHoliday } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
 
 const HolidayManager = () => {
@@ -56,7 +55,7 @@ const HolidayManager = () => {
               selected={selectedDate}
               onSelect={setSelectedDate}
               locale={ptBR}
-              className="rounded-md border shadow p-3 bg-white"
+              className="rounded-md border shadow p-3 bg-white pointer-events-auto"
             />
             
             <Button 
@@ -95,8 +94,8 @@ const HolidayManager = () => {
         
         <div className="mt-6 p-4 bg-muted rounded-md">
           <p className="text-sm text-muted-foreground">
-            Observação: Os feriados cadastrados aqui não impedem mais o agendamento. 
-            Eles servem apenas como referência para você.
+            Observação: Os feriados cadastrados aqui não impedem o agendamento automaticamente. 
+            Eles servem como referência e você pode controlá-los manualmente.
           </p>
         </div>
       </CardContent>

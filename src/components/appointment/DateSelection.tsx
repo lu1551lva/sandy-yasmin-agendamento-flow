@@ -1,13 +1,8 @@
 
-// Hooks and types
 import { useState } from "react";
 import { Service } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import { format } from "date-fns";
-// Custom hook for all logic
 import { useDateSelectionData } from "./hooks/useDateSelectionData";
-// Presentational component
 import DateAndTimeSelector from "./DateAndTimeSelector";
 
 interface DateSelectionProps {
@@ -29,7 +24,6 @@ const DateSelection = ({
   nextStep,
   prevStep,
 }: DateSelectionProps) => {
-  // Main logic outsourced to custom hook 
   const {
     availableTimeSlots,
     loading,
@@ -37,23 +31,6 @@ const DateSelection = ({
     isDateDisabled,
     refetchAppointments,
   } = useDateSelectionData(selectedService, selectedDate, professionalId);
-
-  const handleDateSelect = (date: Date | undefined) => {
-    if (date) {
-      updateAppointmentData({ date, time: null });
-      refetchAppointments();
-    }
-  };
-
-  const handleTimeSelect = (time: string) => {
-    updateAppointmentData({ date: selectedDate, time });
-  };
-
-  const handleContinue = () => {
-    if (selectedDate && selectedTime) {
-      nextStep();
-    }
-  };
 
   if (!selectedService) {
     return (

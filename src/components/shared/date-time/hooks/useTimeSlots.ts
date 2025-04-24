@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { format, addMinutes } from "date-fns";
+import { format } from "date-fns";
 import { Professional, Service } from "@/lib/supabase";
 
 interface UseTimeSlotsProps {
@@ -30,6 +30,7 @@ export const useTimeSlots = ({
 
       console.log(`Gerando horários disponíveis entre ${horario_inicio} e ${horario_fim} com duração de ${serviceDuration} minutos`);
 
+      // Parse start and end hours
       const [startHour, startMinute] = horario_inicio.split(':').map(Number);
       const [endHour, endMinute] = horario_fim.split(':').map(Number);
 
@@ -37,12 +38,14 @@ export const useTimeSlots = ({
       let currentHour = startHour;
       let currentMinute = startMinute;
 
+      // Generate slots until end time
       while (
         currentHour < endHour ||
         (currentHour === endHour && currentMinute <= endMinute - serviceDuration)
       ) {
         const timeSlot = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
         
+        // Check if this slot is available (not booked)
         const isSlotBooked = appointments?.some(
           (appointment) => appointment.hora === timeSlot
         );
@@ -51,6 +54,7 @@ export const useTimeSlots = ({
           slots.push(timeSlot);
         }
 
+        // Increment by service duration
         currentMinute += serviceDuration;
         while (currentMinute >= 60) {
           currentMinute -= 60;

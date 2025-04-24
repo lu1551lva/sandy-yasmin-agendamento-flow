@@ -5,6 +5,7 @@ import { supabase, Service, Professional } from "@/lib/supabase";
 import { format, addDays, parseISO, isAfter, isBefore, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
+import { getHolidays } from "@/lib/utils";
 
 export function useDateSelectionData(
   selectedService: Service | null,
@@ -64,49 +65,31 @@ export function useDateSelectionData(
     enabled: !!professionalId && !!selectedDate
   });
 
-  // Function to check if a date should be disabled - MODIFICADA PARA PERMITIR TODOS OS DIAS
+  // Check if the date is a manually added holiday
+  const isHoliday = (date: Date) => {
+    if (!date) return false;
+    
+    const holidays = getHolidays();
+    const dateString = format(date, "yyyy-MM-dd");
+    return holidays.includes(dateString);
+  };
+
+  // Function to check if a date should be disabled - only disable past dates and holidays
   const isDateDisabled = (date: Date) => {
-    // Always enable today and future dates - MANTIDO
+    // Always disable past dates
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (isBefore(date, today)) return true;
 
-    // If no professional is selected, don't disable any dates
-    if (!professional) return false;
+    // Check if it's a manually added holiday
+    if (isHoliday(date)) return true;
 
-    // Get day name in Portuguese
-    const dayName = format(date, "EEEE", { locale: ptBR });
-    
-    // Convert dayName to match dias_atendimento format
-    const dayMap: { [key: string]: string } = {
-      'domingo': 'domingo',
-      'segunda-feira': 'segunda', 
-      'terça-feira': 'terca',
-      'quarta-feira': 'quarta',
-      'quinta-feira': 'quinta',
-      'sexta-feira': 'sexta',
-      'sábado': 'sabado'
-    };
-    
-    const normalizedDay = dayMap[dayName];
-    console.log(`Verificando dia ${dayName} (${normalizedDay}) para data ${date.toISOString().split('T')[0]}`);
-    console.log("Dias de atendimento do profissional:", professional.dias_atendimento);
-    
-    // Check if professional works on this day
-    const isWorkDay = professional.dias_atendimento.includes(normalizedDay);
-    return !isWorkDay;
+    return false;
   };
 
   // Generate available time slots for the selected date
   useEffect(() => {
     if (!selectedDate || !professional || !selectedService) {
-      setAvailableTimeSlots([]);
-      return;
-    }
-
-    // Check if the professional works on the selected date
-    if (isDateDisabled(selectedDate)) {
-      console.log(`Data ${selectedDate.toISOString().split('T')[0]} está desativada para o profissional`);
       setAvailableTimeSlots([]);
       return;
     }
@@ -176,4 +159,4 @@ export function useDateSelectionData(
     isDateDisabled,
     refetchAppointments,
   };
-}
+};

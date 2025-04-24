@@ -40,7 +40,7 @@ export const ProfessionalSelector = ({
             Nenhum profissional disponível para esta data. Por favor, selecione outra data.
           </div>
         ) : (
-          <Select onValueChange={onProfessionalSelect} value={selectedProfessionalId}>
+          <Select onValueChange={onProfessionalSelect} value={selectedProfessionalId || ""}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Selecione um profissional" />
             </SelectTrigger>
