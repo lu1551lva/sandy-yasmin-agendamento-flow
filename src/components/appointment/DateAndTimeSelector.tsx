@@ -43,7 +43,7 @@ const DateAndTimeSelector = ({
   // Find the selected professional
   const selectedProfessional = professionals.find(p => p.id === professionalId);
   
-  // Use the new date validation hook
+  // Use the enhanced date validation hook
   const dateValidation = useDateValidation(selectedProfessional);
   
   // Generate available time slots
@@ -82,6 +82,7 @@ const DateAndTimeSelector = ({
         <DateSelector 
           date={date} 
           onDateChange={onDateSelect}
+          disabledDates={dateValidation.getDisabledDates}
         />
         
         {dateValidation.error && (
