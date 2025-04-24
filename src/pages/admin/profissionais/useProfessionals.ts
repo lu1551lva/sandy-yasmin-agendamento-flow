@@ -1,139 +1,66 @@
-import { useToast } from "@/hooks/use-toast";
-import { Professional } from "@/lib/supabase";
-import { validateProfessionalForm } from "./professionalUtils";
-import { useProfessionalDialog } from "./hooks/useProfessionalDialog";
-import { useProfessionalsCRUD } from "./hooks/useProfessionalsCRUD";
+
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { useProfessionalsCRUD } from "./hooks/useProfessionalsCRUD";
+import { useDialogState } from "./hooks/useDialogState";
+import { useFormHandlers } from "./hooks/useFormHandlers";
+import { Professional } from "@/lib/supabase";
 
 export const useProfessionals = () => {
   const { toast } = useToast();
-  const dialog = useProfessionalDialog();
   const [isLoading, setIsLoading] = useState(false);
-
+  
+  const dialogState = useDialogState();
+  
   const crud = useProfessionalsCRUD({
-    setIsDialogOpen: dialog.setIsDialogOpen,
-    setIsDeleteDialogOpen: dialog.setIsDeleteDialogOpen,
-    resetForm: dialog.resetForm,
-    setCurrentProfessional: dialog.setCurrentProfessional,
+    setIsDialogOpen: dialogState.setIsDialogOpen,
+    setIsDeleteDialogOpen: dialogState.setIsDeleteDialogOpen,
+    resetForm: dialogState.resetForm,
+    setCurrentProfessional: dialogState.setCurrentProfessional,
     toast,
     setIsLoading,
   });
 
-  // Form handlers
-  const handleEdit = (professional: Professional) => {
-    console.log("Editando profissional:", professional);
-    
-    // Garantir que dias_atendimento seja sempre um array de strings
-    let diasAtendimento: string[] = [];
-    
-    if (professional.dias_atendimento) {
-      if (Array.isArray(professional.dias_atendimento)) {
-        diasAtendimento = professional.dias_atendimento;
-      } else if (typeof professional.dias_atendimento === 'object') {
-        // Trata caso onde dias_atendimento é um objeto
-        try {
-          const diasObj = professional.dias_atendimento as unknown as Record<string, boolean>;
-          diasAtendimento = Object.entries(diasObj)
-            .filter(([_, checked]) => checked)
-            .map(([dia]) => dia);
-        } catch (e) {
-          console.error("Erro ao processar dias_atendimento como objeto:", e);
-        }
-      } else {
-        console.warn("Formato inesperado para dias_atendimento:", professional.dias_atendimento);
-      }
-    }
-    
-    console.log("Dias de atendimento processados para edição:", diasAtendimento);
-    
-    dialog.setCurrentProfessional(professional);
-    dialog.setFormData({
-      nome: professional.nome || "",
-      dias_atendimento: diasAtendimento,
-      horario_inicio: professional.horario_inicio || "08:00",
-      horario_fim: professional.horario_fim || "18:00",
-    });
-    dialog.setIsEditing(true);
-    dialog.setIsDialogOpen(true);
-  };
+  const formHandlers = useFormHandlers({
+    formData: dialogState.formData,
+    setFormData: dialogState.setFormData,
+    setErrors: dialogState.setErrors,
+    setCurrentProfessional: dialogState.setCurrentProfessional,
+    setIsEditing: dialogState.setIsEditing,
+    setIsDialogOpen: dialogState.setIsDialogOpen,
+  });
 
   const handleDelete = (professional: Professional) => {
-    dialog.setCurrentProfessional(professional);
-    dialog.setIsDeleteDialogOpen(true);
+    dialogState.setCurrentProfessional(professional);
+    dialogState.setIsDeleteDialogOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Enviando formulário com dados:", dialog.formData);
+    console.log("Enviando formulário com dados:", dialogState.formData);
     
-    // Validar dados do formulário
-    const errors = validateProfessionalForm(dialog.formData);
-    dialog.setErrors(errors);
-    
-    if (Object.keys(errors).length > 0) {
-      console.log("Validação do formulário falhou. Erros:", errors);
+    if (!formHandlers.validateForm()) {
       return;
     }
-
-    // Garantir que dias_atendimento seja sempre um array de strings
-    const dias_atendimento = Array.isArray(dialog.formData.dias_atendimento) 
-      ? dialog.formData.dias_atendimento 
-      : [];
-      
-    // Validar que pelo menos um dia está selecionado
-    if (dias_atendimento.length === 0) {
-      dialog.setErrors({
-        ...dialog.errors,
-        dias_atendimento: "Selecione pelo menos um dia de atendimento"
-      });
-      return;
-    }
-
-    const professionalData = {
-      nome: dialog.formData.nome,
-      dias_atendimento: dias_atendimento,
-      horario_inicio: dialog.formData.horario_inicio,
-      horario_fim: dialog.formData.horario_fim,
-    };
-    
-    console.log("Enviando dados do profissional:", professionalData);
-    console.log("Está editando:", dialog.isEditing);
-    console.log("Profissional atual:", dialog.currentProfessional);
 
     setIsLoading(true);
-    if (dialog.isEditing && dialog.currentProfessional) {
+    
+    if (dialogState.isEditing && dialogState.currentProfessional) {
       crud.updateProfessionalMutation.mutate({
-        id: dialog.currentProfessional.id,
-        professional: professionalData,
+        id: dialogState.currentProfessional.id,
+        professional: dialogState.formData,
       });
     } else {
-      crud.createProfessionalMutation.mutate(professionalData);
+      crud.createProfessionalMutation.mutate(dialogState.formData);
     }
   };
 
   return {
-    professionals: crud.professionals,
+    ...dialogState,
+    ...crud,
+    ...formHandlers,
     isLoading: crud.isLoading || isLoading,
-    isDialogOpen: dialog.isDialogOpen,
-    setIsDialogOpen: dialog.setIsDialogOpen,
-    isDeleteDialogOpen: dialog.isDeleteDialogOpen,
-    setIsDeleteDialogOpen: dialog.setIsDeleteDialogOpen,
-    isEditing: dialog.isEditing,
-    setIsEditing: dialog.setIsEditing,
-    currentProfessional: dialog.currentProfessional,
-    setCurrentProfessional: dialog.setCurrentProfessional,
-    formData: dialog.formData,
-    setFormData: dialog.setFormData,
-    errors: dialog.errors,
-    setErrors: dialog.setErrors,
-    handleSubmit,
-    handleEdit,
     handleDelete,
-    resetForm: dialog.resetForm,
-    toggleDay: dialog.toggleDay,
-    openNewProfessionalDialog: dialog.openNewProfessionalDialog,
-    deleteProfessionalMutation: crud.deleteProfessionalMutation,
-    createProfessionalMutation: crud.createProfessionalMutation,
-    updateProfessionalMutation: crud.updateProfessionalMutation,
+    handleSubmit,
   };
 };
