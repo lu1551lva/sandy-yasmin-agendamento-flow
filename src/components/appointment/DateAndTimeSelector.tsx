@@ -179,7 +179,7 @@ const DateAndTimeSelector = ({
     const selectedProfessional = availableProfessionals.find(p => p.id === professionalId);
 
     updateAppointmentData({
-      date: date, // This is the line causing the type error - fixed by updating the AppointmentData interface
+      date: date, 
       time,
       professionalId,
       professional_name: selectedProfessional?.nome
