@@ -13,7 +13,7 @@ interface UseProfessionalsProps {
 }
 
 export const useProfessionals = ({ page, pageSize }: UseProfessionalsProps) => {
-  const { toast, dismiss } = useToast();
+  const toastHook = useToast();
   const { isLoading, setIsLoading } = useLoading();
   const dialogState = useDialogState();
   
@@ -24,7 +24,7 @@ export const useProfessionals = ({ page, pageSize }: UseProfessionalsProps) => {
     setIsDeleteDialogOpen: dialogState.setIsDeleteDialogOpen,
     resetForm: dialogState.resetForm,
     setCurrentProfessional: dialogState.setCurrentProfessional,
-    toast: { toast, dismiss },
+    toast: toastHook,
     setIsLoading,
   });
 
