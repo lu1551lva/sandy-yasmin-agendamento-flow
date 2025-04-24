@@ -36,11 +36,14 @@ export function useProfessionalForm(
         dias_atendimento = p.dias_atendimento;
       } else if (typeof p.dias_atendimento === 'object') {
         // Handle case where dias_atendimento is an object like {domingo: true}
-        dias_atendimento = Object.entries(p.dias_atendimento)
+        const diasObj = p.dias_atendimento as unknown as Record<string, boolean>;
+        dias_atendimento = Object.entries(diasObj)
           .filter(([_, checked]) => checked)
           .map(([dia]) => dia);
       }
     }
+    
+    console.log("Processed dias_atendimento for form:", dias_atendimento);
       
     setForm({
       nome: p.nome || "",
