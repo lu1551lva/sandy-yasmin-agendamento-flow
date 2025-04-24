@@ -30,7 +30,7 @@ interface AppointmentData {
   serviceId: string;
   professionalId: string;
   professional_name?: string;
-  date: string;
+  date: Date | string; // Updated to allow both Date and string
   time: string;
   client: {
     nome: string;
@@ -179,9 +179,9 @@ const DateAndTimeSelector = ({
     const selectedProfessional = availableProfessionals.find(p => p.id === professionalId);
 
     updateAppointmentData({
-      date,
+      date: date, // This is the line causing the type error - fixed by updating the AppointmentData interface
       time,
-      professional_id: professionalId,
+      professionalId,
       professional_name: selectedProfessional?.nome
     });
     nextStep();
