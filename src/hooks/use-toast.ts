@@ -24,4 +24,6 @@ function useToast(): UseToastReturn {
   }
 }
 
+// Re-export the type so it can be imported from "@/hooks/use-toast"
+export type { UseToastReturn }
 export { useToast, toast }
