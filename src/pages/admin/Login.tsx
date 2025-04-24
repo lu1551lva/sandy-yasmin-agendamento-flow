@@ -71,7 +71,7 @@ const AdminLogin = () => {
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@studio.com"
+                placeholder="seu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
@@ -99,12 +99,6 @@ const AdminLogin = () => {
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-4">
-          <div className="text-xs text-muted-foreground text-center w-full">
-            <p className="mb-1">Credenciais de acesso:</p>
-            <p>Email: admin@studio.com / Senha: admin123</p>
-          </div>
-        </CardFooter>
       </Card>
     </div>
   );
