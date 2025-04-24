@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useProfessionalsCRUD } from "./hooks/useProfessionalsCRUD";
@@ -12,7 +11,7 @@ interface UseProfessionalsProps {
 }
 
 export const useProfessionals = ({ page, pageSize }: UseProfessionalsProps) => {
-  const { toast } = useToast();
+  const { toast, dismiss } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   
   const dialogState = useDialogState();
@@ -24,17 +23,8 @@ export const useProfessionals = ({ page, pageSize }: UseProfessionalsProps) => {
     setIsDeleteDialogOpen: dialogState.setIsDeleteDialogOpen,
     resetForm: dialogState.resetForm,
     setCurrentProfessional: dialogState.setCurrentProfessional,
-    toast,
+    toast: { toast, dismiss },
     setIsLoading,
-  });
-
-  const formHandlers = useFormHandlers({
-    formData: dialogState.formData,
-    setFormData: dialogState.setFormData,
-    setErrors: dialogState.setErrors,
-    setCurrentProfessional: dialogState.setCurrentProfessional,
-    setIsEditing: dialogState.setIsEditing,
-    setIsDialogOpen: dialogState.setIsDialogOpen,
   });
 
   const handleDelete = (professional: Professional) => {
@@ -61,6 +51,15 @@ export const useProfessionals = ({ page, pageSize }: UseProfessionalsProps) => {
       crud.createProfessionalMutation.mutate(dialogState.formData);
     }
   };
+
+  const formHandlers = useFormHandlers({
+    formData: dialogState.formData,
+    setFormData: dialogState.setFormData,
+    setErrors: dialogState.setErrors,
+    setCurrentProfessional: dialogState.setCurrentProfessional,
+    setIsEditing: dialogState.setIsEditing,
+    setIsDialogOpen: dialogState.setIsDialogOpen,
+  });
 
   return {
     ...dialogState,
