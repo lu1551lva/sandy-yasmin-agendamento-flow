@@ -1,13 +1,12 @@
-
 import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { supabase, Professional } from "@/lib/supabase";
-import { DateSelector } from "./components/DateSelector";
-import { ProfessionalSelector } from "./components/ProfessionalSelector";
-import { TimeSelector } from "./components/TimeSelector";
-import { useTimeSlots } from "./hooks/useTimeSlots";
+import { DateSelector } from "@/components/shared/date-time/DateSelector";
+import { ProfessionalSelector } from "@/components/shared/date-time/ProfessionalSelector";
+import { TimeSelector } from "@/components/shared/date-time/TimeSelector";
+import { useTimeSlots } from "@/components/shared/date-time/hooks/useTimeSlots";
 
 interface DateSelectionProps {
   selectedService: {
