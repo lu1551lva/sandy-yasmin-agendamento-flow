@@ -28,26 +28,43 @@ export function useProfessionalForm(
   const openForEdit = (p: Professional) => {
     console.log("Opening form for edit with data:", p);
     
-    // Ensure dias_atendimento is always an array of strings
-    let dias_atendimento: string[] = [];
+    // Garantir que dias_atendimento seja sempre um array de strings
+    let diasAtendimento: string[] = [];
     
     if (p.dias_atendimento) {
       if (Array.isArray(p.dias_atendimento)) {
-        dias_atendimento = p.dias_atendimento;
-      } else if (typeof p.dias_atendimento === 'object') {
-        // Handle case where dias_atendimento is an object like {domingo: true}
-        const diasObj = p.dias_atendimento as unknown as Record<string, boolean>;
-        dias_atendimento = Object.entries(diasObj)
-          .filter(([_, checked]) => checked)
-          .map(([dia]) => dia);
+        diasAtendimento = p.dias_atendimento;
+      } else {
+        console.warn("dias_atendimento não é um array:", p.dias_atendimento);
+        // Tentativa de converter outros formatos para array
+        try {
+          if (typeof p.dias_atendimento === 'object') {
+            const diasObj = p.dias_atendimento as unknown as Record<string, boolean>;
+            diasAtendimento = Object.entries(diasObj)
+              .filter(([_, checked]) => checked)
+              .map(([dia]) => dia);
+          } else if (typeof p.dias_atendimento === 'string') {
+            // Tenta converter string para array (caso seja JSON)
+            try {
+              const parsed = JSON.parse(p.dias_atendimento as unknown as string);
+              if (Array.isArray(parsed)) {
+                diasAtendimento = parsed;
+              }
+            } catch (e) {
+              console.error("Erro ao fazer parse de dias_atendimento:", e);
+            }
+          }
+        } catch (e) {
+          console.error("Erro ao processar dias_atendimento:", e);
+        }
       }
     }
     
-    console.log("Processed dias_atendimento for form:", dias_atendimento);
+    console.log("Dias de atendimento processados:", diasAtendimento);
       
     setForm({
       nome: p.nome || "",
-      dias_atendimento: dias_atendimento,
+      dias_atendimento: diasAtendimento,
       horario_inicio: p.horario_inicio || "08:00",
       horario_fim: p.horario_fim || "18:00",
     });
@@ -57,7 +74,7 @@ export function useProfessionalForm(
   };
 
   const openForCreate = () => {
-    console.log("Opening form for creating new professional");
+    console.log("Abrindo formulário para criar novo profissional");
     setForm(initialForm);
     setEditingId(null);
     setErrors({});
@@ -65,7 +82,7 @@ export function useProfessionalForm(
   };
 
   const closeDialog = () => {
-    console.log("Closing professional form dialog");
+    console.log("Fechando diálogo de formulário");
     setOpen(false);
     setForm(initialForm);
     setEditingId(null);
@@ -74,46 +91,62 @@ export function useProfessionalForm(
   };
 
   const handleChange = (field: keyof ProfessionalFormData, value: any) => {
-    console.log(`Changing field ${field} to:`, value);
+    console.log(`Alterando campo ${field} para:`, value);
     setForm((prev) => ({
       ...prev,
       [field]: value,
     }));
-    setErrors((e) => ({ ...e, [field]: undefined }));
+    // Limpa o erro quando o campo é alterado
+    if (errors[field]) {
+      setErrors((e) => ({ ...e, [field]: undefined }));
+    }
   };
 
   const toggleDay = (dia: string) => {
-    console.log("Toggling day:", dia);
+    console.log("Alternando dia:", dia);
     setForm((prev) => {
-      // Ensure dias_atendimento is always an array
-      const currentDias = Array.isArray(prev.dias_atendimento) ? prev.dias_atendimento : [];
+      // Garantir que dias_atendimento seja sempre um array
+      const currentDias = Array.isArray(prev.dias_atendimento) ? [...prev.dias_atendimento] : [];
       
-      const dias = currentDias.includes(dia)
+      const newDias = currentDias.includes(dia)
         ? currentDias.filter((d) => d !== dia)
         : [...currentDias, dia];
       
-      console.log("New dias_atendimento:", dias);
-      return { ...prev, dias_atendimento: dias };
+      console.log("Novos dias de atendimento:", newDias);
+      return { ...prev, dias_atendimento: newDias };
     });
   };
 
   const validate = () => {
     const errs: Record<string, string> = {};
-    if (!form.nome.trim()) errs.nome = "O nome é obrigatório";
     
-    // Ensure we're validating an array
-    const dias = Array.isArray(form.dias_atendimento) ? form.dias_atendimento : [];
-    if (dias.length < 1)
-      errs.dias_atendimento = "Escolha pelo menos um dia";
+    // Validação do nome
+    if (!form.nome.trim()) {
+      errs.nome = "O nome é obrigatório";
+    }
+    
+    // Validação dos dias de atendimento
+    if (!Array.isArray(form.dias_atendimento) || form.dias_atendimento.length === 0) {
+      errs.dias_atendimento = "Selecione pelo menos um dia de atendimento";
+    }
       
-    if (!form.horario_inicio) errs.horario_inicio = "Horário obrigatório";
-    if (!form.horario_fim) errs.horario_fim = "Horário obrigatório";
-
-    const inicioHora = parseInt(form.horario_inicio.split(":")[0]);
-    const fimHora = parseInt(form.horario_fim.split(":")[0]);
+    // Validação dos horários
+    if (!form.horario_inicio) {
+      errs.horario_inicio = "Horário de início obrigatório";
+    }
     
-    if (fimHora <= inicioHora) {
-      errs.horario_fim = "Horário final deve ser após o início";
+    if (!form.horario_fim) {
+      errs.horario_fim = "Horário de término obrigatório";
+    }
+
+    // Verificar se o horário final é após o inicial
+    if (form.horario_inicio && form.horario_fim) {
+      const inicioHora = parseInt(form.horario_inicio.split(":")[0]);
+      const fimHora = parseInt(form.horario_fim.split(":")[0]);
+      
+      if (fimHora <= inicioHora) {
+        errs.horario_fim = "Horário final deve ser após o horário inicial";
+      }
     }
     
     setErrors(errs);
@@ -122,31 +155,33 @@ export function useProfessionalForm(
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Submitting form with data:", form);
-    console.log("Editing ID:", editingId);
+    console.log("Enviando formulário com dados:", form);
+    console.log("ID para edição:", editingId);
     
     if (!validate()) {
-      console.log("Form validation failed. Errors:", errors);
+      console.log("Validação do formulário falhou. Erros:", errors);
       return;
     }
     
-    // Ensure dias_atendimento is an array before submission
-    const dias_atendimento = Array.isArray(form.dias_atendimento) ? form.dias_atendimento : [];
+    // Garantir que dias_atendimento é um array antes do envio
+    const diasAtendimento = Array.isArray(form.dias_atendimento) ? 
+      form.dias_atendimento : 
+      [];
     
-    // Log the data being submitted
+    // Log dos dados sendo enviados
     const submissionData = {
       nome: form.nome,
-      dias_atendimento: dias_atendimento,
+      dias_atendimento: diasAtendimento,
       horario_inicio: form.horario_inicio,
       horario_fim: form.horario_fim,
     };
     
-    console.log("Submitting validated data:", submissionData);
+    console.log("Enviando dados validados:", submissionData);
     
     onSubmit(
       {
         ...form, 
-        dias_atendimento: dias_atendimento
+        dias_atendimento: diasAtendimento
       }, 
       editingId || undefined
     );

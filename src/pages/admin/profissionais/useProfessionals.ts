@@ -4,43 +4,52 @@ import { Professional } from "@/lib/supabase";
 import { validateProfessionalForm } from "./professionalUtils";
 import { useProfessionalDialog } from "./hooks/useProfessionalDialog";
 import { useProfessionalsCRUD } from "./hooks/useProfessionalsCRUD";
+import { useState } from "react";
 
 export const useProfessionals = () => {
   const { toast } = useToast();
   const dialog = useProfessionalDialog();
+  const [isLoading, setIsLoading] = useState(false);
 
   const crud = useProfessionalsCRUD({
     setIsDialogOpen: dialog.setIsDialogOpen,
     setIsDeleteDialogOpen: dialog.setIsDeleteDialogOpen,
     resetForm: dialog.resetForm,
     setCurrentProfessional: dialog.setCurrentProfessional,
-    toast: { toast },
+    toast,
+    setIsLoading,
   });
 
   // Form handlers
   const handleEdit = (professional: Professional) => {
-    console.log("Editing professional:", professional);
+    console.log("Editando profissional:", professional);
     
-    // Ensure dias_atendimento is always an array of strings
+    // Garantir que dias_atendimento seja sempre um array de strings
     let diasAtendimento: string[] = [];
     
     if (professional.dias_atendimento) {
       if (Array.isArray(professional.dias_atendimento)) {
         diasAtendimento = professional.dias_atendimento;
       } else if (typeof professional.dias_atendimento === 'object') {
-        // Handle case where dias_atendimento might be an object
-        const diasObj = professional.dias_atendimento as unknown as Record<string, boolean>;
-        diasAtendimento = Object.entries(diasObj)
-          .filter(([_, checked]) => checked)
-          .map(([dia]) => dia);
+        // Trata caso onde dias_atendimento é um objeto
+        try {
+          const diasObj = professional.dias_atendimento as unknown as Record<string, boolean>;
+          diasAtendimento = Object.entries(diasObj)
+            .filter(([_, checked]) => checked)
+            .map(([dia]) => dia);
+        } catch (e) {
+          console.error("Erro ao processar dias_atendimento como objeto:", e);
+        }
+      } else {
+        console.warn("Formato inesperado para dias_atendimento:", professional.dias_atendimento);
       }
     }
     
-    console.log("Processed dias_atendimento:", diasAtendimento);
+    console.log("Dias de atendimento processados para edição:", diasAtendimento);
     
     dialog.setCurrentProfessional(professional);
     dialog.setFormData({
-      nome: professional.nome,
+      nome: professional.nome || "",
       dias_atendimento: diasAtendimento,
       horario_inicio: professional.horario_inicio || "08:00",
       horario_fim: professional.horario_fim || "18:00",
@@ -56,23 +65,23 @@ export const useProfessionals = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Submitting form with data:", dialog.formData);
+    console.log("Enviando formulário com dados:", dialog.formData);
     
-    // Validate form data
+    // Validar dados do formulário
     const errors = validateProfessionalForm(dialog.formData);
     dialog.setErrors(errors);
     
     if (Object.keys(errors).length > 0) {
-      console.log("Form validation failed. Errors:", errors);
+      console.log("Validação do formulário falhou. Erros:", errors);
       return;
     }
 
-    // Make sure dias_atendimento is always an array of strings
+    // Garantir que dias_atendimento seja sempre um array de strings
     const dias_atendimento = Array.isArray(dialog.formData.dias_atendimento) 
       ? dialog.formData.dias_atendimento 
       : [];
       
-    // Validate that at least one day is selected
+    // Validar que pelo menos um dia está selecionado
     if (dias_atendimento.length === 0) {
       dialog.setErrors({
         ...dialog.errors,
@@ -88,10 +97,11 @@ export const useProfessionals = () => {
       horario_fim: dialog.formData.horario_fim,
     };
     
-    console.log("Submitting professional data:", professionalData);
-    console.log("Is editing:", dialog.isEditing);
-    console.log("Current professional:", dialog.currentProfessional);
+    console.log("Enviando dados do profissional:", professionalData);
+    console.log("Está editando:", dialog.isEditing);
+    console.log("Profissional atual:", dialog.currentProfessional);
 
+    setIsLoading(true);
     if (dialog.isEditing && dialog.currentProfessional) {
       crud.updateProfessionalMutation.mutate({
         id: dialog.currentProfessional.id,
@@ -104,7 +114,7 @@ export const useProfessionals = () => {
 
   return {
     professionals: crud.professionals,
-    isLoading: crud.isLoading,
+    isLoading: crud.isLoading || isLoading,
     isDialogOpen: dialog.isDialogOpen,
     setIsDialogOpen: dialog.setIsDialogOpen,
     isDeleteDialogOpen: dialog.isDeleteDialogOpen,

@@ -16,6 +16,7 @@ export function useProfessionalDialog() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const resetForm = () => {
+    console.log("Resetando formulário");
     setFormData({
       nome: "",
       dias_atendimento: [],
@@ -28,23 +29,30 @@ export function useProfessionalDialog() {
   };
 
   const toggleDay = (day: string) => {
+    console.log("Alternando dia:", day);
     setFormData((prev) => {
-      const days = [...prev.dias_atendimento];
-      if (days.includes(day)) {
-        return {
-          ...prev,
-          dias_atendimento: days.filter((d) => d !== day),
-        };
-      } else {
-        return {
-          ...prev,
-          dias_atendimento: [...days, day],
-        };
-      }
+      // Garantir que dias_atendimento seja sempre um array
+      const days = Array.isArray(prev.dias_atendimento) ? [...prev.dias_atendimento] : [];
+      
+      const newDays = days.includes(day) 
+        ? days.filter((d) => d !== day) 
+        : [...days, day];
+      
+      console.log("Novos dias de atendimento:", newDays);
+      return {
+        ...prev,
+        dias_atendimento: newDays,
+      };
     });
+    
+    // Limpa o erro de dias_atendimento quando um dia é alterado
+    if (errors.dias_atendimento) {
+      setErrors((prev) => ({ ...prev, dias_atendimento: undefined }));
+    }
   };
 
   const openNewProfessionalDialog = () => {
+    console.log("Abrindo diálogo para novo profissional");
     resetForm();
     setIsDialogOpen(true);
   };

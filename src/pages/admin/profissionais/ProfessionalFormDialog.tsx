@@ -18,7 +18,7 @@ const DIAS_SEMANA = [
   { id: "sabado", label: "Sábado" },
 ];
 
-// Generate hours from 00:00 to 23:00
+// Gera horários de 00:00 a 23:00
 const HORARIOS = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, "0")}:00`);
 
 interface Props {
@@ -35,18 +35,20 @@ interface Props {
 const ProfessionalFormDialog = ({
   open, isEditing, form, errors, onChange, onToggleDay, onClose, onSubmit
 }: Props) => {
-  console.log("ProfessionalFormDialog rendered with form:", form);
-  console.log("Selected dias_atendimento:", form.dias_atendimento);
+  console.log("ProfessionalFormDialog renderizado com formulário:", form);
+  console.log("Dias de atendimento selecionados:", form.dias_atendimento);
   
   return (
-    <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      if (!isOpen) onClose();
+    }}>
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Editar Profissional" : "Nova Profissional"}
+            {isEditing ? "Editar Profissional" : "Novo Profissional"}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form onSubmit={onSubmit} className="space-y-4 py-2">
           <div>
             <Label htmlFor="nome">Nome</Label>
             <Input
@@ -54,13 +56,14 @@ const ProfessionalFormDialog = ({
               value={form.nome}
               onChange={e => onChange("nome", e.target.value)}
               className={errors.nome ? "border-red-500" : ""}
-              required
+              placeholder="Nome do profissional"
             />
-            {errors.nome && <p className="text-xs text-destructive">{errors.nome}</p>}
+            {errors.nome && <p className="text-xs text-destructive mt-1">{errors.nome}</p>}
           </div>
+          
           <div>
-            <Label>Dias de Atendimento</Label>
-            <div className="flex flex-wrap gap-2">
+            <Label className="mb-2 block">Dias de Atendimento</Label>
+            <div className="grid grid-cols-2 gap-2">
               {DIAS_SEMANA.map(dia => (
                 <div key={dia.id} className="flex items-center gap-1">
                   <Checkbox
@@ -72,47 +75,67 @@ const ProfessionalFormDialog = ({
                 </div>
               ))}
             </div>
-            {errors.dias_atendimento && <p className="text-xs text-destructive">{errors.dias_atendimento}</p>}
+            {errors.dias_atendimento && <p className="text-xs text-destructive mt-1">{errors.dias_atendimento}</p>}
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Hora Início</Label>
-              <Select value={form.horario_inicio} onValueChange={v => onChange("horario_inicio", v)}>
-                <SelectTrigger>
+              <Select 
+                value={form.horario_inicio} 
+                onValueChange={v => onChange("horario_inicio", v)}
+              >
+                <SelectTrigger className={errors.horario_inicio ? "border-red-500" : ""}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {HORARIOS.map(hora => (
-                    <SelectItem key={hora} value={hora}>
+                    <SelectItem key={`inicio-${hora}`} value={hora}>
                       {hora}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {errors.horario_inicio && <p className="text-xs text-destructive">{errors.horario_inicio}</p>}
+              {errors.horario_inicio && <p className="text-xs text-destructive mt-1">{errors.horario_inicio}</p>}
             </div>
+            
             <div>
               <Label>Hora Fim</Label>
-              <Select value={form.horario_fim} onValueChange={v => onChange("horario_fim", v)}>
-                <SelectTrigger>
+              <Select 
+                value={form.horario_fim} 
+                onValueChange={v => onChange("horario_fim", v)}
+              >
+                <SelectTrigger className={errors.horario_fim ? "border-red-500" : ""}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {HORARIOS.filter(h => parseInt(h.split(":")[0]) > parseInt(form.horario_inicio.split(":")[0])).map(hora => (
-                    <SelectItem key={hora} value={hora}>
+                  {HORARIOS.filter(h => {
+                    const horaInicio = parseInt(form.horario_inicio.split(":")[0]);
+                    const hora = parseInt(h.split(":")[0]);
+                    return hora > horaInicio;
+                  }).map(hora => (
+                    <SelectItem key={`fim-${hora}`} value={hora}>
                       {hora}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {errors.horario_fim && <p className="text-xs text-destructive">{errors.horario_fim}</p>}
+              {errors.horario_fim && <p className="text-xs text-destructive mt-1">{errors.horario_fim}</p>}
             </div>
           </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+          
+          <DialogFooter className="pt-4">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={onClose}
+              className="mr-2"
+            >
               Cancelar
             </Button>
-            <Button type="submit">{isEditing ? "Salvar" : "Cadastrar"}</Button>
+            <Button type="submit">
+              {isEditing ? "Salvar" : "Cadastrar"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

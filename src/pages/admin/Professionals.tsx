@@ -2,118 +2,22 @@
 import { Plus } from "lucide-react";
 import ProfessionalTable from "./components/ProfessionalTable";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase, Professional } from "@/lib/supabase";
-import React, { useState } from "react";
 import ProfessionalFormDialog from "./profissionais/ProfessionalFormDialog";
 import ProfessionalDeleteDialog from "./profissionais/ProfessionalDeleteDialog";
 import { Button } from "@/components/ui/button";
-import { useProfessionalForm } from "./profissionais/hooks/useProfessionalForm";
+import { useProfessionals } from "./profissionais/useProfessionals";
 
 const Professionals = () => {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [professionalToDelete, setProfessionalToDelete] = useState<Professional | null>(null);
-
-  // Buscar todos os profissionais sem verificar salão específico
-  const { data: professionals, isLoading } = useQuery({
-    queryKey: ["professionals"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profissionais")
-        .select("*");
-      if (error) throw error;
-      return data as Professional[];
-    },
-  });
-
-  const createProfessionalMutation = useMutation({
-    mutationFn: async (data: Omit<Professional, "id" | "created_at">) => {
-      const { data: result, error } = await supabase
-        .from("profissionais")
-        .insert({ ...data })
-        .select()
-        .single();
-      if (error) throw error;
-      return result;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["professionals"] });
-      toast({ title: "Profissional cadastrada" });
-    },
-    onError: (error) => {
-      toast({
-        title: "Erro ao cadastrar",
-        description: String(error),
-        variant: "destructive",
-      });
-    },
-  });
-
-  const updateProfessionalMutation = useMutation({
-    mutationFn: async ({ id, ...data }: Partial<Professional> & { id: string }) => {
-      const { data: result, error } = await supabase
-        .from("profissionais")
-        .update({ ...data })
-        .eq("id", id)
-        .select()
-        .single();
-      if (error) throw error;
-      return result;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["professionals"] });
-      toast({ title: "Profissional atualizada" });
-    },
-    onError: (error) => {
-      toast({
-        title: "Erro ao atualizar",
-        description: String(error),
-        variant: "destructive",
-      });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("profissionais").delete()
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["professionals"] });
-      toast({ title: "Profissional excluída" });
-      setDeleteOpen(false);
-      setProfessionalToDelete(null);
-    },
-    onError: (error) => {
-      toast({
-        title: "Erro ao excluir",
-        description: String(error),
-        variant: "destructive",
-      });
-    },
-  });
-
-  const professionalForm = useProfessionalForm(
-    (data, idEdit) => {
-      if (idEdit) {
-        updateProfessionalMutation.mutate({ id: idEdit, ...data });
-      } else {
-        createProfessionalMutation.mutate(data);
-      }
-    },
-    () => {}
-  );
-
-  function handleDelete(prof: Professional) {
-    setProfessionalToDelete(prof);
-    setDeleteOpen(true);
-  }
+  const professionalState = useProfessionals();
 
   // Função para exibir abreviatura dos dias de atendimento
   const formatDiasAtendimento = (dias: string[]) => {
+    if (!Array.isArray(dias)) {
+      console.warn("dias_atendimento não é um array:", dias);
+      return "Formato inválido";
+    }
+    
     const abrev: Record<string, string> = {
       segunda: "Seg",
       terca: "Ter",
@@ -123,6 +27,7 @@ const Professionals = () => {
       sabado: "Sáb",
       domingo: "Dom",
     };
+    
     if (!dias || dias.length === 0) return "Sem dias definidos";
     if (dias.length === 7) return "Todos os dias";
     return dias.map((dia) => abrev[dia] || dia).join(", ");
@@ -137,39 +42,50 @@ const Professionals = () => {
             Gerencie os profissionais do salão
           </p>
         </div>
-        <Button onClick={professionalForm.openForCreate} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" /> Nova Profissional
+        <Button 
+          onClick={professionalState.openNewProfessionalDialog} 
+          className="flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" /> Novo Profissional
         </Button>
       </div>
+      
       <div className="bg-white rounded-lg shadow">
         <ProfessionalTable
-          professionals={professionals || []}
-          isLoading={isLoading}
-          onEdit={p => professionalForm.openForEdit(p)}
-          onDelete={handleDelete}
+          professionals={professionalState.professionals || []}
+          isLoading={professionalState.isLoading}
+          onEdit={professionalState.handleEdit}
+          onDelete={professionalState.handleDelete}
           formatDiasAtendimento={formatDiasAtendimento}
-          onAddProfessional={professionalForm.openForCreate}
+          onAddProfessional={professionalState.openNewProfessionalDialog}
         />
       </div>
 
       <ProfessionalFormDialog
-        open={professionalForm.open}
-        isEditing={!!professionalForm.editingId}
-        form={professionalForm.form}
-        errors={professionalForm.errors}
-        onChange={professionalForm.handleChange}
-        onToggleDay={professionalForm.toggleDay}
-        onClose={professionalForm.closeDialog}
-        onSubmit={professionalForm.handleSubmit}
+        open={professionalState.isDialogOpen}
+        isEditing={professionalState.isEditing}
+        form={professionalState.formData}
+        errors={professionalState.errors}
+        onChange={(field, value) => 
+          professionalState.setFormData(prev => ({ ...prev, [field]: value }))
+        }
+        onToggleDay={professionalState.toggleDay}
+        onClose={() => {
+          professionalState.setIsDialogOpen(false);
+          professionalState.resetForm();
+        }}
+        onSubmit={professionalState.handleSubmit}
       />
 
       <ProfessionalDeleteDialog
-        open={deleteOpen}
-        professional={professionalToDelete}
-        onCancel={() => setDeleteOpen(false)}
+        open={professionalState.isDeleteDialogOpen}
+        professional={professionalState.currentProfessional}
+        onCancel={() => professionalState.setIsDeleteDialogOpen(false)}
         onDelete={() => {
-          if (professionalToDelete) {
-            deleteMutation.mutate(professionalToDelete.id);
+          if (professionalState.currentProfessional) {
+            professionalState.deleteProfessionalMutation.mutate(
+              professionalState.currentProfessional.id
+            );
           }
         }}
       />
