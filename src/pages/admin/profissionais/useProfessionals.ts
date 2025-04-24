@@ -12,7 +12,7 @@ interface UseProfessionalsProps {
 }
 
 export const useProfessionals = ({ page, pageSize }: UseProfessionalsProps) => {
-  const toast = useToast();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   
   const dialogState = useDialogState();
