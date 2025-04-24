@@ -1,7 +1,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, Professional } from "@/lib/supabase";
-import { Toast } from "@/hooks/use-toast";
+import { ToastProps } from "@/components/ui/toast";
 
 interface UseProfessionalsCRUDProps {
   setIsDialogOpen: (isOpen: boolean) => void;
@@ -9,7 +9,7 @@ interface UseProfessionalsCRUDProps {
   resetForm: () => void;
   setCurrentProfessional: (professional: Professional | null) => void;
   toast: {
-    toast: (props: Toast) => void;
+    toast: (props: ToastProps) => void;
   };
 }
 

@@ -14,7 +14,7 @@ export const useProfessionals = () => {
     setIsDeleteDialogOpen: dialog.setIsDeleteDialogOpen,
     resetForm: dialog.resetForm,
     setCurrentProfessional: dialog.setCurrentProfessional,
-    toast,
+    toast: { toast },
   });
 
   // Form handlers
