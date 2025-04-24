@@ -48,7 +48,7 @@ export const useProfessionals = () => {
       return;
     }
 
-    // Ensure dias_atendimento is an array of strings
+    // Ensure dias_atendimento is properly formatted as an array of strings
     const dias_atendimento = Array.isArray(dialog.formData.dias_atendimento) 
       ? dialog.formData.dias_atendimento 
       : [];

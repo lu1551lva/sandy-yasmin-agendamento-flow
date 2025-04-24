@@ -1,15 +1,17 @@
 
-import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, Professional } from "@/lib/supabase";
+import { Toast } from "@/hooks/use-toast";
 
-type UseProfessionalsCRUDProps = {
-  setIsDialogOpen: (open: boolean) => void;
-  setIsDeleteDialogOpen: (open: boolean) => void;
+interface UseProfessionalsCRUDProps {
+  setIsDialogOpen: (isOpen: boolean) => void;
+  setIsDeleteDialogOpen: (isOpen: boolean) => void;
   resetForm: () => void;
   setCurrentProfessional: (professional: Professional | null) => void;
-  toast: any;
-};
+  toast: {
+    toast: (props: Toast) => void;
+  };
+}
 
 export function useProfessionalsCRUD({
   setIsDialogOpen,
@@ -19,157 +21,168 @@ export function useProfessionalsCRUD({
   toast,
 }: UseProfessionalsCRUDProps) {
   const queryClient = useQueryClient();
-  const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch all professionals
-  const { data: professionals = [] } = useQuery({
+  // Query to fetch professionals
+  const {
+    data: professionals = [],
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["professionals"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profissionais")
-        .select("*")
-        .order("created_at", { ascending: false });
-
+      const { data, error } = await supabase.from("profissionais").select("*");
+      
       if (error) {
         console.error("Error fetching professionals:", error);
         throw error;
       }
-
+      
       return data as Professional[];
     },
   });
 
-  // Create new professional
+  // Mutation to create a new professional
   const createProfessionalMutation = useMutation({
-    mutationFn: async (professional: Omit<Professional, "id" | "created_at">) => {
-      console.log("Creating professional with data:", professional);
-      const { data, error } = await supabase
-        .from("profissionais")
-        .insert(professional)
-        .select()
-        .single();
-
-      if (error) {
-        console.error("Error creating professional:", error);
+    mutationFn: async (professionalData: Omit<Professional, "id" | "created_at">) => {
+      try {
+        // Ensure dias_atendimento is an array
+        if (professionalData.dias_atendimento && typeof professionalData.dias_atendimento === 'object' && !Array.isArray(professionalData.dias_atendimento)) {
+          const diasArray = Object.entries(professionalData.dias_atendimento)
+            .filter(([_, checked]) => checked)
+            .map(([dia]) => dia);
+          
+          professionalData = {
+            ...professionalData,
+            dias_atendimento: diasArray,
+          };
+        }
+        
+        console.log("Creating professional with data:", professionalData);
+        
+        const { data, error } = await supabase
+          .from("profissionais")
+          .insert(professionalData)
+          .select()
+          .single();
+        
+        if (error) {
+          console.error("Error creating professional:", error);
+          throw error;
+        }
+        
+        return data;
+      } catch (error: any) {
+        console.error("Error in createProfessionalMutation:", error);
         throw error;
       }
-
-      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["professionals"] });
-      toast({ title: "Profissional cadastrada com sucesso" });
       setIsDialogOpen(false);
       resetForm();
+      toast.toast({
+        title: "Profissional criado com sucesso",
+      });
     },
-    onError: (error) => {
-      console.error("Create professional error:", error);
-      let errorMessage = "Erro ao cadastrar profissional";
-      
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      } else if (typeof error === 'object' && error !== null) {
-        errorMessage = JSON.stringify(error);
-      }
-      
-      toast({
-        title: "Erro ao cadastrar",
-        description: errorMessage,
+    onError: (error: any) => {
+      console.error("Error details:", error);
+      toast.toast({
+        title: "Erro ao criar profissional",
+        description: error.message || JSON.stringify(error),
         variant: "destructive",
       });
     },
   });
 
-  // Update professional
+  // Mutation to update a professional
   const updateProfessionalMutation = useMutation({
-    mutationFn: async ({
-      id,
-      professional,
-    }: {
-      id: string;
-      professional: Partial<Professional>;
-    }) => {
-      console.log("Updating professional with ID:", id);
-      console.log("Update data:", professional);
-      
-      // Ensure dias_atendimento is an array of strings
-      if (professional.dias_atendimento && !Array.isArray(professional.dias_atendimento)) {
-        professional.dias_atendimento = Object.entries(professional.dias_atendimento)
-          .filter(([_, checked]) => checked)
-          .map(([day]) => day);
-      }
-      
-      const { data, error } = await supabase
-        .from("profissionais")
-        .update(professional)
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) {
-        console.error("Error updating professional:", error);
+    mutationFn: async ({ id, professional }: { id: string; professional: Partial<Professional> }) => {
+      try {
+        // Ensure dias_atendimento is an array
+        if (professional.dias_atendimento && typeof professional.dias_atendimento === 'object' && !Array.isArray(professional.dias_atendimento)) {
+          const diasArray = Object.entries(professional.dias_atendimento)
+            .filter(([_, checked]) => checked)
+            .map(([dia]) => dia);
+          
+          professional = {
+            ...professional,
+            dias_atendimento: diasArray,
+          };
+        }
+        
+        console.log("Updating professional with data:", { id, professional });
+        
+        const { data, error } = await supabase
+          .from("profissionais")
+          .update(professional)
+          .eq("id", id)
+          .select()
+          .single();
+        
+        if (error) {
+          console.error("Error updating professional:", error);
+          throw error;
+        }
+        
+        return data;
+      } catch (error: any) {
+        console.error("Error in updateProfessionalMutation:", error);
         throw error;
       }
-
-      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["professionals"] });
-      toast({ title: "Profissional atualizada com sucesso" });
       setIsDialogOpen(false);
       resetForm();
       setCurrentProfessional(null);
+      toast.toast({
+        title: "Profissional atualizado com sucesso",
+      });
     },
-    onError: (error) => {
-      console.error("Update professional error:", error);
-      let errorMessage = "Erro ao atualizar profissional";
-      
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      } else if (typeof error === 'object' && error !== null) {
-        errorMessage = JSON.stringify(error);
-      }
-      
-      toast({
+    onError: (error: any) => {
+      console.error("Error details:", error);
+      toast.toast({
         title: "Erro ao atualizar",
-        description: errorMessage,
+        description: error.message || JSON.stringify(error),
         variant: "destructive",
       });
     },
   });
 
-  // Delete professional
+  // Mutation to delete a professional
   const deleteProfessionalMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("profissionais")
-        .delete()
-        .eq("id", id);
-
-      if (error) {
-        console.error("Error deleting professional:", error);
+      try {
+        console.log("Deleting professional with id:", id);
+        
+        const { error } = await supabase
+          .from("profissionais")
+          .delete()
+          .eq("id", id);
+        
+        if (error) {
+          console.error("Error deleting professional:", error);
+          throw error;
+        }
+        
+        return id;
+      } catch (error: any) {
+        console.error("Error in deleteProfessionalMutation:", error);
         throw error;
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["professionals"] });
-      toast({ title: "Profissional excluída com sucesso" });
       setIsDeleteDialogOpen(false);
-      setCurrentProfessional(null);
+      toast.toast({
+        title: "Profissional excluído com sucesso",
+      });
     },
-    onError: (error) => {
-      console.error("Delete professional error:", error);
-      let errorMessage = "Erro ao excluir profissional";
-      
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      } else if (typeof error === 'object' && error !== null) {
-        errorMessage = JSON.stringify(error);
-      }
-      
-      toast({
+    onError: (error: any) => {
+      console.error("Error details:", error);
+      toast.toast({
         title: "Erro ao excluir",
-        description: errorMessage,
+        description: error.message || JSON.stringify(error),
         variant: "destructive",
       });
     },
@@ -178,6 +191,7 @@ export function useProfessionalsCRUD({
   return {
     professionals,
     isLoading,
+    error,
     createProfessionalMutation,
     updateProfessionalMutation,
     deleteProfessionalMutation,

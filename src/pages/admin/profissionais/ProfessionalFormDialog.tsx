@@ -18,6 +18,7 @@ const DIAS_SEMANA = [
   { id: "sabado", label: "Sábado" },
 ];
 
+// Generate hours from 00:00 to 23:00
 const HORARIOS = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, "0")}:00`);
 
 interface Props {
@@ -64,7 +65,7 @@ const ProfessionalFormDialog = ({
                 <div key={dia.id} className="flex items-center gap-1">
                   <Checkbox
                     id={dia.id}
-                    checked={form.dias_atendimento.includes(dia.id)}
+                    checked={Array.isArray(form.dias_atendimento) && form.dias_atendimento.includes(dia.id)}
                     onCheckedChange={() => onToggleDay(dia.id)}
                   />
                   <label htmlFor={dia.id} className="text-sm cursor-pointer">{dia.label}</label>
