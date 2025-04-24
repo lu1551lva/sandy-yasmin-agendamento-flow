@@ -66,9 +66,7 @@ const Professionals = () => {
         isEditing={professionalState.isEditing}
         form={professionalState.formData}
         errors={professionalState.errors}
-        onChange={(field, value) => 
-          professionalState.setFormData(prev => ({ ...prev, [field]: value }))
-        }
+        onChange={professionalState.handleChange}
         onToggleDay={professionalState.toggleDay}
         onClose={() => {
           professionalState.setIsDialogOpen(false);

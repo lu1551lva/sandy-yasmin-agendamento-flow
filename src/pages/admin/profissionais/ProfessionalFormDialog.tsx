@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { ProfessionalFormData } from "./hooks/useProfessionalForm";
+import type { ProfessionalFormData } from "./types/professional-state";
 
 const DIAS_SEMANA = [
   { id: "domingo", label: "Domingo" },

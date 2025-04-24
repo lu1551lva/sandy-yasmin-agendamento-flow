@@ -7,7 +7,7 @@ import { useFormHandlers } from "./hooks/useFormHandlers";
 import { Professional } from "@/lib/supabase";
 
 export const useProfessionals = () => {
-  const { toast } = useToast();
+  const toast = useToast();
   const [isLoading, setIsLoading] = useState(false);
   
   const dialogState = useDialogState();
