@@ -5,32 +5,22 @@ import { supabase } from "@/lib/supabase";
 interface UseFetchProfessionalsProps {
   page: number;
   pageSize: number;
-  salaoId?: string | null;
 }
 
 export function useFetchProfessionals({ 
   page, 
-  pageSize,
-  salaoId
+  pageSize
 }: UseFetchProfessionalsProps) {
   return useQuery({
-    queryKey: ["professionals", page, pageSize, salaoId],
+    queryKey: ["professionals", page, pageSize],
     queryFn: async () => {
-      console.log("Fetching professionals for salon:", salaoId);
+      console.log("Fetching professionals");
       const startIndex = (page - 1) * pageSize;
       
-      // Build query with conditional filters
-      let query = supabase
+      // Build query without salon filter since this is single-tenant now
+      const { data, error, count } = await supabase
         .from("profissionais")
-        .select("*", { count: "exact" });
-        
-      // Add salon filter if salaoId is available
-      if (salaoId) {
-        query = query.eq("salao_id", salaoId);
-      }
-      
-      // Execute query with pagination
-      const { data, error, count } = await query
+        .select("*", { count: "exact" })
         .range(startIndex, startIndex + pageSize - 1)
         .order("nome", { ascending: true });
 

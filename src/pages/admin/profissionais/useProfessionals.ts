@@ -1,3 +1,4 @@
+
 import { useToast } from "@/hooks/use-toast";
 import { useProfessionalsCRUD } from "./hooks/useProfessionalsCRUD";
 import { useDialogState } from "./hooks/useDialogState";
@@ -5,8 +6,6 @@ import { useFormHandlers } from "./hooks/useFormHandlers";
 import { useLoading } from "./hooks/useLoading";
 import { useHandleProfessional } from "./hooks/useHandleProfessional";
 import { useSubmitProfessional } from "./hooks/useSubmitProfessional";
-import { supabase } from "@/lib/supabase";
-import { useEffect, useState } from "react";
 
 interface UseProfessionalsProps {
   page: number;
@@ -17,18 +16,6 @@ export const useProfessionals = ({ page, pageSize }: UseProfessionalsProps) => {
   const toastHook = useToast();
   const { isLoading, setIsLoading } = useLoading();
   const dialogState = useDialogState();
-  const [salaoId, setSalaoId] = useState<string | null>(null);
-  
-  useEffect(() => {
-    const fetchSalaoId = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session?.user?.id) {
-        setSalaoId(data.session.user.id);
-      }
-    };
-    
-    fetchSalaoId();
-  }, []);
   
   const crud = useProfessionalsCRUD({
     page,
@@ -38,8 +25,7 @@ export const useProfessionals = ({ page, pageSize }: UseProfessionalsProps) => {
     resetForm: dialogState.resetForm,
     setCurrentProfessional: dialogState.setCurrentProfessional,
     toast: toastHook,
-    setIsLoading,
-    salaoId
+    setIsLoading
   });
 
   const formHandlers = useFormHandlers({
@@ -65,8 +51,7 @@ export const useProfessionals = ({ page, pageSize }: UseProfessionalsProps) => {
     validateForm: formHandlers.validateForm,
     setIsLoading,
     createProfessionalMutation: crud.createProfessionalMutation,
-    updateProfessionalMutation: crud.updateProfessionalMutation,
-    salaoId
+    updateProfessionalMutation: crud.updateProfessionalMutation
   });
 
   return {
@@ -76,7 +61,6 @@ export const useProfessionals = ({ page, pageSize }: UseProfessionalsProps) => {
     isLoading: crud.isLoading || isLoading,
     handleDelete,
     handleSubmit,
-    openNewProfessionalDialog,
-    salaoId
+    openNewProfessionalDialog
   };
 };

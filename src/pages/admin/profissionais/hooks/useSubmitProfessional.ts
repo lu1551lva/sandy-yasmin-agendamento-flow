@@ -10,7 +10,6 @@ interface UseSubmitProfessionalProps {
   setIsLoading: (loading: boolean) => void;
   createProfessionalMutation: any;
   updateProfessionalMutation: any;
-  salaoId?: string | null;
 }
 
 export const useSubmitProfessional = ({
@@ -21,7 +20,6 @@ export const useSubmitProfessional = ({
   setIsLoading,
   createProfessionalMutation,
   updateProfessionalMutation,
-  salaoId
 }: UseSubmitProfessionalProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,14 +35,12 @@ export const useSubmitProfessional = ({
       updateProfessionalMutation.mutate({
         id: currentProfessional.id,
         professional: {
-          ...formData,
-          salao_id: currentProfessional.salao_id || salaoId
+          ...formData
         },
       });
     } else {
       createProfessionalMutation.mutate({
-        ...formData,
-        salao_id: salaoId
+        ...formData
       });
     }
   };

@@ -37,8 +37,10 @@ export function useUpdateProfessional({
         : [];
         
       const updateData = {
-        ...professional,
-        dias_atendimento: dias_atendimento
+        nome: professional.nome,
+        dias_atendimento: dias_atendimento,
+        horario_inicio: professional.horario_inicio,
+        horario_fim: professional.horario_fim
       };
       
       console.log("Dados formatados para atualização:", updateData);

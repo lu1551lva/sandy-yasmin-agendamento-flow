@@ -27,20 +27,13 @@ export function useCreateProfessional({
         ? professional.dias_atendimento 
         : [];
       
-      // Obter a sessão atual do usuário para verificar se está autenticado
-      const { data: sessionData } = await supabase.auth.getSession();
-      
-      // Verificar se o salao_id está presente ou usar o ID da sessão
-      const salaoId = professional.salao_id || sessionData?.session?.user?.id;
-      
-      console.log("Usando salao_id:", salaoId);
-      
       const { data, error } = await supabase
         .from("profissionais")
         .insert({
-          ...professional,
+          nome: professional.nome,
           dias_atendimento: dias_atendimento,
-          salao_id: salaoId // Garantir que salao_id esteja definido
+          horario_inicio: professional.horario_inicio,
+          horario_fim: professional.horario_fim
         })
         .select()
         .single();

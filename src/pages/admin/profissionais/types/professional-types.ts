@@ -9,5 +9,4 @@ export interface UseProfessionalCRUDProps {
   resetForm: () => void;
   setCurrentProfessional: (professional: Professional | null) => void;
   setIsLoading: (loading: boolean) => void;
-  salaoId?: string | null;
 }
