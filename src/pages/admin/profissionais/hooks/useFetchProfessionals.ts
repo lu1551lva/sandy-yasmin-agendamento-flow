@@ -1,47 +1,49 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { Professional, supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 interface UseFetchProfessionalsProps {
   page: number;
   pageSize: number;
+  salaoId?: string | null;
 }
 
-export interface ProfessionalsResponse {
-  data: Professional[];
-  total: number;
-}
-
-export function useFetchProfessionals({ page, pageSize }: UseFetchProfessionalsProps) {
+export function useFetchProfessionals({ 
+  page, 
+  pageSize,
+  salaoId
+}: UseFetchProfessionalsProps) {
   return useQuery({
-    queryKey: ["professionals", page, pageSize],
-    queryFn: async (): Promise<ProfessionalsResponse> => {
-      console.log("Buscando profissionais...");
+    queryKey: ["professionals", page, pageSize, salaoId],
+    queryFn: async () => {
+      console.log("Fetching professionals for salon:", salaoId);
+      const startIndex = (page - 1) * pageSize;
       
-      // Primeiro, buscar o total de registros
-      const countResponse = await supabase
+      // Build query with conditional filters
+      let query = supabase
         .from("profissionais")
-        .select("id", { count: "exact", head: true });
+        .select("*", { count: "exact" });
         
-      const total = countResponse.count || 0;
-
-      // Depois, buscar os dados paginados
-      const { data, error } = await supabase
-        .from("profissionais")
-        .select("*")
-        .order("nome")
-        .range((page - 1) * pageSize, page * pageSize - 1);
-        
-      if (error) {
-        console.error("Erro ao buscar profissionais:", error);
-        throw error;
+      // Add salon filter if salaoId is available
+      if (salaoId) {
+        query = query.eq("salao_id", salaoId);
       }
       
-      console.log("Profissionais encontrados:", data);
+      // Execute query with pagination
+      const { data, error, count } = await query
+        .range(startIndex, startIndex + pageSize - 1)
+        .order("nome", { ascending: true });
+
+      if (error) {
+        console.error("Error fetching professionals:", error);
+        throw error;
+      }
+
       return {
-        data: data as Professional[],
-        total,
+        data: data || [],
+        total: count || 0
       };
     },
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }

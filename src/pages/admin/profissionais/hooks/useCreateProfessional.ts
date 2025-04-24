@@ -1,7 +1,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Professional, supabase } from "@/lib/supabase";
-import { UseToastReturn } from "@/hooks/use-toast";
+import type { UseToastReturn } from "@/hooks/use-toast";
 
 interface CreateProfessionalOptions {
   toast: UseToastReturn;
@@ -27,11 +27,20 @@ export function useCreateProfessional({
         ? professional.dias_atendimento 
         : [];
       
+      // Obter a sessão atual do usuário para verificar se está autenticado
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      // Verificar se o salao_id está presente ou usar o ID da sessão
+      const salaoId = professional.salao_id || sessionData?.session?.user?.id;
+      
+      console.log("Usando salao_id:", salaoId);
+      
       const { data, error } = await supabase
         .from("profissionais")
         .insert({
           ...professional,
-          dias_atendimento: dias_atendimento
+          dias_atendimento: dias_atendimento,
+          salao_id: salaoId // Garantir que salao_id esteja definido
         })
         .select()
         .single();

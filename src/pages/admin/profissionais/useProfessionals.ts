@@ -1,4 +1,3 @@
-
 import { useToast } from "@/hooks/use-toast";
 import { useProfessionalsCRUD } from "./hooks/useProfessionalsCRUD";
 import { useDialogState } from "./hooks/useDialogState";
@@ -6,6 +5,8 @@ import { useFormHandlers } from "./hooks/useFormHandlers";
 import { useLoading } from "./hooks/useLoading";
 import { useHandleProfessional } from "./hooks/useHandleProfessional";
 import { useSubmitProfessional } from "./hooks/useSubmitProfessional";
+import { supabase } from "@/lib/supabase";
+import { useEffect, useState } from "react";
 
 interface UseProfessionalsProps {
   page: number;
@@ -16,6 +17,18 @@ export const useProfessionals = ({ page, pageSize }: UseProfessionalsProps) => {
   const toastHook = useToast();
   const { isLoading, setIsLoading } = useLoading();
   const dialogState = useDialogState();
+  const [salaoId, setSalaoId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const fetchSalaoId = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user?.id) {
+        setSalaoId(data.session.user.id);
+      }
+    };
+    
+    fetchSalaoId();
+  }, []);
   
   const crud = useProfessionalsCRUD({
     page,
@@ -26,6 +39,7 @@ export const useProfessionals = ({ page, pageSize }: UseProfessionalsProps) => {
     setCurrentProfessional: dialogState.setCurrentProfessional,
     toast: toastHook,
     setIsLoading,
+    salaoId
   });
 
   const formHandlers = useFormHandlers({
@@ -52,6 +66,7 @@ export const useProfessionals = ({ page, pageSize }: UseProfessionalsProps) => {
     setIsLoading,
     createProfessionalMutation: crud.createProfessionalMutation,
     updateProfessionalMutation: crud.updateProfessionalMutation,
+    salaoId
   });
 
   return {
@@ -62,5 +77,6 @@ export const useProfessionals = ({ page, pageSize }: UseProfessionalsProps) => {
     handleDelete,
     handleSubmit,
     openNewProfessionalDialog,
+    salaoId
   };
 };

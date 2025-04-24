@@ -8,6 +8,7 @@ import type { UseProfessionalCRUDProps } from "../types/professional-types";
 interface UseProfessionalsCRUDProps extends UseProfessionalCRUDProps {
   page: number;
   pageSize: number;
+  salaoId?: string | null;
 }
 
 export function useProfessionalsCRUD(props: UseProfessionalsCRUDProps) {
@@ -17,7 +18,8 @@ export function useProfessionalsCRUD(props: UseProfessionalsCRUDProps) {
     isLoading 
   } = useFetchProfessionals({
     page: props.page,
-    pageSize: props.pageSize
+    pageSize: props.pageSize,
+    salaoId: props.salaoId
   });
 
   // Create professional
