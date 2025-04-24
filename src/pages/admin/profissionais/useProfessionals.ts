@@ -19,6 +19,7 @@ export const useProfessionals = () => {
 
   // Form handlers
   const handleEdit = (professional: Professional) => {
+    console.log("Editing professional:", professional);
     dialog.setCurrentProfessional(professional);
     dialog.setFormData({
       nome: professional.nome,
@@ -37,16 +38,31 @@ export const useProfessionals = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Submitting form with data:", dialog.formData);
+    
     const errors = validateProfessionalForm(dialog.formData);
     dialog.setErrors(errors);
-    if (Object.keys(errors).length > 0) return;
+    
+    if (Object.keys(errors).length > 0) {
+      console.log("Form validation failed. Errors:", errors);
+      return;
+    }
+
+    // Ensure dias_atendimento is an array of strings
+    const dias_atendimento = Array.isArray(dialog.formData.dias_atendimento) 
+      ? dialog.formData.dias_atendimento 
+      : [];
 
     const professionalData = {
       nome: dialog.formData.nome,
-      dias_atendimento: dialog.formData.dias_atendimento,
+      dias_atendimento: dias_atendimento,
       horario_inicio: dialog.formData.horario_inicio,
       horario_fim: dialog.formData.horario_fim,
     };
+    
+    console.log("Submitting professional data:", professionalData);
+    console.log("Is editing:", dialog.isEditing);
+    console.log("Current professional:", dialog.currentProfessional);
 
     if (dialog.isEditing && dialog.currentProfessional) {
       crud.updateProfessionalMutation.mutate({
