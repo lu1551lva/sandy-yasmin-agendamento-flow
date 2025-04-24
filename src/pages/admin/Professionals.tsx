@@ -1,4 +1,3 @@
-
 import { Plus } from "lucide-react";
 import ProfessionalTable from "./components/ProfessionalTable";
 import { useToast } from "@/hooks/use-toast";
@@ -6,10 +5,16 @@ import ProfessionalFormDialog from "./profissionais/ProfessionalFormDialog";
 import ProfessionalDeleteDialog from "./profissionais/ProfessionalDeleteDialog";
 import { Button } from "@/components/ui/button";
 import { useProfessionals } from "./profissionais/useProfessionals";
+import { useState } from "react";
+
+const PAGE_SIZE = 10;
 
 const Professionals = () => {
   const { toast } = useToast();
-  const professionalState = useProfessionals();
+  const [currentPage, setCurrentPage] = useState(1);
+  const professionalState = useProfessionals({ page: currentPage, pageSize: PAGE_SIZE });
+
+  const totalPages = Math.ceil((professionalState.professionals?.length || 0) / PAGE_SIZE);
 
   // Função para exibir abreviatura dos dias de atendimento
   const formatDiasAtendimento = (dias: string[]) => {
@@ -58,6 +63,9 @@ const Professionals = () => {
           onDelete={professionalState.handleDelete}
           formatDiasAtendimento={formatDiasAtendimento}
           onAddProfessional={professionalState.openNewProfessionalDialog}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
         />
       </div>
 

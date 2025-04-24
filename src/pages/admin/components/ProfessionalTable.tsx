@@ -1,10 +1,10 @@
-
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Edit, Trash2 } from "lucide-react";
 import { Professional } from "@/lib/supabase";
 import React from "react";
 import { Badge } from "@/components/ui/badge";
+import { DataTablePagination } from "@/components/common/DataTablePagination";
 
 interface ProfessionalTableProps {
   professionals: Professional[];
@@ -13,6 +13,9 @@ interface ProfessionalTableProps {
   onDelete: (professional: Professional) => void;
   formatDiasAtendimento: (dias: string[]) => string;
   onAddProfessional: () => void;
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
 const ProfessionalTable: React.FC<ProfessionalTableProps> = ({
@@ -22,6 +25,9 @@ const ProfessionalTable: React.FC<ProfessionalTableProps> = ({
   onDelete,
   formatDiasAtendimento,
   onAddProfessional,
+  currentPage,
+  totalPages,
+  onPageChange,
 }) => {
   // Lista completa dos dias da semana para verificar disponibilidade
   const diasSemana = ["domingo", "segunda", "terca", "quarta", "quinta", "sexta", "sabado"];
@@ -45,57 +51,64 @@ const ProfessionalTable: React.FC<ProfessionalTableProps> = ({
   };
 
   return (
-    <div>
+    <div className="space-y-4">
       {isLoading ? (
         <div className="flex justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       ) : professionals && professionals.length > 0 ? (
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Dias de Atendimento</TableHead>
-                <TableHead>Horários</TableHead>
-                <TableHead className="w-[100px]">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {professionals.map((professional) => (
-                <TableRow key={professional.id}>
-                  <TableCell className="font-medium">
-                    {professional.nome}
-                  </TableCell>
-                  <TableCell>
-                    {renderDiasBadges(professional.dias_atendimento)}
-                  </TableCell>
-                  <TableCell>
-                    {professional.horario_inicio} às {professional.horario_fim}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => onEdit(professional)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => onDelete(professional)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+        <>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Dias de Atendimento</TableHead>
+                  <TableHead>Horários</TableHead>
+                  <TableHead className="w-[100px]">Ações</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {professionals.map((professional) => (
+                  <TableRow key={professional.id}>
+                    <TableCell className="font-medium">
+                      {professional.nome}
+                    </TableCell>
+                    <TableCell>
+                      {renderDiasBadges(professional.dias_atendimento)}
+                    </TableCell>
+                    <TableCell>
+                      {professional.horario_inicio} às {professional.horario_fim}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => onEdit(professional)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => onDelete(professional)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <DataTablePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={onPageChange}
+          />
+        </>
       ) : (
         <div className="text-center py-8">
           <p className="text-muted-foreground mb-4">
