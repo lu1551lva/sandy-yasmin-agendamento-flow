@@ -51,6 +51,7 @@ export function useCreateProfessional({
       queryClient.invalidateQueries({ queryKey: ["professionals"] });
       toast.toast({
         title: "Profissional cadastrado com sucesso",
+        variant: "default"
       });
       setIsDialogOpen(false);
       resetForm();

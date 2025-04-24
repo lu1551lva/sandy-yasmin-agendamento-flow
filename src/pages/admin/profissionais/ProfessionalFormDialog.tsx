@@ -26,6 +26,7 @@ interface Props {
   isEditing: boolean;
   form: ProfessionalFormData;
   errors: Record<string, string>;
+  isSubmitting?: boolean;
   onChange: (field: keyof ProfessionalFormData, value: any) => void;
   onToggleDay: (dia: string) => void;
   onClose: () => void;
@@ -33,11 +34,16 @@ interface Props {
 }
 
 const ProfessionalFormDialog = ({
-  open, isEditing, form, errors, onChange, onToggleDay, onClose, onSubmit
+  open, 
+  isEditing, 
+  form, 
+  errors, 
+  isSubmitting = false,
+  onChange, 
+  onToggleDay, 
+  onClose, 
+  onSubmit
 }: Props) => {
-  console.log("ProfessionalFormDialog renderizado com formulário:", form);
-  console.log("Dias de atendimento selecionados:", form.dias_atendimento);
-  
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
       if (!isOpen) onClose();
@@ -57,6 +63,7 @@ const ProfessionalFormDialog = ({
               onChange={e => onChange("nome", e.target.value)}
               className={errors.nome ? "border-red-500" : ""}
               placeholder="Nome do profissional"
+              disabled={isSubmitting}
             />
             {errors.nome && <p className="text-xs text-destructive mt-1">{errors.nome}</p>}
           </div>
@@ -70,6 +77,7 @@ const ProfessionalFormDialog = ({
                     id={dia.id}
                     checked={Array.isArray(form.dias_atendimento) && form.dias_atendimento.includes(dia.id)}
                     onCheckedChange={() => onToggleDay(dia.id)}
+                    disabled={isSubmitting}
                   />
                   <label htmlFor={dia.id} className="text-sm cursor-pointer">{dia.label}</label>
                 </div>
@@ -84,6 +92,7 @@ const ProfessionalFormDialog = ({
               <Select 
                 value={form.horario_inicio} 
                 onValueChange={v => onChange("horario_inicio", v)}
+                disabled={isSubmitting}
               >
                 <SelectTrigger className={errors.horario_inicio ? "border-red-500" : ""}>
                   <SelectValue />
@@ -104,6 +113,7 @@ const ProfessionalFormDialog = ({
               <Select 
                 value={form.horario_fim} 
                 onValueChange={v => onChange("horario_fim", v)}
+                disabled={isSubmitting}
               >
                 <SelectTrigger className={errors.horario_fim ? "border-red-500" : ""}>
                   <SelectValue />
@@ -130,11 +140,15 @@ const ProfessionalFormDialog = ({
               variant="outline" 
               onClick={onClose}
               className="mr-2"
+              disabled={isSubmitting}
             >
               Cancelar
             </Button>
-            <Button type="submit">
-              {isEditing ? "Salvar" : "Cadastrar"}
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Salvando..." : (isEditing ? "Salvar" : "Cadastrar")}
             </Button>
           </DialogFooter>
         </form>
