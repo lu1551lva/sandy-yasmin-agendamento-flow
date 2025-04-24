@@ -1,9 +1,11 @@
-import { useState } from "react";
+
 import { useToast } from "@/hooks/use-toast";
 import { useProfessionalsCRUD } from "./hooks/useProfessionalsCRUD";
 import { useDialogState } from "./hooks/useDialogState";
 import { useFormHandlers } from "./hooks/useFormHandlers";
-import { Professional } from "@/lib/supabase";
+import { useLoading } from "./hooks/useLoading";
+import { useHandleProfessional } from "./hooks/useHandleProfessional";
+import { useSubmitProfessional } from "./hooks/useSubmitProfessional";
 
 interface UseProfessionalsProps {
   page: number;
@@ -12,8 +14,7 @@ interface UseProfessionalsProps {
 
 export const useProfessionals = ({ page, pageSize }: UseProfessionalsProps) => {
   const { toast, dismiss } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-  
+  const { isLoading, setIsLoading } = useLoading();
   const dialogState = useDialogState();
   
   const crud = useProfessionalsCRUD({
@@ -27,31 +28,6 @@ export const useProfessionals = ({ page, pageSize }: UseProfessionalsProps) => {
     setIsLoading,
   });
 
-  const handleDelete = (professional: Professional) => {
-    dialogState.setCurrentProfessional(professional);
-    dialogState.setIsDeleteDialogOpen(true);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Enviando formulário com dados:", dialogState.formData);
-    
-    if (!formHandlers.validateForm()) {
-      return;
-    }
-
-    setIsLoading(true);
-    
-    if (dialogState.isEditing && dialogState.currentProfessional) {
-      crud.updateProfessionalMutation.mutate({
-        id: dialogState.currentProfessional.id,
-        professional: dialogState.formData,
-      });
-    } else {
-      crud.createProfessionalMutation.mutate(dialogState.formData);
-    }
-  };
-
   const formHandlers = useFormHandlers({
     formData: dialogState.formData,
     setFormData: dialogState.setFormData,
@@ -61,6 +37,23 @@ export const useProfessionals = ({ page, pageSize }: UseProfessionalsProps) => {
     setIsDialogOpen: dialogState.setIsDialogOpen,
   });
 
+  const { handleDelete, openNewProfessionalDialog } = useHandleProfessional({
+    setCurrentProfessional: dialogState.setCurrentProfessional,
+    setIsDeleteDialogOpen: dialogState.setIsDeleteDialogOpen,
+    setIsDialogOpen: dialogState.setIsDialogOpen,
+    setIsEditing: dialogState.setIsEditing,
+  });
+
+  const { handleSubmit } = useSubmitProfessional({
+    isEditing: dialogState.isEditing,
+    currentProfessional: dialogState.currentProfessional,
+    formData: dialogState.formData,
+    validateForm: formHandlers.validateForm,
+    setIsLoading,
+    createProfessionalMutation: crud.createProfessionalMutation,
+    updateProfessionalMutation: crud.updateProfessionalMutation,
+  });
+
   return {
     ...dialogState,
     ...crud,
@@ -68,5 +61,6 @@ export const useProfessionals = ({ page, pageSize }: UseProfessionalsProps) => {
     isLoading: crud.isLoading || isLoading,
     handleDelete,
     handleSubmit,
+    openNewProfessionalDialog,
   };
 };
