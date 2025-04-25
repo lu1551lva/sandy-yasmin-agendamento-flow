@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { Professional, Service } from "@/lib/supabase";
 
 interface UseTimeSlotsProps {
@@ -31,7 +32,7 @@ export const useTimeSlots = ({
       console.log("Horário fim:", professional.horario_fim);
       
       // Verificar se a data selecionada é um dia de atendimento do profissional
-      const dayName = format(date, 'EEEE', { locale: require('date-fns/locale/pt-BR') });
+      const dayName = format(date, 'EEEE', { locale: ptBR });
       
       // Mapeamento dos dias da semana para o formato usado no banco
       const dayMap: { [key: string]: string } = {
