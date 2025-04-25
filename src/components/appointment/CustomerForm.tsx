@@ -59,32 +59,7 @@ const CustomerForm = ({
     setIsCheckingClient(true);
     
     try {
-      const { data: clientsByEmail, error: emailError } = await supabase
-        .from("clientes")
-        .select("*")
-        .eq("email", data.email.trim().toLowerCase());
-      
-      if (emailError) {
-        console.error("Erro ao verificar email:", emailError);
-        toast({
-          title: "Erro na verificação",
-          description: "Ocorreu um erro ao verificar seu email. Tente novamente.",
-          variant: "destructive",
-        });
-        throw emailError;
-      }
-      
-      if (clientsByEmail && clientsByEmail.length > 0) {
-        updateAppointmentData({ client: clientsByEmail[0] });
-        toast({
-          title: "Cliente encontrado",
-          description: "Utilizaremos seus dados já cadastrados.",
-          duration: 3000,
-        });
-        nextStep();
-        return;
-      }
-      
+      // Check by phone first since this is causing the primary error
       const formattedPhone = data.telefone;
       const { data: clientsByPhone, error: phoneError } = await supabase
         .from("clientes")
@@ -103,6 +78,33 @@ const CustomerForm = ({
       
       if (clientsByPhone && clientsByPhone.length > 0) {
         updateAppointmentData({ client: clientsByPhone[0] });
+        toast({
+          title: "Cliente encontrado",
+          description: "Utilizaremos seus dados já cadastrados.",
+          duration: 3000,
+        });
+        nextStep();
+        return;
+      }
+      
+      // If not found by phone, check by email
+      const { data: clientsByEmail, error: emailError } = await supabase
+        .from("clientes")
+        .select("*")
+        .eq("email", data.email.trim().toLowerCase());
+      
+      if (emailError) {
+        console.error("Erro ao verificar email:", emailError);
+        toast({
+          title: "Erro na verificação",
+          description: "Ocorreu um erro ao verificar seu email. Tente novamente.",
+          variant: "destructive",
+        });
+        throw emailError;
+      }
+      
+      if (clientsByEmail && clientsByEmail.length > 0) {
+        updateAppointmentData({ client: clientsByEmail[0] });
         toast({
           title: "Cliente encontrado",
           description: "Utilizaremos seus dados já cadastrados.",

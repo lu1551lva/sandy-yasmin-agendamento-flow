@@ -50,6 +50,16 @@ const Confirmation = ({
       return;
     }
 
+    // Check if professional_id is null or undefined
+    if (!appointmentData.professional_id) {
+      toast({
+        title: "Profissional não selecionado",
+        description: "Por favor, selecione um profissional para o agendamento.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -57,24 +67,38 @@ const Confirmation = ({
       let clientId = appointmentData.client.id;
       
       if (!clientId) {
-        // Insert new client
-        const clientData = {
-          nome: appointmentData.client.nome,
-          telefone: appointmentData.client.telefone,
-          email: appointmentData.client.email,
-        };
-        
-        const { data: newClient, error: clientError } = await supabase
+        // Check if client exists by phone
+        const { data: existingClient, error: checkError } = await supabase
           .from("clientes")
-          .insert(clientData)
-          .select()
-          .single();
+          .select("*")
+          .eq("telefone", appointmentData.client.telefone)
+          .maybeSingle();
+          
+        if (checkError) throw checkError;
+        
+        if (existingClient) {
+          // Use existing client
+          clientId = existingClient.id;
+        } else {
+          // Insert new client
+          const clientData = {
+            nome: appointmentData.client.nome,
+            telefone: appointmentData.client.telefone,
+            email: appointmentData.client.email,
+          };
+          
+          const { data: newClient, error: clientError } = await supabase
+            .from("clientes")
+            .insert(clientData)
+            .select()
+            .single();
 
-        if (clientError) {
-          throw clientError;
+          if (clientError) {
+            throw clientError;
+          }
+
+          clientId = newClient.id;
         }
-
-        clientId = newClient.id;
       }
 
       // Create appointment data
@@ -82,10 +106,12 @@ const Confirmation = ({
         cliente_id: clientId,
         servico_id: appointmentData.service.id,
         profissional_id: appointmentData.professional_id,
-        data: appointmentData.date, // Use string directly
+        data: appointmentData.date,
         hora: appointmentData.time,
         status: "agendado",
       };
+
+      console.log("Sending appointment data:", appointmentRecord);
 
       // Insert appointment
       const { data: appointment, error: appointmentError } = await supabase

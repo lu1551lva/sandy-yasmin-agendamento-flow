@@ -64,7 +64,7 @@ const DateAndTimeSelector = ({
         toast({
           title: "Data selecionada é um feriado",
           description: "O agendamento é permitido, mas verifique o funcionamento do estabelecimento nesta data.",
-          variant: "default", // Corrected from "warning" to "default"
+          variant: "default", // Using default instead of warning which isn't a valid variant
         });
       }
       
