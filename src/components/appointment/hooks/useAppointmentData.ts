@@ -20,15 +20,18 @@ export function useAppointmentData(
   const [date, setDate] = useState<Date | undefined>(initialDate);
   const [time, setTime] = useState(initialTime || "");
   const [professionalId, setProfessionalId] = useState("");
+  const [professionalName, setProfessionalName] = useState("");
 
   const handleDateSelect = (newDate: Date | undefined) => {
     setDate(newDate);
     setProfessionalId("");
+    setProfessionalName("");
     setTime("");
   };
 
-  const handleProfessionalSelect = (id: string) => {
+  const handleProfessionalSelect = (id: string, name: string) => {
     setProfessionalId(id);
+    setProfessionalName(name);
     setTime("");
   };
 
@@ -42,6 +45,14 @@ export function useAppointmentData(
       return false;
     }
 
+    // Update the appointment data including both professional ID and name
+    updateAppointmentData({
+      date,
+      time,
+      professionalId,
+      professional_name: professionalName
+    });
+
     return true;
   };
 
@@ -49,6 +60,7 @@ export function useAppointmentData(
     date,
     time,
     professionalId,
+    professionalName,
     handleDateSelect,
     handleProfessionalSelect,
     handleTimeSelect,

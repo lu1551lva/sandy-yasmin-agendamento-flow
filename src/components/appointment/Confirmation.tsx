@@ -17,6 +17,7 @@ export interface AppointmentData {
   time: string;
   client: any;
   professional_id: string;
+  professionalId?: string; // Added for compatibility with previous data structure
   professional_name?: string;
 }
 
@@ -50,8 +51,11 @@ const Confirmation = ({
       return;
     }
 
+    // Use either the professional_id field or professionalId field
+    const professionalId = appointmentData.professional_id || appointmentData.professionalId;
+    
     // Check if professional_id is null or undefined
-    if (!appointmentData.professional_id) {
+    if (!professionalId) {
       toast({
         title: "Profissional não selecionado",
         description: "Por favor, selecione um profissional para o agendamento.",
@@ -101,11 +105,11 @@ const Confirmation = ({
         }
       }
 
-      // Create appointment data
+      // Create appointment data with explicit professional_id
       const appointmentRecord = {
         cliente_id: clientId,
         servico_id: appointmentData.service.id,
-        profissional_id: appointmentData.professional_id,
+        profissional_id: professionalId, // Use the determined professionalId
         data: appointmentData.date,
         hora: appointmentData.time,
         status: "agendado",

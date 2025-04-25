@@ -32,6 +32,7 @@ const DateAndTimeSelector = ({
     date,
     time,
     professionalId,
+    professionalName,
     handleDateSelect,
     handleProfessionalSelect,
     handleTimeSelect,
@@ -74,14 +75,15 @@ const DateAndTimeSelector = ({
     }
   };
 
+  const onProfessionalSelect = (id: string) => {
+    const professional = professionals.find(p => p.id === id);
+    if (professional) {
+      handleProfessionalSelect(id, professional.nome);
+    }
+  };
+
   const onContinue = () => {
     if (handleContinue()) {
-      updateAppointmentData({
-        date,
-        time,
-        professionalId,
-        professional_name: selectedProfessional?.nome
-      });
       nextStep();
     }
   };
@@ -110,7 +112,7 @@ const DateAndTimeSelector = ({
           error={error}
           professionals={professionals}
           selectedProfessionalId={professionalId}
-          onProfessionalSelect={handleProfessionalSelect}
+          onProfessionalSelect={onProfessionalSelect}
         />
 
         <TimeSelector

@@ -13,6 +13,7 @@ import { format } from "date-fns";
 type AppointmentData = {
   service: Service | null;
   professional_id: string | null;
+  professionalId?: string | null; // Added for compatibility
   professional_name?: string | null;
   date: Date | null;
   time: string | null;
@@ -24,6 +25,7 @@ const Appointment = () => {
   const [appointmentData, setAppointmentData] = useState<AppointmentData>({
     service: null,
     professional_id: null,
+    professionalId: null,
     professional_name: null,
     date: null,
     time: null,
@@ -48,7 +50,19 @@ const Appointment = () => {
   };
 
   const updateAppointmentData = (data: Partial<AppointmentData>) => {
-    setAppointmentData({ ...appointmentData, ...data });
+    const newData = { ...appointmentData, ...data };
+    
+    // Ensure professional_id is always set correctly
+    if (data.professionalId && !data.professional_id) {
+      newData.professional_id = data.professionalId;
+    }
+    
+    // And vice versa for backward compatibility
+    if (data.professional_id && !data.professionalId) {
+      newData.professionalId = data.professional_id;
+    }
+    
+    setAppointmentData(newData);
   };
 
   const renderStepContent = () => {
