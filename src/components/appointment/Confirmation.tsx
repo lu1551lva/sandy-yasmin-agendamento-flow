@@ -1,34 +1,11 @@
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import AppointmentSummary from "./AppointmentSummary";
+import ConfirmationComplete from "./ConfirmationComplete";
 import ConfirmationActions from "./ConfirmationActions";
-import ConfirmationSuccess from "./ConfirmationSuccess";
-import { format, parseISO } from "date-fns";
-import { parseDate } from "@/lib/dateUtils";
-
-export interface AppointmentData {
-  service: any;
-  date: string;
-  time: string;
-  client: any;
-  professional_id: string;
-  professionalId?: string; // Added for compatibility with previous data structure
-  professional_name?: string;
-}
-
-export interface ConfirmationProps {
-  appointmentData: AppointmentData;
-  isSubmitting: boolean;
-  isComplete: boolean;
-  setIsSubmitting: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsComplete: React.Dispatch<React.SetStateAction<boolean>>;
-  prevStep: () => void;
-}
+import { useConfirmation } from "./hooks/useConfirmation";
+import type { ConfirmationProps } from "./types/confirmation.types";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const Confirmation = ({
   appointmentData,
@@ -38,124 +15,18 @@ const Confirmation = ({
   setIsComplete,
   prevStep,
 }: ConfirmationProps) => {
-  const [appointmentId, setAppointmentId] = useState<string | null>(null);
-  const { toast } = useToast();
+  const { appointmentId, handleConfirmation } = useConfirmation();
 
-  const handleConfirm = async () => {
-    if (!appointmentData.service || !appointmentData.date || !appointmentData.time || !appointmentData.client) {
-      toast({
-        title: "Dados incompletos",
-        description: "Por favor, preencha todos os dados do agendamento.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Use either the professional_id field or professionalId field
-    const professionalId = appointmentData.professional_id || appointmentData.professionalId;
-    
-    // Check if professional_id is null or undefined
-    if (!professionalId) {
-      toast({
-        title: "Profissional não selecionado",
-        description: "Por favor, selecione um profissional para o agendamento.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      // First check if we need to create a new client or use an existing one
-      let clientId = appointmentData.client.id;
-      
-      if (!clientId) {
-        // Check if client exists by phone
-        const { data: existingClient, error: checkError } = await supabase
-          .from("clientes")
-          .select("*")
-          .eq("telefone", appointmentData.client.telefone)
-          .maybeSingle();
-          
-        if (checkError) throw checkError;
-        
-        if (existingClient) {
-          // Use existing client
-          clientId = existingClient.id;
-        } else {
-          // Insert new client
-          const clientData = {
-            nome: appointmentData.client.nome,
-            telefone: appointmentData.client.telefone,
-            email: appointmentData.client.email,
-          };
-          
-          const { data: newClient, error: clientError } = await supabase
-            .from("clientes")
-            .insert(clientData)
-            .select()
-            .single();
-
-          if (clientError) {
-            throw clientError;
-          }
-
-          clientId = newClient.id;
-        }
-      }
-
-      // Create appointment data with explicit professional_id
-      const appointmentRecord = {
-        cliente_id: clientId,
-        servico_id: appointmentData.service.id,
-        profissional_id: professionalId, // Use the determined professionalId
-        data: appointmentData.date,
-        hora: appointmentData.time,
-        status: "agendado",
-      };
-
-      console.log("Sending appointment data:", appointmentRecord);
-
-      // Insert appointment
-      const { data: appointment, error: appointmentError } = await supabase
-        .from("agendamentos")
-        .insert(appointmentRecord)
-        .select()
-        .single();
-
-      if (appointmentError) {
-        throw appointmentError;
-      }
-
-      setAppointmentId(appointment.id);
-      setIsComplete(true);
-    } catch (error: any) {
-      console.error("Erro ao criar agendamento:", error);
-      toast({
-        title: "Erro ao confirmar agendamento",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleConfirm = () => {
+    handleConfirmation(appointmentData, setIsSubmitting, setIsComplete);
   };
 
   return (
     <div>
       {isComplete ? (
-        <ConfirmationSuccess
+        <ConfirmationComplete
           appointmentId={appointmentId}
-          clientPhone={appointmentData.client?.telefone}
-          whatsappMessage={`Olá! Seu agendamento para ${appointmentData.service?.nome} foi confirmado para ${appointmentData.date} às ${appointmentData.time}.`}
-          appointmentData={{
-            service: appointmentData.service,
-            professional_name: appointmentData.professional_name,
-            date: appointmentData.date,
-            time: appointmentData.time,
-            client: appointmentData.client
-          }}
+          appointmentData={appointmentData}
         />
       ) : (
         <div className="space-y-6">
@@ -172,13 +43,6 @@ const Confirmation = ({
             date={appointmentData.date}
             time={appointmentData.time}
             client={appointmentData.client}
-            appointmentData={{
-              service: appointmentData.service,
-              professional_name: appointmentData.professional_name,
-              date: appointmentData.date,
-              time: appointmentData.time,
-              client: appointmentData.client
-            }}
           />
 
           <div className="mt-8 flex flex-col sm:flex-row justify-between gap-4">
