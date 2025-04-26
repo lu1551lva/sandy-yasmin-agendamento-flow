@@ -81,13 +81,13 @@ export const useDashboardData = (): DashboardData => {
     const totalAppointments = appointments.length;
     
     // Calculate status counts
-    const statusMap = appointments.reduce((acc, app) => {
+    const statusMap: Record<string, number> = appointments.reduce((acc, app) => {
       acc[app.status] = (acc[app.status] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
     
     // Convert to array with percentages
-    const statusCounts = Object.entries(statusMap).map(([status, count]) => ({
+    const statusCounts: StatusCount[] = Object.entries(statusMap).map(([status, count]) => ({
       status,
       count,
       percentage: totalAppointments > 0 ? (count / totalAppointments) * 100 : 0

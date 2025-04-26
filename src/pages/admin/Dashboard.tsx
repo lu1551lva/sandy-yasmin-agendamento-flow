@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { Loader2, Calendar, DollarSign, CheckCircle, XCircle, Clock, TrendingUp } from "lucide-react";
@@ -6,7 +5,6 @@ import { formatCurrency } from "@/lib/supabase";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { 
-  Chart as ChartComponent,
   PieChart, 
   Pie, 
   Cell, 
