@@ -8,15 +8,59 @@ export function createWhatsAppLink(phoneNumber: string, message: string): string
 
 export function getWhatsAppTemplates(): Record<string, string> {
   const defaultTemplates = {
-    confirmation: `Olá {nome}! Confirmamos seu agendamento no Studio Sandy Yasmin para {servico} no dia {data} às {hora}. Valor: {valor}. Aguardamos sua presença!`,
+    confirmation: `Olá {nome}! 👋
+
+Seu agendamento foi confirmado com sucesso!
+
+✅ Profissional: {profissional}
+✅ Serviço: {servico}
+✅ Data e Hora: {data} às {hora}
+💰 Valor: {valor}
+
+Aguardamos você! ✨
+Studio Sandy Yasmin 💇‍♀️`,
     
-    reminder: `Olá {nome}! Passando para lembrar do seu agendamento amanhã às {hora} para {servico}. Caso precise remarcar, entre em contato conosco. Obrigado!`,
+    reminder: `Olá {nome}! 👋
+
+Passando para lembrar do seu agendamento amanhã:
+
+📅 Horário: {hora}
+💇‍♀️ Serviço: {servico}
+👩 Profissional: {profissional}
+
+Caso precise remarcar, entre em contato conosco.
+Aguardamos você! ✨`,
     
-    reschedule: `Olá {nome}! Precisamos remarcar seu agendamento para {servico} que está marcado para {data} às {hora}. Por favor, entre em contato conosco para agendar uma nova data e horário. Agradecemos a compreensão!`,
+    reschedule: `Olá {nome}! 
+
+Precisamos remarcar seu agendamento:
+
+📅 Data: {data}
+⏰ Horário: {hora}
+💇‍♀️ Serviço: {servico}
+👩 Profissional: {profissional}
+
+Por favor, entre em contato conosco para agendar uma nova data e horário.
+Agradecemos a compreensão! 🙏`,
     
-    cancellation: `Olá {nome}! Lamentamos informar que precisamos cancelar seu agendamento para {servico} no dia {data} às {hora}. Por favor, entre em contato conosco para mais informações. Pedimos desculpas pelo inconveniente.`,
+    cancellation: `Olá {nome}!
+
+Lamentamos informar que precisamos cancelar seu agendamento:
+
+📅 Data: {data}
+⏰ Horário: {hora}
+💇‍♀️ Serviço: {servico}
+👩 Profissional: {profissional}
+
+Por favor, entre em contato conosco para mais informações.
+Pedimos desculpas pelo inconveniente. 🙏`,
     
-    followup: `Olá {nome}! Como foi sua experiência com o serviço {servico} no Studio Sandy Yasmin? Ficaríamos felizes em receber seu feedback. Obrigado pela preferência!`
+    followup: `Olá {nome}! 
+
+Como foi sua experiência com o serviço {servico} no Studio Sandy Yasmin? 
+
+Ficaríamos felizes em receber seu feedback! 
+Obrigado pela preferência! ⭐`
   };
 
   const savedTemplates = localStorage.getItem('whatsappTemplates');

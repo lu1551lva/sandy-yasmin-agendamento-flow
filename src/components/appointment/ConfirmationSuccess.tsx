@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Check, Send } from "lucide-react";
 import { createWhatsAppLink } from "@/lib/utils";
 import { Service } from "@/lib/supabase";
+import { formatLocalDate } from "@/lib/dateUtils";
 
 interface ConfirmationSuccessProps {
   appointmentId: string | null;
@@ -10,6 +11,7 @@ interface ConfirmationSuccessProps {
   whatsappMessage?: string;
   appointmentData?: {
     client?: {
+      nome?: string;
       telefone?: string;
     };
     service?: Service;
@@ -27,8 +29,22 @@ const ConfirmationSuccess = ({
 }: ConfirmationSuccessProps) => {
   // Fallback values if not provided directly
   const phone = clientPhone || appointmentData?.client?.telefone || "";
-  const message = whatsappMessage || 
+  
+  // Create a friendly message with emojis and formatting
+  const defaultMessage = appointmentData ? 
+    `Olá ${appointmentData.client?.nome}! 👋
+
+Seu agendamento foi confirmado com sucesso!
+
+✅ Profissional: ${appointmentData.professional_name}
+✅ Serviço: ${appointmentData.service?.nome}
+✅ Data e Hora: ${formatLocalDate(appointmentData.date || "")} às ${appointmentData.time}
+
+Aguardamos você! ✨
+Studio Sandy Yasmin 💇‍♀️` : 
     `Olá! Seu agendamento #${appointmentId} foi confirmado.`;
+
+  const message = whatsappMessage || defaultMessage;
 
   return (
     <div className="text-center space-y-4">
