@@ -10,6 +10,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { RescheduleDialog } from "@/components/appointment/RescheduleDialog";
 import { useRescheduleAppointment } from "@/hooks/useRescheduleAppointment";
+import { AppointmentWithDetails } from "@/types/appointment.types";
 
 const WeeklySchedule = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -18,17 +19,10 @@ const WeeklySchedule = () => {
   const [showHolidayManager, setShowHolidayManager] = useState(false);
   const [appointmentToReschedule, setAppointmentToReschedule] = useState<AppointmentWithDetails | null>(null);
 
-  const {
-    professionals,
-    appointments,
-    isLoading,
-    weekStart,
-    weekEnd,
-    weekDays,
-    timeSlots,
-    getAppointmentsForDayAndTime,
-    getAppointmentsForDay
-  } = useWeeklyAppointments({ selectedDate, professionalFilter });
+  const { professionals, appointments, isLoading, weekStart, weekEnd, weekDays, timeSlots, getAppointmentsForDayAndTime, getAppointmentsForDay } = useWeeklyAppointments({ 
+    selectedDate, 
+    professionalFilter 
+  });
 
   const { rescheduleAppointment, isLoading: isRescheduling } = useRescheduleAppointment();
 

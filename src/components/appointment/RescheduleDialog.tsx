@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { DateSelector } from "@/components/shared/date-time/DateSelector";
 import { TimeSelector } from "@/components/shared/date-time/TimeSelector";
-import { useTimeSlots } from "@/hooks/useTimeSlots";
+import { useTimeSlots } from "@/components/shared/date-time/hooks/useTimeSlots";
 import { AppointmentWithDetails } from "@/types/appointment.types";
 import { Loader2 } from "lucide-react";
 
