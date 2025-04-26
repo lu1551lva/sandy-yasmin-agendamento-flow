@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
-import { isBefore } from "date-fns";
+import { startOfDay, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { getHolidays } from "@/lib/utils";
 
@@ -14,9 +14,9 @@ interface DateSelectorProps {
 export const DateSelector = ({ date, onDateChange, disabledDates }: DateSelectorProps) => {
   // Default disabled dates function that only disables past dates
   const defaultDisabledDates = (date: Date) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return isBefore(date, today);
+    const today = startOfDay(new Date());
+    const checkDate = startOfDay(new Date(date));
+    return isBefore(checkDate, today);
   };
 
   // Use custom disabled function if provided, otherwise use default

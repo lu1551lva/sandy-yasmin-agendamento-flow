@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase, Service, Professional } from "@/lib/supabase";
-import { format, addDays, parseISO, isAfter, isBefore, isSameDay } from "date-fns";
+import { format, addDays, parseISO, isAfter, isBefore, isSameDay, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { getHolidays } from "@/lib/utils";
@@ -77,9 +77,9 @@ export function useDateSelectionData(
   // Function to check if a date should be disabled - only disable past dates and holidays
   const isDateDisabled = (date: Date) => {
     // Always disable past dates
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (isBefore(date, today)) return true;
+    const today = startOfDay(new Date());
+    const checkDate = startOfDay(new Date(date));
+    if (isBefore(checkDate, today)) return true;
 
     // Check if it's a manually added holiday
     if (isHoliday(date)) return true;

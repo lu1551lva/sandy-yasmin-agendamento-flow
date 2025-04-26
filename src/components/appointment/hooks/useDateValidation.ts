@@ -1,6 +1,6 @@
 
 import { useState, useCallback } from "react";
-import { format, isBefore } from "date-fns";
+import { format, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { getHolidays } from "@/lib/utils";
 import { Professional } from "@/lib/supabase";
@@ -40,9 +40,10 @@ export const useDateValidation = (professional: Professional | undefined) => {
 
   const isPastDate = useCallback((date: Date) => {
     if (!date) return false;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return isBefore(date, today);
+    // Importante: usar startOfDay para evitar problemas com horas
+    const today = startOfDay(new Date());
+    const checkDate = startOfDay(new Date(date));
+    return isBefore(checkDate, today);
   }, []);
 
   const getValidationMessage = useCallback((date: Date): string | null => {
