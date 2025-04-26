@@ -3,24 +3,34 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Calendar } from "@/components/ui/calendar";
 import { startOfDay, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { getHolidays } from "@/lib/utils";
 
 interface DateSelectorProps {
   date: Date | undefined;
   onDateChange: (date: Date | undefined) => void;
+  disablePastDates?: boolean; // Make this prop optional
   disabledDates?: (date: Date) => boolean;
 }
 
-export const DateSelector = ({ date, onDateChange, disabledDates }: DateSelectorProps) => {
-  // Default disabled dates function that only disables past dates
+export const DateSelector = ({ 
+  date, 
+  onDateChange, 
+  disablePastDates = false, 
+  disabledDates 
+}: DateSelectorProps) => {
+  // Default disabled dates function that only disables past dates if disablePastDates is true
   const defaultDisabledDates = (date: Date) => {
-    const today = startOfDay(new Date());
-    const checkDate = startOfDay(new Date(date));
-    return isBefore(checkDate, today);
+    if (disablePastDates) {
+      const today = startOfDay(new Date());
+      const checkDate = startOfDay(new Date(date));
+      return isBefore(checkDate, today);
+    }
+    return false;
   };
 
-  // Use custom disabled function if provided, otherwise use default
-  const isDateDisabled = disabledDates || defaultDisabledDates;
+  // Combine custom disabled function with default if provided
+  const isDateDisabled = disabledDates 
+    ? (date: Date) => disabledDates(date) || defaultDisabledDates(date)
+    : defaultDisabledDates;
 
   return (
     <Card>
