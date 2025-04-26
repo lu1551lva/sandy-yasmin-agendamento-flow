@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,12 +8,15 @@ import ScheduleGridView from "./components/ScheduleGridView";
 import ScheduleListView from "./components/ScheduleListView";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { RescheduleDialog } from "@/components/appointment/RescheduleDialog";
+import { useRescheduleAppointment } from "@/hooks/useRescheduleAppointment";
 
 const WeeklySchedule = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [viewType, setViewType] = useState<"grid" | "list">("grid");
   const [professionalFilter, setProfessionalFilter] = useState<string>("all");
   const [showHolidayManager, setShowHolidayManager] = useState(false);
+  const [appointmentToReschedule, setAppointmentToReschedule] = useState<AppointmentWithDetails | null>(null);
 
   const {
     professionals,
@@ -28,7 +30,23 @@ const WeeklySchedule = () => {
     getAppointmentsForDay
   } = useWeeklyAppointments({ selectedDate, professionalFilter });
 
-  // Format the date range for the header
+  const { rescheduleAppointment, isLoading: isRescheduling } = useRescheduleAppointment();
+
+  const handleReschedule = async (date: Date, time: string) => {
+    if (!appointmentToReschedule) return;
+    
+    const success = await rescheduleAppointment(
+      appointmentToReschedule.id,
+      date,
+      time,
+      appointmentToReschedule.profissional.id
+    );
+
+    if (success) {
+      setAppointmentToReschedule(null);
+    }
+  };
+
   const dateRangeText = `${format(weekStart, "d 'de' MMMM", { locale: ptBR })} - ${format(weekEnd, "d 'de' MMMM", { locale: ptBR })}`;
 
   return (
@@ -110,6 +128,16 @@ const WeeklySchedule = () => {
           )}
         </CardContent>
       </Card>
+
+      {appointmentToReschedule && (
+        <RescheduleDialog
+          appointment={appointmentToReschedule}
+          isOpen={!!appointmentToReschedule}
+          onClose={() => setAppointmentToReschedule(null)}
+          onReschedule={handleReschedule}
+          isLoading={isRescheduling}
+        />
+      )}
     </div>
   );
 };
