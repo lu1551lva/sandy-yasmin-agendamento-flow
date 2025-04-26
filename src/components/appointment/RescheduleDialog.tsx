@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -37,7 +36,6 @@ export function RescheduleDialog({
   const [selectedTime, setSelectedTime] = useState<string>("");
   const { toast } = useToast();
 
-  // Direct assignment of the return value from useTimeSlots which is a string[]
   const availableTimes = useTimeSlots({
     date: selectedDate,
     selectedService: appointment.servico,
@@ -73,6 +71,7 @@ export function RescheduleDialog({
           <DateSelector
             date={selectedDate}
             onDateChange={setSelectedDate}
+            disablePastDates={true}
           />
           
           {selectedDate && (
