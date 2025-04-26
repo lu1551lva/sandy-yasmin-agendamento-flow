@@ -1,7 +1,9 @@
 
-import { formatCurrency } from "@/lib/supabase";
 import { Service, Client } from "@/lib/supabase";
-import { formatLocalDate } from "@/lib/dateUtils";
+import ServiceSummary from "./summary/ServiceSummary";
+import ProfessionalSummary from "./summary/ProfessionalSummary";
+import DateTimeSummary from "./summary/DateTimeSummary";
+import ClientSummary from "./summary/ClientSummary";
 
 interface AppointmentSummaryProps {
   service?: Service;
@@ -26,7 +28,6 @@ const AppointmentSummary = ({
   client,
   appointmentData,
 }: AppointmentSummaryProps) => {
-  // Allow direct props or data from appointmentData
   const _service = service || appointmentData?.service;
   const _professionalName = professionalName || appointmentData?.professional_name;
   const _date = date || appointmentData?.date;
@@ -41,47 +42,12 @@ const AppointmentSummary = ({
     );
   }
 
-  const formatDateDisplay = (dateString: string) => {
-    try {
-      return formatLocalDate(dateString);
-    } catch (error) {
-      console.error("Error formatting date:", error);
-      return dateString;
-    }
-  };
-
   return (
     <div className="bg-muted/30 rounded-lg p-4 space-y-3">
-      <div>
-        <h3 className="font-medium text-lg">Serviço</h3>
-        <p>{_service.nome}</p>
-        <p className="text-sm text-muted-foreground">
-          Valor: {formatCurrency(_service.valor)} • 
-          Duração: {_service.duracao_em_minutos} min
-        </p>
-      </div>
-
-      {_professionalName && (
-        <div>
-          <h3 className="font-medium">Profissional</h3>
-          <p>{_professionalName}</p>
-        </div>
-      )}
-
-      <div>
-        <h3 className="font-medium">Data e Hora</h3>
-        <p>
-          {formatDateDisplay(_date)} às {_time}
-        </p>
-      </div>
-
-      <div>
-        <h3 className="font-medium">Cliente</h3>
-        <p>{_client.nome}</p>
-        <p className="text-sm text-muted-foreground">
-          {_client.telefone} • {_client.email}
-        </p>
-      </div>
+      <ServiceSummary service={_service} />
+      <ProfessionalSummary professionalName={_professionalName || ''} />
+      <DateTimeSummary date={_date} time={_time} />
+      <ClientSummary client={_client} />
     </div>
   );
 };
