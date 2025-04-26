@@ -35,6 +35,7 @@ export function RescheduleDialog({
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedTime, setSelectedTime] = useState<string>("");
 
+  // Fix: Direct assignment of the return value from useTimeSlots which is a string[]
   const availableTimes = useTimeSlots({
     date: selectedDate,
     selectedService: appointment.servico,
