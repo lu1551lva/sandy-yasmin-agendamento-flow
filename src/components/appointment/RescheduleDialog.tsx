@@ -35,7 +35,7 @@ export function RescheduleDialog({
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedTime, setSelectedTime] = useState<string>("");
 
-  const { availableTimes } = useTimeSlots({
+  const availableTimes = useTimeSlots({
     date: selectedDate,
     selectedService: appointment.servico,
     professional: appointment.profissional,
