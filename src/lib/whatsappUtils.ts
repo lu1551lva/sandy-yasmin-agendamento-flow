@@ -8,17 +8,9 @@ export function createWhatsAppLink(phoneNumber: string, message: string): string
 
 export function getWhatsAppTemplates(): Record<string, string> {
   const defaultTemplates = {
-    confirmation: `Olá {nome}! 👋
+    confirmation: `Olá {nome}! 
 
-Seu agendamento foi confirmado com sucesso!
-
-✅ Profissional: {profissional}
-✅ Serviço: {servico}
-✅ Data e Hora: {data} às {hora}
-💰 Valor: {valor}
-
-Aguardamos você! ✨
-Studio Sandy Yasmin 💇‍♀️`,
+Seu agendamento para {servico} com {profissional} no dia {data} às {hora} foi confirmado. Aguardamos você no Studio Sandy Yasmin! ✨`,
     
     reminder: `Olá {nome}! 👋
 

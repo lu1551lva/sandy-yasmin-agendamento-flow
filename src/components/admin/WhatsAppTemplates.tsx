@@ -15,6 +15,7 @@ import { Send } from "lucide-react";
 import { createWhatsAppLink } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { getWhatsAppTemplates, formatWhatsAppTemplate } from "@/lib/whatsappUtils";
 
 interface WhatsAppTemplatesProps {
   clientName: string;
@@ -24,6 +25,7 @@ interface WhatsAppTemplatesProps {
   serviceTime: string;
   serviceDuration: number;
   servicePrice: number;
+  professionalName: string;
   onMessageSent: () => void;
 }
 
@@ -35,57 +37,25 @@ const WhatsAppTemplates = ({
   serviceTime,
   serviceDuration,
   servicePrice,
+  professionalName,
   onMessageSent
 }: WhatsAppTemplatesProps) => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("confirmar");
   const [customMessage, setCustomMessage] = useState("");
 
-  // Template messages
-  const templates = {
-    confirmar: `Olá ${clientName}! 
-    
-Confirmamos seu agendamento no Studio Sandy Yasmin:
+  // Get templates from helper function
+  const templates = getWhatsAppTemplates();
 
-📅 Data: ${serviceDate}
-⏰ Horário: ${serviceTime}
-💇‍♀️ Serviço: ${serviceName}
-⏱️ Duração: ${serviceDuration} minutos
-💰 Valor: R$ ${servicePrice.toFixed(2)}
-
-Para confirmar sua presença, por favor responda esta mensagem.
-Em caso de cancelamento, pedimos que avise com pelo menos 24h de antecedência.
-
-Obrigada pela preferência! 😊
-Studio Sandy Yasmin`,
-
-    reagendar: `Olá ${clientName}!
-    
-Infelizmente precisamos reagendar seu horário:
-
-📅 Data: ${serviceDate}
-⏰ Horário: ${serviceTime}
-💇‍♀️ Serviço: ${serviceName}
-
-Por favor, entre em contato conosco para escolher uma nova data e horário que seja conveniente para você.
-
-Agradecemos pela compreensão!
-Studio Sandy Yasmin`,
-
-    cancelar: `Olá ${clientName}!
-    
-Infelizmente precisamos informar que seu agendamento precisou ser cancelado:
-
-📅 Data: ${serviceDate}
-⏰ Horário: ${serviceTime}
-💇‍♀️ Serviço: ${serviceName}
-
-Por favor, entre em contato conosco para remarcarmos em uma nova data.
-
-Agradecemos pela compreensão!
-Studio Sandy Yasmin`,
-
-    personalizado: ""
+  // Template variables
+  const templateVars = {
+    nome: clientName,
+    servico: serviceName,
+    profissional: professionalName,
+    data: serviceDate,
+    hora: serviceTime,
+    duracao: `${serviceDuration} minutos`,
+    valor: `R$ ${servicePrice.toFixed(2)}`,
   };
 
   // Initialize custom message when tab changes
@@ -101,7 +71,9 @@ Studio Sandy Yasmin`,
     if (activeTab === "personalizado") {
       return customMessage;
     }
-    return templates[activeTab as keyof typeof templates];
+    
+    const template = templates[activeTab as keyof typeof templates] || "";
+    return formatWhatsAppTemplate(template, templateVars);
   };
 
   // Send WhatsApp message
@@ -157,7 +129,7 @@ Studio Sandy Yasmin`,
           <TabsContent value="confirmar">
             <Textarea 
               className="min-h-[200px] font-mono text-sm" 
-              value={templates.confirmar} 
+              value={formatWhatsAppTemplate(templates.confirmation, templateVars)} 
               readOnly 
             />
           </TabsContent>
@@ -165,7 +137,7 @@ Studio Sandy Yasmin`,
           <TabsContent value="reagendar">
             <Textarea 
               className="min-h-[200px] font-mono text-sm" 
-              value={templates.reagendar} 
+              value={formatWhatsAppTemplate(templates.reschedule, templateVars)} 
               readOnly 
             />
           </TabsContent>
@@ -173,7 +145,7 @@ Studio Sandy Yasmin`,
           <TabsContent value="cancelar">
             <Textarea 
               className="min-h-[200px] font-mono text-sm" 
-              value={templates.cancelar} 
+              value={formatWhatsAppTemplate(templates.cancellation, templateVars)} 
               readOnly 
             />
           </TabsContent>
