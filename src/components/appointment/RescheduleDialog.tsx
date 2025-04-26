@@ -16,6 +16,7 @@ import { TimeSelector } from "@/components/shared/date-time/TimeSelector";
 import { useTimeSlots } from "@/components/shared/date-time/hooks/useTimeSlots";
 import { AppointmentWithDetails } from "@/types/appointment.types";
 import { Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface RescheduleDialogProps {
   appointment: AppointmentWithDetails;
@@ -34,8 +35,9 @@ export function RescheduleDialog({
 }: RescheduleDialogProps) {
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedTime, setSelectedTime] = useState<string>("");
+  const { toast } = useToast();
 
-  // Fix: Direct assignment of the return value from useTimeSlots which is a string[]
+  // Direct assignment of the return value from useTimeSlots which is a string[]
   const availableTimes = useTimeSlots({
     date: selectedDate,
     selectedService: appointment.servico,
@@ -44,7 +46,15 @@ export function RescheduleDialog({
   });
 
   const handleReschedule = async () => {
-    if (!selectedDate || !selectedTime) return;
+    if (!selectedDate || !selectedTime) {
+      toast({
+        title: "Dados incompletos",
+        description: "Por favor, selecione uma data e horário",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     await onReschedule(selectedDate, selectedTime);
   };
 

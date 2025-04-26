@@ -11,13 +11,18 @@ export const useRescheduleAppointment = () => {
   const queryClient = useQueryClient();
 
   const checkAvailability = async (professionalId: string, date: string, time: string) => {
-    const { data: existingAppointments } = await supabase
+    const { data: existingAppointments, error } = await supabase
       .from('agendamentos')
       .select('*')
       .eq('profissional_id', professionalId)
       .eq('data', date)
       .eq('hora', time)
       .eq('status', 'agendado');
+      
+    if (error) {
+      console.error("Erro ao verificar disponibilidade:", error);
+      return false;
+    }
 
     return existingAppointments?.length === 0;
   };
@@ -54,7 +59,10 @@ export const useRescheduleAppointment = () => {
         })
         .eq('id', appointmentId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao atualizar agendamento:", error);
+        throw error;
+      }
 
       // Invalidate and refetch relevant queries
       await queryClient.invalidateQueries({ queryKey: ['dashboard-appointments'] });
@@ -67,6 +75,7 @@ export const useRescheduleAppointment = () => {
 
       return true;
     } catch (error) {
+      console.error("Erro no reagendamento:", error);
       toast({
         title: "Erro ao reagendar",
         description: "Não foi possível reagendar o horário. Tente novamente.",
