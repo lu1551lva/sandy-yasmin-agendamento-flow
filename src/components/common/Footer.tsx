@@ -19,7 +19,7 @@ export const Footer = () => {
           <div className="flex flex-col items-center md:items-end">
             <div className="flex space-x-4 mb-4">
               <a 
-                href="https://instagram.com" 
+                href="https://instagram.com/studiosandyyasmin" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-white hover:text-primary transition-colors"
@@ -27,15 +27,7 @@ export const Footer = () => {
                 Instagram
               </a>
               <a 
-                href="https://facebook.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-white hover:text-primary transition-colors"
-              >
-                Facebook
-              </a>
-              <a 
-                href="https://wa.me/5500000000000" 
+                href="https://wa.me/5511940015784" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-white hover:text-primary transition-colors"
@@ -60,3 +52,4 @@ export const Footer = () => {
     </footer>
   );
 };
+
