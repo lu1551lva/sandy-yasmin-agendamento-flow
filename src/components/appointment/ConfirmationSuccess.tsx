@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { formatLocalDate } from "@/lib/dateUtils";
+import { Service } from "@/lib/supabase";
 
 interface ConfirmationSuccessProps {
   appointmentId: string | null;
