@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -44,6 +44,11 @@ export const PersonalInfoForm = ({ defaultValues, onSubmit, isSubmitting = false
     defaultValues,
   });
 
+  // Update form values when defaultValues change
+  useEffect(() => {
+    form.reset(defaultValues);
+  }, [defaultValues, form]);
+
   const handleSubmit = async (data: PersonalInfoFormValues) => {
     setSavingProfile(true);
     try {
@@ -58,11 +63,7 @@ export const PersonalInfoForm = ({ defaultValues, onSubmit, isSubmitting = false
       }
     } catch (error) {
       console.error("Error updating profile:", error);
-      toast({
-        title: "Erro ao atualizar perfil",
-        description: "Ocorreu um erro ao atualizar suas informações. Tente novamente.",
-        variant: "destructive",
-      });
+      // Toast is already handled in the parent component
     } finally {
       setSavingProfile(false);
     }

@@ -11,22 +11,34 @@ export type Database = {
     Tables: {
       admins: {
         Row: {
+          avatar_url: string | null
           created_at: string
           email: string
           id: string
+          nome: string | null
           senha: string
+          studio_name: string | null
+          telefone: string | null
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string
           email: string
           id?: string
+          nome?: string | null
           senha: string
+          studio_name?: string | null
+          telefone?: string | null
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string
           email?: string
           id?: string
+          nome?: string | null
           senha?: string
+          studio_name?: string | null
+          telefone?: string | null
         }
         Relationships: []
       }

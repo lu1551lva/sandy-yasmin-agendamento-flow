@@ -59,17 +59,48 @@ export const ProfileAvatar = ({ initialImage, onAvatarUpdate }: ProfileAvatarPro
       // Upload image to Supabase Storage
       const fileName = `avatar-${Date.now()}.${file.name.split('.').pop()}`;
       
-      // Create a local preview
-      const reader = new FileReader();
-      reader.onload = () => {
-        const imageUrl = reader.result as string;
-        setImage(imageUrl);
-      };
-      reader.readAsDataURL(file);
+      // Create a Supabase bucket if it doesn't exist
+      try {
+        const { data: bucketData, error: bucketError } = await supabase.storage.getBucket('avatars');
+        
+        if (bucketError && bucketError.message.includes('does not exist')) {
+          // Bucket doesn't exist, create it
+          const { error: createBucketError } = await supabase.storage.createBucket('avatars', { public: true });
+          
+          if (createBucketError) {
+            console.error("Error creating bucket:", createBucketError);
+            throw createBucketError;
+          }
+        }
+      } catch (bucketError) {
+        console.error("Error checking/creating bucket:", bucketError);
+      }
+      
+      // Upload the file to storage
+      const { data: storageData, error: storageError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true,
+        });
+      
+      if (storageError) {
+        throw storageError;
+      }
+      
+      // Get the public URL of the uploaded file
+      const { data: publicUrlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+      
+      const imageUrl = publicUrlData?.publicUrl || null;
+      
+      // Update state with new image URL
+      setImage(imageUrl);
       
       // If onAvatarUpdate is provided, call it with the new URL
-      if (onAvatarUpdate) {
-        const success = await onAvatarUpdate(image);
+      if (onAvatarUpdate && imageUrl) {
+        const success = await onAvatarUpdate(imageUrl);
         
         if (success) {
           toast({
@@ -84,11 +115,11 @@ export const ProfileAvatar = ({ initialImage, onAvatarUpdate }: ProfileAvatarPro
           });
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading image:", error);
       toast({
         title: "Erro ao enviar imagem",
-        description: "Ocorreu um erro ao enviar a imagem. Tente novamente.",
+        description: error?.message || "Ocorreu um erro ao enviar a imagem. Tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -135,11 +166,11 @@ export const ProfileAvatar = ({ initialImage, onAvatarUpdate }: ProfileAvatarPro
           description: "Sua foto de perfil foi removida com sucesso.",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error removing image:", error);
       toast({
         title: "Erro ao remover imagem",
-        description: "Ocorreu um erro ao remover a imagem. Tente novamente.",
+        description: error?.message || "Ocorreu um erro ao remover a imagem. Tente novamente.",
         variant: "destructive",
       });
     } finally {

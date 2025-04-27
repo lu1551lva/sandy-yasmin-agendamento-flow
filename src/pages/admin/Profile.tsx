@@ -48,6 +48,7 @@ const Profile = () => {
             variant: "destructive",
           });
         } else if (data) {
+          console.log("Admin data fetched:", data);
           setAdminData(data);
         }
       } catch (error) {
@@ -74,30 +75,45 @@ const Profile = () => {
       if (!adminData?.id) {
         throw new Error("Dados do administrador não encontrados");
       }
+
+      console.log("Updating admin data with:", {
+        nome: data.nome,
+        telefone: data.telefone,
+        studio_name: data.studioName,
+        avatar_url: data.avatar_url
+      });
       
       // Update the admin profile in the database
-      const { error } = await supabase
+      // Map studioName to studio_name field in the database
+      const { data: updatedData, error } = await supabase
         .from('admins')
         .update({
           nome: data.nome,
-          email: data.email,
           telefone: data.telefone,
+          studio_name: data.studioName,
           avatar_url: data.avatar_url
         })
-        .eq('id', adminData.id);
+        .eq('id', adminData.id)
+        .select();
         
       if (error) {
+        console.error("Supabase update error:", error);
         throw error;
       }
       
+      console.log("Update successful, returned data:", updatedData);
+      
       // Update local state with new data
-      setAdminData({
-        ...adminData,
-        nome: data.nome,
-        email: data.email || adminData.email,
-        telefone: data.telefone,
-        avatar_url: data.avatar_url
-      });
+      if (updatedData && updatedData.length > 0) {
+        setAdminData({
+          ...adminData,
+          nome: data.nome,
+          email: data.email || adminData.email,
+          telefone: data.telefone,
+          studioName: data.studioName,
+          avatar_url: data.avatar_url
+        });
+      }
       
       toast({
         title: "Perfil atualizado",
@@ -105,11 +121,11 @@ const Profile = () => {
       });
       
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating profile:", error);
       toast({
         title: "Erro ao atualizar perfil",
-        description: "Ocorreu um erro ao atualizar suas informações.",
+        description: error?.message || "Ocorreu um erro ao atualizar suas informações.",
         variant: "destructive",
       });
       throw error;
@@ -187,12 +203,16 @@ const Profile = () => {
             onAvatarUpdate={async (url) => {
               if (adminData?.id && url !== undefined) {
                 try {
+                  console.log("Updating avatar_url to:", url);
                   const { error } = await supabase
                     .from('admins')
                     .update({ avatar_url: url })
                     .eq('id', adminData.id);
                     
-                  if (error) throw error;
+                  if (error) {
+                    console.error("Error updating avatar:", error);
+                    throw error;
+                  }
                   
                   // Update local state
                   setAdminData({
@@ -216,7 +236,7 @@ const Profile = () => {
             <PersonalInfoForm
               defaultValues={{
                 nome: adminData?.nome || "Sandy Yasmin",
-                studioName: adminData?.studioName || "Studio Sandy Yasmin",
+                studioName: adminData?.studioName || adminData?.studio_name || "Studio Sandy Yasmin",
                 email: adminData?.email || "admin@studio.com",
                 telefone: adminData?.telefone || "+55 (11) 98765-4321",
               }}
