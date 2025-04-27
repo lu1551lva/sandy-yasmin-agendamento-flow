@@ -7,7 +7,7 @@ import { PersonalInfoForm } from "@/components/admin/PersonalInfoForm";
 import { PasswordChangeForm } from "@/components/admin/PasswordChangeForm";
 import { useToast } from "@/hooks/use-toast";
 
-// Define an interface for admin data
+// Update AdminData interface to support both naming conventions
 interface AdminData {
   id: string;
   nome: string;
@@ -15,6 +15,7 @@ interface AdminData {
   telefone: string;
   avatar_url?: string;
   studioName?: string;
+  studio_name?: string;
 }
 
 const Profile = () => {
@@ -236,6 +237,7 @@ const Profile = () => {
             <PersonalInfoForm
               defaultValues={{
                 nome: adminData?.nome || "Sandy Yasmin",
+                // Prioritize studioName, fall back to studio_name
                 studioName: adminData?.studioName || adminData?.studio_name || "Studio Sandy Yasmin",
                 email: adminData?.email || "admin@studio.com",
                 telefone: adminData?.telefone || "+55 (11) 98765-4321",
@@ -253,3 +255,4 @@ const Profile = () => {
 };
 
 export default Profile;
+
