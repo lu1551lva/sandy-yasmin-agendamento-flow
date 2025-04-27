@@ -1,6 +1,5 @@
-
 import { AdminData } from "@/hooks/useAdminProfile";
-import { ProfileAvatar } from "@/components/admin/ProfileAvatar";
+import { ProfileAvatar } from './avatar/ProfileAvatar';
 import { PersonalInfoForm } from "@/components/admin/PersonalInfoForm";
 import { PasswordChangeForm } from "@/components/admin/PasswordChangeForm";
 import { useState } from "react";
