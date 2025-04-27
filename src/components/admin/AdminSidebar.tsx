@@ -9,7 +9,8 @@ import {
   Settings, 
   MessageSquare,
   Menu,
-  X
+  X,
+  User
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,11 @@ const AdminSidebar = () => {
       title: "WhatsApp",
       href: "/admin/mensagens",
       icon: <MessageSquare className="mr-2 h-4 w-4" />,
+    },
+    {
+      title: "Meu Perfil",
+      href: "/admin/perfil",
+      icon: <User className="mr-2 h-4 w-4" />,
     },
   ];
 

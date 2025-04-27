@@ -17,6 +17,7 @@ import WeeklySchedule from "./pages/admin/WeeklySchedule";
 import Professionals from "./pages/admin/Professionals";
 import Services from "./pages/admin/Services";
 import WhatsAppMessages from "./pages/admin/WhatsAppMessages";
+import Profile from "./pages/admin/Profile";
 import { AuthProvider } from "./context/auth-context";
 import Register from "./pages/auth/Register";
 import Login from "./pages/auth/Login";
@@ -72,6 +73,7 @@ const App = () => {
                 <Route path="profissionais" element={<Professionals />} />
                 <Route path="servicos" element={<Services />} />
                 <Route path="mensagens" element={<WhatsAppMessages />} />
+                <Route path="perfil" element={<Profile />} />
               </Route>
 
               {/* Catch-all */}
