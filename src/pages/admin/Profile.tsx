@@ -1,14 +1,64 @@
 
 import { useAuth } from "@/context/auth-context";
 import { supabase } from "@/lib/supabase";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ProfileAvatar } from "@/components/admin/ProfileAvatar";
 import { PersonalInfoForm } from "@/components/admin/PersonalInfoForm";
 import { PasswordChangeForm } from "@/components/admin/PasswordChangeForm";
+import { useToast } from "@/hooks/use-toast";
+
+// Define an interface for admin data
+interface AdminData {
+  id: string;
+  nome: string;
+  email: string;
+  telefone: string;
+  avatar_url?: string;
+  studioName?: string;
+}
 
 const Profile = () => {
   const { user, signIn } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [adminData, setAdminData] = useState<AdminData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  // Fetch admin data from database
+  useEffect(() => {
+    const fetchAdminData = async () => {
+      if (!user?.email) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        // Get admin data based on email
+        const { data, error } = await supabase
+          .from('admins')
+          .select('*')
+          .eq('email', user.email)
+          .single();
+          
+        if (error) {
+          console.error("Error fetching admin data:", error);
+          toast({
+            title: "Erro ao carregar perfil",
+            description: "Não foi possível carregar os dados do perfil.",
+            variant: "destructive",
+          });
+        } else if (data) {
+          setAdminData(data);
+        }
+      } catch (error) {
+        console.error("Error in fetchAdminData:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAdminData();
+  }, [user, toast]);
 
   const onProfileSubmit = async (data: {
     nome: string;
@@ -20,12 +70,12 @@ const Profile = () => {
     setIsSubmitting(true);
     
     try {
-      // Check if user exists before updating
-      if (!user?.id) {
-        throw new Error("Usuário não encontrado");
+      // Check if adminData exists before updating
+      if (!adminData?.id) {
+        throw new Error("Dados do administrador não encontrados");
       }
       
-      // Update the user profile in the database
+      // Update the admin profile in the database
       const { error } = await supabase
         .from('admins')
         .update({
@@ -34,16 +84,34 @@ const Profile = () => {
           telefone: data.telefone,
           avatar_url: data.avatar_url
         })
-        .eq('id', user.id);
+        .eq('id', adminData.id);
         
       if (error) {
         throw error;
       }
       
-      // If we reach this point, the update was successful
+      // Update local state with new data
+      setAdminData({
+        ...adminData,
+        nome: data.nome,
+        email: data.email || adminData.email,
+        telefone: data.telefone,
+        avatar_url: data.avatar_url
+      });
+      
+      toast({
+        title: "Perfil atualizado",
+        description: "Suas informações foram atualizadas com sucesso.",
+      });
+      
       return true;
     } catch (error) {
       console.error("Error updating profile:", error);
+      toast({
+        title: "Erro ao atualizar perfil",
+        description: "Ocorreu um erro ao atualizar suas informações.",
+        variant: "destructive",
+      });
       throw error;
     } finally {
       setIsSubmitting(false);
@@ -55,20 +123,51 @@ const Profile = () => {
     newPassword: string;
     confirmPassword: string;
   }) => {
-    const { error } = await signIn(user?.email || "admin@studio.com", data.currentPassword);
-    
-    if (error) {
-      throw new Error("Senha atual incorreta");
-    }
-    
-    const { error: updateError } = await supabase.auth.updateUser({
-      password: data.newPassword
-    });
-    
-    if (updateError) {
-      throw updateError;
+    try {
+      const { error } = await signIn(user?.email || "admin@studio.com", data.currentPassword);
+      
+      if (error) {
+        toast({
+          title: "Senha atual incorreta",
+          description: "Por favor, verifique sua senha atual e tente novamente.",
+          variant: "destructive",
+        });
+        throw new Error("Senha atual incorreta");
+      }
+      
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: data.newPassword
+      });
+      
+      if (updateError) {
+        toast({
+          title: "Erro ao atualizar senha",
+          description: updateError.message,
+          variant: "destructive",
+        });
+        throw updateError;
+      }
+      
+      toast({
+        title: "Senha atualizada",
+        description: "Sua senha foi atualizada com sucesso.",
+      });
+    } catch (error) {
+      console.error("Error in password change:", error);
+      throw error;
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto py-6 flex items-center justify-center h-48">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+          <p className="mt-2">Carregando perfil...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-6">
@@ -84,16 +183,23 @@ const Profile = () => {
       <div className="grid gap-6 md:grid-cols-3">
         <div className="md:col-span-1">
           <ProfileAvatar 
-            initialImage={user?.user_metadata?.avatar_url} 
+            initialImage={adminData?.avatar_url} 
             onAvatarUpdate={async (url) => {
-              if (user?.id && url) {
+              if (adminData?.id && url !== undefined) {
                 try {
                   const { error } = await supabase
                     .from('admins')
                     .update({ avatar_url: url })
-                    .eq('id', user.id);
+                    .eq('id', adminData.id);
                     
                   if (error) throw error;
+                  
+                  // Update local state
+                  setAdminData({
+                    ...adminData,
+                    avatar_url: url
+                  });
+                  
                   return true;
                 } catch (error) {
                   console.error("Error updating avatar:", error);
@@ -109,10 +215,10 @@ const Profile = () => {
           <div className="grid gap-6">
             <PersonalInfoForm
               defaultValues={{
-                nome: user?.user_metadata?.nome || "Sandy Yasmin",
-                studioName: user?.user_metadata?.studioName || "Studio Sandy Yasmin",
-                email: user?.email || "admin@studio.com",
-                telefone: user?.user_metadata?.telefone || "+55 (11) 98765-4321",
+                nome: adminData?.nome || "Sandy Yasmin",
+                studioName: adminData?.studioName || "Studio Sandy Yasmin",
+                email: adminData?.email || "admin@studio.com",
+                telefone: adminData?.telefone || "+55 (11) 98765-4321",
               }}
               onSubmit={onProfileSubmit}
               isSubmitting={isSubmitting}
