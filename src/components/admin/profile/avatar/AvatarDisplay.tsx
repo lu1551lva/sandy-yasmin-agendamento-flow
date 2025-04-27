@@ -2,6 +2,12 @@
 import { User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface AvatarDisplayProps {
   image: string | null;
@@ -14,11 +20,20 @@ export const AvatarDisplay = ({ image, isUploading, onRemove }: AvatarDisplayPro
     <div className="relative">
       {image ? (
         <div className="relative">
-          <img 
-            src={image} 
-            alt="Foto de perfil" 
-            className="w-32 h-32 rounded-full object-cover border-2 border-primary"
-          />
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <img 
+                  src={image} 
+                  alt="Foto de perfil" 
+                  className="w-32 h-32 rounded-full object-cover border-2 border-primary transition-all hover:border-primary/80"
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Foto de perfil atual</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <Button 
             size="icon" 
             variant="destructive" 
