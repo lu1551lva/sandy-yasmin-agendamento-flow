@@ -1,10 +1,8 @@
 
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -37,37 +35,10 @@ interface PersonalInfoFormProps {
 }
 
 export const PersonalInfoForm = ({ defaultValues, onSubmit, isSubmitting = false }: PersonalInfoFormProps) => {
-  const [savingProfile, setSavingProfile] = useState(false);
-  const { toast } = useToast();
   const form = useForm<PersonalInfoFormValues>({
     resolver: zodResolver(personalInfoSchema),
     defaultValues,
   });
-
-  // Update form values when defaultValues change
-  useEffect(() => {
-    form.reset(defaultValues);
-  }, [defaultValues, form]);
-
-  const handleSubmit = async (data: PersonalInfoFormValues) => {
-    setSavingProfile(true);
-    try {
-      const result = await onSubmit(data);
-      
-      // If onSubmit returns true or void, consider it successful
-      if (result !== false) {
-        toast({
-          title: "Perfil atualizado",
-          description: "Suas informações foram atualizadas com sucesso! 🎉",
-        });
-      }
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      // Toast is already handled in the parent component
-    } finally {
-      setSavingProfile(false);
-    }
-  };
 
   return (
     <Card>
@@ -79,7 +50,7 @@ export const PersonalInfoForm = ({ defaultValues, onSubmit, isSubmitting = false
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="nome"
@@ -152,10 +123,10 @@ export const PersonalInfoForm = ({ defaultValues, onSubmit, isSubmitting = false
             
             <Button 
               type="submit" 
-              disabled={savingProfile || isSubmitting} 
+              disabled={isSubmitting} 
               className="w-full"
             >
-              {savingProfile || isSubmitting ? (
+              {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Salvando...

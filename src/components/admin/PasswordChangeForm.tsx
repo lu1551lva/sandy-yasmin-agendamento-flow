@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -34,8 +33,6 @@ interface PasswordChangeFormProps {
 
 export const PasswordChangeForm = ({ onSubmit }: PasswordChangeFormProps) => {
   const [changingPassword, setChangingPassword] = useState(false);
-  const { toast } = useToast();
-  
   const form = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordSchema),
     defaultValues: {
@@ -50,17 +47,8 @@ export const PasswordChangeForm = ({ onSubmit }: PasswordChangeFormProps) => {
     try {
       await onSubmit(data);
       form.reset();
-      toast({
-        title: "Senha atualizada",
-        description: "Sua senha foi atualizada com sucesso!",
-      });
     } catch (error) {
-      console.error("Error updating password:", error);
-      toast({
-        title: "Erro ao atualizar senha",
-        description: "Ocorreu um erro ao atualizar sua senha. Tente novamente.",
-        variant: "destructive",
-      });
+      console.error("Error in password change:", error);
     } finally {
       setChangingPassword(false);
     }
@@ -119,7 +107,11 @@ export const PasswordChangeForm = ({ onSubmit }: PasswordChangeFormProps) => {
               )}
             />
             
-            <Button type="submit" disabled={changingPassword} className="w-full">
+            <Button 
+              type="submit" 
+              disabled={changingPassword} 
+              className="w-full"
+            >
               {changingPassword ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -18,8 +18,7 @@ export const ProfileAvatar = ({ initialImage, onAvatarUpdate }: ProfileAvatarPro
   const { toast } = useToast();
 
   const validateFile = (file: File): boolean => {
-    // Check file size (5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
       toast({
         title: "Arquivo muito grande",
@@ -29,7 +28,6 @@ export const ProfileAvatar = ({ initialImage, onAvatarUpdate }: ProfileAvatarPro
       return false;
     }
 
-    // Check file type
     if (!['image/jpeg', 'image/png'].includes(file.type)) {
       toast({
         title: "Formato inválido",
@@ -56,27 +54,7 @@ export const ProfileAvatar = ({ initialImage, onAvatarUpdate }: ProfileAvatarPro
     setIsUploading(true);
     
     try {
-      // Upload image to Supabase Storage
       const fileName = `avatar-${Date.now()}.${file.name.split('.').pop()}`;
-      
-      // Create a Supabase bucket if it doesn't exist
-      try {
-        const { data: bucketData, error: bucketError } = await supabase.storage.getBucket('avatars');
-        
-        if (bucketError && bucketError.message.includes('does not exist')) {
-          // Bucket doesn't exist, create it
-          const { error: createBucketError } = await supabase.storage.createBucket('avatars', { public: true });
-          
-          if (createBucketError) {
-            console.error("Error creating bucket:", createBucketError);
-            throw createBucketError;
-          }
-        }
-      } catch (bucketError) {
-        console.error("Error checking/creating bucket:", bucketError);
-      }
-      
-      // Upload the file to storage
       const { data: storageData, error: storageError } = await supabase.storage
         .from('avatars')
         .upload(fileName, file, {
@@ -84,21 +62,16 @@ export const ProfileAvatar = ({ initialImage, onAvatarUpdate }: ProfileAvatarPro
           upsert: true,
         });
       
-      if (storageError) {
-        throw storageError;
-      }
+      if (storageError) throw storageError;
       
-      // Get the public URL of the uploaded file
       const { data: publicUrlData } = supabase.storage
         .from('avatars')
         .getPublicUrl(fileName);
       
       const imageUrl = publicUrlData?.publicUrl || null;
       
-      // Update state with new image URL
       setImage(imageUrl);
       
-      // If onAvatarUpdate is provided, call it with the new URL
       if (onAvatarUpdate && imageUrl) {
         const success = await onAvatarUpdate(imageUrl);
         
@@ -127,10 +100,6 @@ export const ProfileAvatar = ({ initialImage, onAvatarUpdate }: ProfileAvatarPro
     }
   };
 
-  const triggerFileInput = () => {
-    fileInputRef.current?.click();
-  };
-
   const removeImage = async () => {
     setIsUploading(true);
     
@@ -155,16 +124,6 @@ export const ProfileAvatar = ({ initialImage, onAvatarUpdate }: ProfileAvatarPro
             variant: "destructive",
           });
         }
-      } else {
-        setImage(null);
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-        
-        toast({
-          title: "Foto removida",
-          description: "Sua foto de perfil foi removida com sucesso.",
-        });
       }
     } catch (error: any) {
       console.error("Error removing image:", error);
@@ -211,7 +170,7 @@ export const ProfileAvatar = ({ initialImage, onAvatarUpdate }: ProfileAvatarPro
         
         <div className="flex gap-2">
           <Button 
-            onClick={triggerFileInput}
+            onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
           >
             {isUploading ? (

@@ -3,10 +3,10 @@ import { AdminData } from "@/hooks/useAdminProfile";
 import { ProfileAvatar } from "@/components/admin/ProfileAvatar";
 import { PersonalInfoForm } from "@/components/admin/PersonalInfoForm";
 import { PasswordChangeForm } from "@/components/admin/PasswordChangeForm";
-import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/auth-context";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProfileContentProps {
   adminData: AdminData;
@@ -51,11 +51,8 @@ const ProfileContent = ({ adminData, setAdminData }: ProfileContentProps) => {
         .select();
         
       if (error) {
-        console.error("Supabase update error:", error);
         throw error;
       }
-      
-      console.log("Update successful, returned data:", updatedData);
       
       if (updatedData && updatedData.length > 0) {
         setAdminData({
@@ -67,11 +64,6 @@ const ProfileContent = ({ adminData, setAdminData }: ProfileContentProps) => {
           avatar_url: data.avatar_url
         });
       }
-      
-      toast({
-        title: "Perfil atualizado",
-        description: "Suas informações foram atualizadas com sucesso.",
-      });
       
       return true;
     } catch (error: any) {
@@ -93,7 +85,7 @@ const ProfileContent = ({ adminData, setAdminData }: ProfileContentProps) => {
     confirmPassword: string;
   }) => {
     try {
-      const { error } = await signIn(adminData?.email || "admin@studio.com", data.currentPassword);
+      const { error } = await signIn(adminData?.email || "", data.currentPassword);
       
       if (error) {
         toast({
@@ -141,10 +133,7 @@ const ProfileContent = ({ adminData, setAdminData }: ProfileContentProps) => {
                   .update({ avatar_url: url })
                   .eq('id', adminData.id);
                   
-                if (error) {
-                  console.error("Error updating avatar:", error);
-                  throw error;
-                }
+                if (error) throw error;
                 
                 setAdminData({
                   ...adminData,
@@ -166,10 +155,10 @@ const ProfileContent = ({ adminData, setAdminData }: ProfileContentProps) => {
         <div className="grid gap-6">
           <PersonalInfoForm
             defaultValues={{
-              nome: adminData?.nome || "Sandy Yasmin",
-              studioName: adminData?.studioName || adminData?.studio_name || "Studio Sandy Yasmin",
-              email: adminData?.email || "admin@studio.com",
-              telefone: adminData?.telefone || "+55 (11) 98765-4321",
+              nome: adminData?.nome || "",
+              studioName: adminData?.studioName || adminData?.studio_name || "",
+              email: adminData?.email || "",
+              telefone: adminData?.telefone || "",
             }}
             onSubmit={onProfileSubmit}
             isSubmitting={isSubmitting}
