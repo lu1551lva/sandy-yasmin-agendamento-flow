@@ -15,6 +15,7 @@ interface ServiceDialogProps {
   currentService: Service | null;
   onSubmit: (data: any) => void;
   resetForm: () => void;
+  categories: { id: string; nome: string }[];
 }
 
 const ServiceDialog = ({
@@ -24,6 +25,7 @@ const ServiceDialog = ({
   currentService,
   onSubmit,
   resetForm,
+  categories,
 }: ServiceDialogProps) => (
   <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent>
@@ -37,6 +39,7 @@ const ServiceDialog = ({
         currentService={currentService}
         onSubmit={onSubmit}
         resetForm={resetForm}
+        categories={categories}
       />
     </DialogContent>
   </Dialog>

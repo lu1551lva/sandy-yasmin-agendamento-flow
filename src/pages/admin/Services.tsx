@@ -25,8 +25,14 @@ const Services = () => {
       try {
         const { data, error } = await supabase
           .from("servicos")
-          .select("*")
-          .order("nome");
+          .select(`
+            *,
+            categorias_servico (
+              id,
+              nome
+            )
+          `)
+          .order('nome');
 
         if (error) {
           toast({
@@ -39,6 +45,31 @@ const Services = () => {
         return data as Service[];
       } catch (error: any) {
         console.error("Erro ao buscar serviços:", error);
+        throw error;
+      }
+    },
+  });
+
+  const { data: categories } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from("categorias_servico")
+          .select("*")
+          .order('ordem');
+
+        if (error) {
+          toast({
+            title: "Erro ao carregar categorias",
+            description: error.message,
+            variant: "destructive",
+          });
+          throw error;
+        }
+        return data;
+      } catch (error: any) {
+        console.error("Erro ao buscar categorias:", error);
         throw error;
       }
     },
@@ -167,9 +198,12 @@ const Services = () => {
   const handleSubmit = (formData: any) => {
     const serviceData = {
       nome: formData.nome,
+      descricao: formData.descricao,
       valor: Number(formData.valor.replace(",", ".")),
       duracao_em_minutos: Number(formData.duracao_em_minutos),
-      ativo: true, // Add the missing ativo field
+      categoria_id: formData.categoria_id || null,
+      imagem_url: formData.imagem_url || null,
+      ativo: true,
     };
 
     if (isEditing && currentService) {
@@ -240,6 +274,7 @@ const Services = () => {
         currentService={currentService}
         onSubmit={handleSubmit}
         resetForm={resetForm}
+        categories={categories || []}
       />
 
       <DeleteServiceDialog

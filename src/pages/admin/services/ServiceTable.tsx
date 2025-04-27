@@ -53,6 +53,7 @@ const ServiceTable = ({
         <TableHeader>
           <TableRow>
             <TableHead>Nome</TableHead>
+            <TableHead>Categoria</TableHead>
             <TableHead>Valor</TableHead>
             <TableHead>Duração</TableHead>
             <TableHead className="w-[100px]">Ações</TableHead>
@@ -61,7 +62,17 @@ const ServiceTable = ({
         <TableBody>
           {services.map((service) => (
             <TableRow key={service.id}>
-              <TableCell className="font-medium">{service.nome}</TableCell>
+              <TableCell className="font-medium">
+                <div>
+                  <p>{service.nome}</p>
+                  {service.descricao && (
+                    <p className="text-sm text-muted-foreground">{service.descricao}</p>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell>
+                {service.categorias_servico?.nome || "Sem categoria"}
+              </TableCell>
               <TableCell>{formatCurrency(service.valor)}</TableCell>
               <TableCell>{service.duracao_em_minutos} minutos</TableCell>
               <TableCell>

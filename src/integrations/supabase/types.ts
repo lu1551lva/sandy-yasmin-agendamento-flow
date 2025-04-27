@@ -100,6 +100,30 @@ export type Database = {
           },
         ]
       }
+      categorias_servico: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          ordem: number | null
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          ordem?: number | null
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          ordem?: number | null
+        }
+        Relationships: []
+      }
       clientes: {
         Row: {
           created_at: string
@@ -154,29 +178,49 @@ export type Database = {
       servicos: {
         Row: {
           ativo: boolean
+          categoria: string | null
+          categoria_id: string | null
           created_at: string
+          descricao: string | null
           duracao_em_minutos: number
           id: string
+          imagem_url: string | null
           nome: string
           valor: number
         }
         Insert: {
           ativo?: boolean
+          categoria?: string | null
+          categoria_id?: string | null
           created_at?: string
+          descricao?: string | null
           duracao_em_minutos: number
           id?: string
+          imagem_url?: string | null
           nome: string
           valor: number
         }
         Update: {
           ativo?: boolean
+          categoria?: string | null
+          categoria_id?: string | null
           created_at?: string
+          descricao?: string | null
           duracao_em_minutos?: number
           id?: string
+          imagem_url?: string | null
           nome?: string
           valor?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "servicos_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias_servico"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

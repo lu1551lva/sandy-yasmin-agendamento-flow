@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { DialogFooter } from "@/components/ui/dialog";
 import { DialogClose } from "@radix-ui/react-dialog";
 import { Service } from "@/lib/supabase";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Form, 
   FormControl, 
@@ -21,6 +22,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 // Schema for service validation
 const serviceSchema = z.object({
   nome: z.string().min(3, "O nome do serviço deve ter pelo menos 3 caracteres"),
+  descricao: z.string().optional(),
   valor: z.string()
     .refine(val => !isNaN(Number(val.replace(",", "."))), { 
       message: "O valor deve ser um número válido" 
@@ -31,6 +33,8 @@ const serviceSchema = z.object({
   duracao_em_minutos: z.string()
     .refine(val => !isNaN(Number(val)), { message: "A duração deve ser um número válido" })
     .refine(val => Number(val) > 0, { message: "A duração deve ser maior que zero" }),
+  categoria_id: z.string().optional(),
+  imagem_url: z.string().optional()
 });
 
 type FormSchemaType = z.infer<typeof serviceSchema>;
@@ -40,37 +44,46 @@ interface ServiceFormProps {
   currentService: Service | null;
   onSubmit: (data: FormSchemaType) => void;
   resetForm: () => void;
+  categories: { id: string; nome: string }[];
 }
 
 const ServiceForm: React.FC<ServiceFormProps> = ({ 
   isEditing, 
   currentService, 
   onSubmit, 
-  resetForm 
+  resetForm,
+  categories 
 }) => {
-  // Initialize form with react-hook-form and zod validation
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(serviceSchema),
     defaultValues: {
       nome: "",
+      descricao: "",
       valor: "",
       duracao_em_minutos: "",
+      categoria_id: "",
+      imagem_url: ""
     }
   });
   
-  // Update form values when editing a service
   useEffect(() => {
     if (isEditing && currentService) {
       form.reset({
         nome: currentService.nome,
+        descricao: currentService.descricao || "",
         valor: String(currentService.valor),
         duracao_em_minutos: String(currentService.duracao_em_minutos),
+        categoria_id: currentService.categoria_id || "",
+        imagem_url: currentService.imagem_url || ""
       });
     } else {
       form.reset({
         nome: "",
+        descricao: "",
         valor: "",
         duracao_em_minutos: "",
+        categoria_id: "",
+        imagem_url: ""
       });
     }
   }, [isEditing, currentService, form]);
@@ -87,15 +100,53 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
           name="nome"
           render={({ field }) => (
             <FormItem>
-              <FormLabel htmlFor="nome">Nome do Serviço</FormLabel>
+              <FormLabel>Nome do Serviço</FormLabel>
               <FormControl>
                 <Input
-                  id="nome"
                   placeholder="Ex: Design de Sobrancelha"
-                  aria-label="Nome do Serviço"
-                  aria-describedby="nome-descricao"
                   {...field}
                 />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="descricao"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Descrição</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Descreva o serviço..."
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="categoria_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Categoria</FormLabel>
+              <FormControl>
+                <select
+                  className="w-full p-2 border rounded-md"
+                  {...field}
+                >
+                  <option value="">Selecione uma categoria</option>
+                  {categories.map(category => (
+                    <option key={category.id} value={category.id}>
+                      {category.nome}
+                    </option>
+                  ))}
+                </select>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -107,13 +158,10 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
           name="valor"
           render={({ field }) => (
             <FormItem>
-              <FormLabel htmlFor="valor">Valor (R$)</FormLabel>
+              <FormLabel>Valor (R$)</FormLabel>
               <FormControl>
                 <Input
-                  id="valor"
                   placeholder="Ex: 40.00"
-                  aria-label="Valor do Serviço"
-                  aria-describedby="valor-descricao"
                   {...field}
                 />
               </FormControl>
@@ -127,14 +175,28 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
           name="duracao_em_minutos"
           render={({ field }) => (
             <FormItem>
-              <FormLabel htmlFor="duracao">Duração (minutos)</FormLabel>
+              <FormLabel>Duração (minutos)</FormLabel>
               <FormControl>
                 <Input
-                  id="duracao"
-                  placeholder="Ex: 30"
                   type="number"
-                  aria-label="Duração em Minutos"
-                  aria-describedby="duracao-descricao"
+                  placeholder="Ex: 30"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="imagem_url"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>URL da Imagem</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="URL da imagem do serviço"
                   {...field}
                 />
               </FormControl>
