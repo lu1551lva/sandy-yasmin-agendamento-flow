@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -21,15 +20,17 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { ProfileAvatar } from "@/components/admin/ProfileAvatar";
 
-// Schema for profile form
 const profileSchema = z.object({
   nome: z.string().min(2, "O nome deve ter pelo menos 2 caracteres"),
   studioName: z.string().min(2, "O nome do studio deve ter pelo menos 2 caracteres"),
   email: z.string().email("Email inválido").optional(),
-  telefone: z.string().min(10, "O telefone deve ter pelo menos 10 dígitos"),
+  telefone: z.string()
+    .regex(
+      /^\+55 \(\d{2}\) \d{5}-\d{4}$/,
+      "Formato inválido. Use: +55 (XX) XXXXX-XXXX"
+    ),
 });
 
-// Schema for password form
 const passwordSchema = z.object({
   currentPassword: z.string().min(1, "A senha atual é obrigatória"),
   newPassword: z.string().min(6, "A nova senha deve ter pelo menos 6 caracteres"),
@@ -48,7 +49,6 @@ const Profile = () => {
   const [savingProfile, setSavingProfile] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
   
-  // Profile form
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -59,7 +59,6 @@ const Profile = () => {
     },
   });
   
-  // Password form
   const passwordForm = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordSchema),
     defaultValues: {
@@ -69,17 +68,14 @@ const Profile = () => {
     },
   });
 
-  // Handle profile form submission
   const onProfileSubmit = async (data: ProfileFormValues) => {
     setSavingProfile(true);
     try {
-      // Here we would update the admin's profile in the database
-      // Since we're using a mock admin for now, we'll just simulate success
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       toast({
         title: "Perfil atualizado",
-        description: "Suas informações foram atualizadas com sucesso.",
+        description: "Suas informações foram atualizadas com sucesso! 🎉",
       });
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -93,11 +89,9 @@ const Profile = () => {
     }
   };
 
-  // Handle password form submission
   const onPasswordSubmit = async (data: PasswordFormValues) => {
     setChangingPassword(true);
     try {
-      // Verify current password by attempting to sign in
       const { error } = await signIn(user?.email || "admin@studio.com", data.currentPassword);
       
       if (error) {
@@ -110,7 +104,6 @@ const Profile = () => {
         return;
       }
       
-      // Update password
       const { error: updateError } = await supabase.auth.updateUser({
         password: data.newPassword
       });
@@ -124,7 +117,6 @@ const Profile = () => {
         description: "Sua senha foi atualizada com sucesso.",
       });
       
-      // Reset form
       passwordForm.reset({
         currentPassword: "",
         newPassword: "",
@@ -154,14 +146,12 @@ const Profile = () => {
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
-        {/* Avatar Section */}
         <div className="md:col-span-1">
           <ProfileAvatar />
         </div>
 
         <div className="md:col-span-2">
           <div className="grid gap-6">
-            {/* Profile Information Card */}
             <Card>
               <CardHeader>
                 <CardTitle>Informações Pessoais</CardTitle>
@@ -221,14 +211,32 @@ const Profile = () => {
                         <FormItem>
                           <FormLabel>Telefone</FormLabel>
                           <FormControl>
-                            <Input {...field} />
+                            <Input 
+                              {...field} 
+                              placeholder="+55 (XX) XXXXX-XXXX"
+                              onChange={(e) => {
+                                const cleaned = e.target.value.replace(/\D/g, '');
+                                if (cleaned.length <= 13) {
+                                  let formatted = cleaned;
+                                  if (cleaned.length >= 2) formatted = `+${cleaned.slice(0,2)} `;
+                                  if (cleaned.length >= 4) formatted += `(${cleaned.slice(2,4)}) `;
+                                  if (cleaned.length >= 9) formatted += `${cleaned.slice(4,9)}-`;
+                                  if (cleaned.length >= 13) formatted += cleaned.slice(9,13);
+                                  field.onChange(formatted);
+                                }
+                              }}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                     
-                    <Button type="submit" disabled={savingProfile} className="w-full">
+                    <Button 
+                      type="submit" 
+                      disabled={savingProfile} 
+                      className="w-full"
+                    >
                       {savingProfile ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -243,7 +251,6 @@ const Profile = () => {
               </CardContent>
             </Card>
 
-            {/* Change Password Card */}
             <Card>
               <CardHeader>
                 <CardTitle>Alterar Senha</CardTitle>

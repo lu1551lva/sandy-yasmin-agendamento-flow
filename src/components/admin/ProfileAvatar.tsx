@@ -1,6 +1,6 @@
 
 import { useState, useRef } from 'react';
-import { User, Upload, X } from 'lucide-react';
+import { User, Upload, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -15,21 +15,42 @@ export const ProfileAvatar = ({ initialImage }: ProfileAvatarProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
+  const validateFile = (file: File): boolean => {
+    // Check file size (5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    if (file.size > maxSize) {
+      toast({
+        title: "Arquivo muito grande",
+        description: "O tamanho máximo permitido é 5MB.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    // Check file type
+    if (!['image/jpeg', 'image/png'].includes(file.type)) {
+      toast({
+        title: "Formato inválido",
+        description: "Por favor, selecione uma imagem JPG ou PNG.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    return true;
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast({
-        title: 'Formato inválido',
-        description: 'Por favor, selecione uma imagem válida.',
-        variant: 'destructive',
-      });
+    if (!validateFile(file)) {
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       return;
     }
 
-    // Simulate upload process
     setIsUploading(true);
     
     // Create a local preview
@@ -39,8 +60,8 @@ export const ProfileAvatar = ({ initialImage }: ProfileAvatarProps) => {
       setIsUploading(false);
       
       toast({
-        title: 'Foto atualizada',
-        description: 'Sua foto de perfil foi atualizada com sucesso.',
+        title: "Foto atualizada",
+        description: "Sua foto de perfil foi atualizada com sucesso! 🎉",
       });
     };
     
@@ -58,8 +79,8 @@ export const ProfileAvatar = ({ initialImage }: ProfileAvatarProps) => {
     }
     
     toast({
-      title: 'Foto removida',
-      description: 'Sua foto de perfil foi removida.',
+      title: "Foto removida",
+      description: "Sua foto de perfil foi removida com sucesso.",
     });
   };
 
@@ -98,8 +119,17 @@ export const ProfileAvatar = ({ initialImage }: ProfileAvatarProps) => {
             onClick={triggerFileInput}
             disabled={isUploading}
           >
-            <Upload className="mr-2 h-4 w-4" />
-            {isUploading ? 'Enviando...' : 'Alterar foto'}
+            {isUploading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Enviando...
+              </>
+            ) : (
+              <>
+                <Upload className="mr-2 h-4 w-4" />
+                Alterar foto
+              </>
+            )}
           </Button>
         </div>
         
@@ -107,7 +137,7 @@ export const ProfileAvatar = ({ initialImage }: ProfileAvatarProps) => {
           type="file"
           ref={fileInputRef}
           className="hidden"
-          accept="image/*"
+          accept="image/jpeg,image/png"
           onChange={handleFileChange}
         />
         
