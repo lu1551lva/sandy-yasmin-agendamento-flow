@@ -32,10 +32,11 @@ type PersonalInfoFormValues = z.infer<typeof personalInfoSchema>;
 
 interface PersonalInfoFormProps {
   defaultValues: PersonalInfoFormValues;
-  onSubmit: (data: PersonalInfoFormValues) => Promise<void>;
+  onSubmit: (data: PersonalInfoFormValues) => Promise<boolean | void>;
+  isSubmitting?: boolean;
 }
 
-export const PersonalInfoForm = ({ defaultValues, onSubmit }: PersonalInfoFormProps) => {
+export const PersonalInfoForm = ({ defaultValues, onSubmit, isSubmitting = false }: PersonalInfoFormProps) => {
   const [savingProfile, setSavingProfile] = useState(false);
   const { toast } = useToast();
   const form = useForm<PersonalInfoFormValues>({
@@ -46,11 +47,15 @@ export const PersonalInfoForm = ({ defaultValues, onSubmit }: PersonalInfoFormPr
   const handleSubmit = async (data: PersonalInfoFormValues) => {
     setSavingProfile(true);
     try {
-      await onSubmit(data);
-      toast({
-        title: "Perfil atualizado",
-        description: "Suas informações foram atualizadas com sucesso! 🎉",
-      });
+      const result = await onSubmit(data);
+      
+      // If onSubmit returns true or void, consider it successful
+      if (result !== false) {
+        toast({
+          title: "Perfil atualizado",
+          description: "Suas informações foram atualizadas com sucesso! 🎉",
+        });
+      }
     } catch (error) {
       console.error("Error updating profile:", error);
       toast({
@@ -146,10 +151,10 @@ export const PersonalInfoForm = ({ defaultValues, onSubmit }: PersonalInfoFormPr
             
             <Button 
               type="submit" 
-              disabled={savingProfile} 
+              disabled={savingProfile || isSubmitting} 
               className="w-full"
             >
-              {savingProfile ? (
+              {savingProfile || isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Salvando...

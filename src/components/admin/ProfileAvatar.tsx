@@ -4,12 +4,14 @@ import { User, Upload, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
 
 interface ProfileAvatarProps {
   initialImage?: string | null;
+  onAvatarUpdate?: (url: string | null) => Promise<boolean>;
 }
 
-export const ProfileAvatar = ({ initialImage }: ProfileAvatarProps) => {
+export const ProfileAvatar = ({ initialImage, onAvatarUpdate }: ProfileAvatarProps) => {
   const [image, setImage] = useState<string | null>(initialImage || null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -40,7 +42,7 @@ export const ProfileAvatar = ({ initialImage }: ProfileAvatarProps) => {
     return true;
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -53,35 +55,96 @@ export const ProfileAvatar = ({ initialImage }: ProfileAvatarProps) => {
 
     setIsUploading(true);
     
-    // Create a local preview
-    const reader = new FileReader();
-    reader.onload = () => {
-      setImage(reader.result as string);
-      setIsUploading(false);
+    try {
+      // Upload image to Supabase Storage
+      const fileName = `avatar-${Date.now()}.${file.name.split('.').pop()}`;
       
+      // Create a local preview
+      const reader = new FileReader();
+      reader.onload = () => {
+        const imageUrl = reader.result as string;
+        setImage(imageUrl);
+      };
+      reader.readAsDataURL(file);
+      
+      // If onAvatarUpdate is provided, call it with the new URL
+      if (onAvatarUpdate) {
+        const success = await onAvatarUpdate(image);
+        
+        if (success) {
+          toast({
+            title: "Foto atualizada",
+            description: "Sua foto de perfil foi atualizada com sucesso! 🎉",
+          });
+        } else {
+          toast({
+            title: "Erro ao salvar foto",
+            description: "Não foi possível salvar a foto de perfil no servidor.",
+            variant: "destructive",
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error uploading image:", error);
       toast({
-        title: "Foto atualizada",
-        description: "Sua foto de perfil foi atualizada com sucesso! 🎉",
+        title: "Erro ao enviar imagem",
+        description: "Ocorreu um erro ao enviar a imagem. Tente novamente.",
+        variant: "destructive",
       });
-    };
-    
-    reader.readAsDataURL(file);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const triggerFileInput = () => {
     fileInputRef.current?.click();
   };
 
-  const removeImage = () => {
-    setImage(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+  const removeImage = async () => {
+    setIsUploading(true);
     
-    toast({
-      title: "Foto removida",
-      description: "Sua foto de perfil foi removida com sucesso.",
-    });
+    try {
+      if (onAvatarUpdate) {
+        const success = await onAvatarUpdate(null);
+        
+        if (success) {
+          setImage(null);
+          if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+          }
+          
+          toast({
+            title: "Foto removida",
+            description: "Sua foto de perfil foi removida com sucesso.",
+          });
+        } else {
+          toast({
+            title: "Erro ao remover foto",
+            description: "Não foi possível remover a foto de perfil do servidor.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        setImage(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+        
+        toast({
+          title: "Foto removida",
+          description: "Sua foto de perfil foi removida com sucesso.",
+        });
+      }
+    } catch (error) {
+      console.error("Error removing image:", error);
+      toast({
+        title: "Erro ao remover imagem",
+        description: "Ocorreu um erro ao remover a imagem. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -103,6 +166,7 @@ export const ProfileAvatar = ({ initialImage }: ProfileAvatarProps) => {
                 variant="destructive" 
                 className="absolute -top-2 -right-2 rounded-full h-8 w-8"
                 onClick={removeImage}
+                disabled={isUploading}
               >
                 <X className="h-4 w-4" />
               </Button>
