@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '@/types/database.types';
 
@@ -19,7 +20,12 @@ export type Tables = Database['public']['Tables'];
 
 export type Client = Tables['clientes']['Row'];
 export type Professional = Tables['profissionais']['Row'];
-export type Service = Tables['servicos']['Row'];
+export type Service = Tables['servicos']['Row'] & {
+  categorias_servico?: {
+    id: string;
+    nome: string;
+  } | null;
+};
 export type Appointment = Tables['agendamentos']['Row'];
 
 export type AppointmentWithDetails = Appointment & {
