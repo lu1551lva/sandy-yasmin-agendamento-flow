@@ -1,6 +1,6 @@
 
 import { StatsCard } from "@/components/admin/dashboard/StatsCard";
-import { Calendar, DollarSign, Users } from "lucide-react";
+import { Calendar as CalendarIcon, DollarSign, Users } from "lucide-react";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { DataTablePagination } from "@/components/common/DataTablePagination";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,7 +64,7 @@ const Dashboard = () => {
           title="Agendamentos do Mês" 
           value={stats.appointmentsThisMonth} 
           trend={stats.appointmentsTrend}
-          icon={<Calendar className="h-6 w-6" />}
+          icon={<CalendarIcon className="h-6 w-6" />}
           loading={isLoading}
         />
         <StatsCard 
