@@ -44,6 +44,7 @@ export type Database = {
       }
       agendamentos: {
         Row: {
+          avaliado: boolean | null
           cliente_id: string
           created_at: string
           data: string
@@ -55,6 +56,7 @@ export type Database = {
           ultima_mensagem_enviada_em: string | null
         }
         Insert: {
+          avaliado?: boolean | null
           cliente_id: string
           created_at?: string
           data: string
@@ -66,6 +68,7 @@ export type Database = {
           ultima_mensagem_enviada_em?: string | null
         }
         Update: {
+          avaliado?: boolean | null
           cliente_id?: string
           created_at?: string
           data?: string
@@ -205,6 +208,38 @@ export type Database = {
         }
         Relationships: []
       }
+      reviews: {
+        Row: {
+          appointment_id: string
+          comment: string | null
+          created_at: string
+          id: string
+          rating: number
+        }
+        Insert: {
+          appointment_id: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating: number
+        }
+        Update: {
+          appointment_id?: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "agendamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       servicos: {
         Row: {
           ativo: boolean
@@ -254,7 +289,35 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      appointment_reviews: {
+        Row: {
+          cliente_id: string | null
+          cliente_nome: string | null
+          comment: string | null
+          created_at: string | null
+          id: string | null
+          profissional_id: string | null
+          profissional_nome: string | null
+          rating: number | null
+          servico_nome: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agendamentos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agendamentos_profissional_id_fkey"
+            columns: ["profissional_id"]
+            isOneToOne: false
+            referencedRelation: "profissionais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never

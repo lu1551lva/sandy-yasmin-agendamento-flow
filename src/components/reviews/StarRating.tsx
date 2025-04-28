@@ -4,7 +4,7 @@ import { Star } from "lucide-react";
 
 interface StarRatingProps {
   rating: number;
-  onRatingChange: (rating: number) => void;
+  onRatingChange?: (rating: number) => void;
   readOnly?: boolean;
   size?: number;
 }
@@ -29,7 +29,7 @@ export const StarRating = ({
 
   const handleClick = (index: number) => {
     if (readOnly) return;
-    onRatingChange(index);
+    if (onRatingChange) onRatingChange(index);
   };
 
   return (
@@ -43,7 +43,7 @@ export const StarRating = ({
             key={index}
             size={size}
             className={`cursor-${readOnly ? 'default' : 'pointer'} transition-colors ${
-              filled ? "fill-gold text-gold" : "text-gray-300"
+              filled ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
             } mr-1`}
             onClick={() => handleClick(index)}
             onMouseEnter={() => handleMouseEnter(index)}

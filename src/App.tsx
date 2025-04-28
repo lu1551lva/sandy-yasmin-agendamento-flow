@@ -19,6 +19,7 @@ import Professionals from "./pages/admin/Professionals";
 import Services from "./pages/admin/Services";
 import WhatsAppMessages from "./pages/admin/WhatsAppMessages";
 import Profile from "./pages/admin/Profile";
+import Reviews from "./pages/admin/Reviews"; // Import the new Reviews page
 import { AuthProvider } from "./context/auth-context";
 import Register from "./pages/auth/Register";
 import Login from "./pages/auth/Login";
@@ -73,6 +74,7 @@ const App = () => {
                 <Route path="mensagens" element={<WhatsAppMessages />} />
                 <Route path="perfil" element={<Profile />} />
                 <Route path="bloqueios" element={<BlocksList />} />
+                <Route path="avaliacoes" element={<Reviews />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
