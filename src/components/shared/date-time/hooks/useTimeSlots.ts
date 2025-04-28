@@ -1,8 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useQuery } from "@tanstack/react-query";
 import { Professional, Service } from "@/lib/supabase";
-import { useQuery } from "react-query";
+import { supabase } from "@/lib/supabase";
 import { Block } from "@/pages/admin/blocks/types";
 
 interface UseTimeSlotsProps {

@@ -5,6 +5,8 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { Block } from "../types";
 
+export type BlockFormData = Omit<Block, "id" | "created_at">;
+
 export function useBlocks() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -31,7 +33,7 @@ export function useBlocks() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (blockData: Omit<Block, "id" | "created_at">) => {
+    mutationFn: async (blockData: BlockFormData) => {
       const { error } = await supabase.from("bloqueios").insert([blockData]);
       
       if (error) {
@@ -53,7 +55,7 @@ export function useBlocks() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, ...blockData }: Partial<Block> & { id: string }) => {
+    mutationFn: async ({ id, ...blockData }: Partial<BlockFormData> & { id: string }) => {
       const { error } = await supabase
         .from("bloqueios")
         .update(blockData)

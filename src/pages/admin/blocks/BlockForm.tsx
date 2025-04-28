@@ -42,10 +42,12 @@ const formSchema = z.object({
   observacao: z.string().optional(),
 });
 
+type BlockFormValues = z.infer<typeof formSchema>;
+
 export default function BlockForm({ block, onClose }: BlockFormProps) {
   const { createBlock, updateBlock } = useBlocks();
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<BlockFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: block ? {
       data_inicio: new Date(block.data_inicio),
@@ -62,13 +64,20 @@ export default function BlockForm({ block, onClose }: BlockFormProps) {
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (block) {
-      await updateBlock(block.id, values);
-    } else {
-      await createBlock(values);
+  const onSubmit = async (values: BlockFormValues) => {
+    try {
+      if (block) {
+        await updateBlock({
+          id: block.id,
+          ...values,
+        });
+      } else {
+        await createBlock(values);
+      }
+      onClose();
+    } catch (error) {
+      console.error("Error saving block:", error);
     }
-    onClose();
   };
 
   return (
