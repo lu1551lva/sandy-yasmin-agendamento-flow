@@ -10,6 +10,22 @@ export const useRescheduleAppointment = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const invalidateAppointmentQueries = async () => {
+    console.log('Invalidating and refetching appointment queries after reschedule...');
+    // Invalidate all appointment-related queries
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['dashboard-appointments'] }),
+      queryClient.invalidateQueries({ queryKey: ['weekly-appointments'] }),
+      queryClient.invalidateQueries({ queryKey: ['appointments'] })
+    ]);
+    
+    // Force a refetch of appointments query to update UI immediately
+    await queryClient.refetchQueries({ queryKey: ['appointments'] });
+    
+    // Add a small delay to ensure the UI has time to update
+    return new Promise(resolve => setTimeout(resolve, 100));
+  };
+
   const checkAvailability = async (professionalId: string, date: string, time: string) => {
     const { data: existingAppointments, error } = await supabase
       .from('agendamentos')
@@ -71,10 +87,11 @@ export const useRescheduleAppointment = () => {
         throw error;
       }
 
-      // Invalidate and refetch relevant queries
-      await queryClient.invalidateQueries({ queryKey: ['dashboard-appointments'] });
-      await queryClient.invalidateQueries({ queryKey: ['weekly-appointments'] });
-      await queryClient.invalidateQueries({ queryKey: ['appointments'] });
+      // Invalidate and refetch relevant queries to update UI
+      await invalidateAppointmentQueries();
+      
+      // Also invalidate specific appointment history
+      await queryClient.invalidateQueries({ queryKey: ['appointment-history', appointmentId] });
 
       toast({
         title: "Agendamento reagendado",

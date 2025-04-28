@@ -32,11 +32,15 @@ export function AppointmentDialogs({
 }: AppointmentDialogsProps) {
   const { updateStatus, isLoading } = useAppointmentStatusUpdate();
   const { toast } = useToast();
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleStatusUpdate = async () => {
     if (!appointmentToUpdate) return;
     
+    setIsProcessing(true);
+    
     const success = await updateStatus(appointmentToUpdate.id, appointmentToUpdate.status);
+    
     if (success) {
       toast({
         title: appointmentToUpdate.status === 'concluido' ? "Agendamento concluído" : "Status atualizado",
@@ -45,36 +49,43 @@ export function AppointmentDialogs({
           : "O status do agendamento foi atualizado com sucesso.",
       });
       
-      // Guarantee list update
+      // Ensure list update
       if (onAppointmentUpdated) {
         onAppointmentUpdated();
       }
     }
+    
+    setIsProcessing(false);
     setAppointmentToUpdate(null);
   };
 
   const handleCancelAppointment = async (reason: string) => {
     if (!appointmentToCancel) return;
     
+    setIsProcessing(true);
+    
     const success = await updateStatus(appointmentToCancel, "cancelado", reason);
+    
     if (success) {
       toast({
         title: "Agendamento cancelado",
         description: "O agendamento foi cancelado com sucesso.",
       });
       
-      // Guarantee list update
+      // Ensure list update
       if (onAppointmentUpdated) {
         onAppointmentUpdated();
       }
     }
+    
+    setIsProcessing(false);
     setIsCancelDialogOpen(false);
     setAppointmentToCancel(null);
   };
 
   const handleAppointmentDialogClose = () => {
     setSelectedAppointment(null);
-    // Guarantee list update
+    // Ensure list update
     if (onAppointmentUpdated) {
       onAppointmentUpdated();
     }
@@ -97,6 +108,7 @@ export function AppointmentDialogs({
         onOpenChange={() => setAppointmentToUpdate(null)}
         status={appointmentToUpdate?.status || null}
         onConfirm={handleStatusUpdate}
+        isLoading={isLoading || isProcessing}
       />
 
       {/* Appointment Cancel Dialog */}
@@ -104,7 +116,7 @@ export function AppointmentDialogs({
         isOpen={isCancelDialogOpen}
         onClose={() => setIsCancelDialogOpen(false)}
         onConfirm={handleCancelAppointment}
-        isLoading={isLoading}
+        isLoading={isLoading || isProcessing}
       />
     </>
   );

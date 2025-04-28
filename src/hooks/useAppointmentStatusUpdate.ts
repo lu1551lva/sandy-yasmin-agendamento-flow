@@ -6,8 +6,10 @@ export const useAppointmentStatusUpdate = () => {
   const { updateStatus, deleteAppointment, isLoading } = useUpdateAppointmentStatus();
 
   const updateAppointmentStatus = async (appointmentId: string, newStatus: AppointmentStatus, reason?: string) => {
-    // Delega para o hook principal e retorna o resultado
-    return await updateStatus(appointmentId, newStatus, reason);
+    // Delegate to the main hook and return the result
+    const result = await updateStatus(appointmentId, newStatus, reason);
+    console.log(`Status update result for appointment ${appointmentId}: ${result}`);
+    return result;
   };
 
   return {

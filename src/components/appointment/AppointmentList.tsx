@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AppointmentWithDetails, AppointmentStatus } from "@/types/appointment.types";
 import { AppointmentStatusSection } from "./list/AppointmentStatusSection";
 import { AppointmentDialogs } from "./list/AppointmentDialogs";
@@ -21,10 +21,16 @@ export function AppointmentList({
   const [appointmentToUpdate, setAppointmentToUpdate] = useState<{ id: string; status: AppointmentStatus } | null>(null);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [appointmentToCancel, setAppointmentToCancel] = useState<string | null>(null);
+  const [localAppointments, setLocalAppointments] = useState<AppointmentWithDetails[]>(appointments);
+  
+  // Update local state when appointments prop changes
+  useEffect(() => {
+    setLocalAppointments(appointments);
+  }, [appointments]);
   
   // Group appointments by status
   const { groupedAppointments, isEmpty } = useAppointmentGrouper({ 
-    appointments, 
+    appointments: localAppointments, 
     showAll 
   });
 
@@ -32,6 +38,17 @@ export function AppointmentList({
   const openCancelDialog = (appointmentId: string) => {
     setAppointmentToCancel(appointmentId);
     setIsCancelDialogOpen(true);
+  };
+
+  // Handle appointment updates
+  const handleAppointmentUpdated = () => {
+    // Call parent callback if provided
+    if (onAppointmentUpdated) {
+      onAppointmentUpdated();
+    }
+    
+    // If we have a refresh function, use it
+    console.log("Appointment updated, refreshing data...");
   };
 
   // If no appointments, show empty state
@@ -90,7 +107,7 @@ export function AppointmentList({
         setIsCancelDialogOpen={setIsCancelDialogOpen}
         appointmentToCancel={appointmentToCancel}
         setAppointmentToCancel={setAppointmentToCancel}
-        onAppointmentUpdated={onAppointmentUpdated}
+        onAppointmentUpdated={handleAppointmentUpdated}
       />
     </>
   );

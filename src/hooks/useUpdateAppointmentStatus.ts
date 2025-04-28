@@ -10,13 +10,19 @@ export const useUpdateAppointmentStatus = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const invalidateQueries = async () => {
-    // Invalidar todas as queries relacionadas a agendamentos
-    await queryClient.invalidateQueries({ queryKey: ['appointments'] });
-    await queryClient.invalidateQueries({ queryKey: ['dashboard-appointments'] });
-    await queryClient.invalidateQueries({ queryKey: ['weekly-appointments'] });
+  const invalidateAppointmentQueries = async () => {
+    console.log('Invalidating appointment queries...');
+    // Invalidate all appointment-related queries
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['appointments'] }),
+      queryClient.invalidateQueries({ queryKey: ['dashboard-appointments'] }),
+      queryClient.invalidateQueries({ queryKey: ['weekly-appointments'] })
+    ]);
     
-    // Aguardar para garantir que a UI seja atualizada
+    // Force a refetch of appointments query to update UI immediately
+    await queryClient.refetchQueries({ queryKey: ['appointments'] });
+    
+    // Add a small delay to ensure the UI has time to update
     return new Promise(resolve => setTimeout(resolve, 100));
   };
 
@@ -24,7 +30,7 @@ export const useUpdateAppointmentStatus = () => {
     try {
       setIsLoading(true);
 
-      // Atualizar status do agendamento no banco
+      // Update appointment status in the database
       const { error } = await supabase
         .from('agendamentos')
         .update({ 
@@ -43,7 +49,7 @@ export const useUpdateAppointmentStatus = () => {
         return false;
       }
 
-      // Criar entrada no histórico
+      // Create history entry
       const historyEntry = {
         agendamento_id: appointmentId,
         tipo: status,
@@ -53,7 +59,7 @@ export const useUpdateAppointmentStatus = () => {
       
       await supabase.from('agendamento_historico').insert(historyEntry);
 
-      // Mostrar toast de sucesso
+      // Show success toast
       toast({
         title: status === 'concluido' ? 'Agendamento concluído' : 'Agendamento cancelado',
         description: status === 'concluido' 
@@ -61,10 +67,10 @@ export const useUpdateAppointmentStatus = () => {
           : 'O agendamento foi cancelado com sucesso.',
       });
 
-      // Invalidar e recarregar as queries relevantes
-      await invalidateQueries();
+      // Invalidate and reload relevant queries
+      await invalidateAppointmentQueries();
       
-      // Adicionalmente invalidar a query do histórico específico
+      // Additionally invalidate the specific appointment history query
       await queryClient.invalidateQueries({ queryKey: ['appointment-history', appointmentId] });
 
       return true;
@@ -85,13 +91,13 @@ export const useUpdateAppointmentStatus = () => {
     try {
       setIsLoading(true);
 
-      // Excluir o histórico do agendamento primeiro
+      // Delete appointment history first
       await supabase
         .from('agendamento_historico')
         .delete()
         .eq('agendamento_id', appointmentId);
 
-      // Em seguida, excluir o agendamento
+      // Then delete the appointment itself
       const { error } = await supabase
         .from('agendamentos')
         .delete()
@@ -112,8 +118,8 @@ export const useUpdateAppointmentStatus = () => {
         description: "O agendamento foi excluído permanentemente.",
       });
 
-      // Invalidar e recarregar as queries relevantes
-      await invalidateQueries();
+      // Invalidate and reload relevant queries
+      await invalidateAppointmentQueries();
 
       return true;
     } catch (error) {

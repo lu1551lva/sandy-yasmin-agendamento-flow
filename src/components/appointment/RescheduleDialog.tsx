@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/lib/supabase";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface RescheduleDialogProps {
   appointment: AppointmentWithDetails;
@@ -88,8 +89,8 @@ export function RescheduleDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-none">
           <DialogTitle className="flex items-center gap-2">
             <CalendarClock className="h-5 w-5" />
             Reagendar Horário
@@ -100,53 +101,55 @@ export function RescheduleDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <Alert className="bg-blue-50 border-blue-200">
+        <Alert className="bg-blue-50 border-blue-200 flex-none">
           <AlertDescription className="text-sm">
             <strong>Agendamento atual:</strong> {currentDateTime} com {appointment.profissional.nome}
           </AlertDescription>
         </Alert>
 
-        <div className="grid gap-4 py-4">
-          <DateSelector
-            date={selectedDate}
-            onDateChange={setSelectedDate}
-            disablePastDates={true}
-          />
-          
-          {selectedDate && (
-            <TimeSelector
-              professionalId={appointment.profissional.id}
-              availableTimes={availableTimes}
-              selectedTime={selectedTime}
-              onTimeSelect={setSelectedTime}
+        <ScrollArea className="flex-grow pr-4 my-4 max-h-[50vh]">
+          <div className="grid gap-4">
+            <DateSelector
+              date={selectedDate}
+              onDateChange={setSelectedDate}
+              disablePastDates={true}
             />
-          )}
-          
-          <Separator />
-          
-          <div className="space-y-2">
-            <label htmlFor="note" className="text-sm font-medium">
-              Observação (opcional)
-            </label>
-            <textarea
-              id="note"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              className="w-full min-h-[80px] p-2 border rounded-md"
-              placeholder="Motivo do reagendamento..."
-            />
+            
+            {selectedDate && (
+              <TimeSelector
+                professionalId={appointment.profissional.id}
+                availableTimes={availableTimes}
+                selectedTime={selectedTime}
+                onTimeSelect={setSelectedTime}
+              />
+            )}
+            
+            <Separator />
+            
+            <div className="space-y-2">
+              <label htmlFor="note" className="text-sm font-medium">
+                Observação (opcional)
+              </label>
+              <textarea
+                id="note"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                className="w-full min-h-[80px] p-2 border rounded-md"
+                placeholder="Motivo do reagendamento..."
+              />
+            </div>
           </div>
-        </div>
+        </ScrollArea>
 
         {selectedDate && selectedTime && (
-          <Alert className="bg-green-50 border-green-200">
+          <Alert className="bg-green-50 border-green-200 flex-none mt-2">
             <AlertDescription className="text-sm">
               <strong>Novo agendamento:</strong> {newDateTime} com {appointment.profissional.nome}
             </AlertDescription>
           </Alert>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="flex-none mt-4 border-t pt-4">
           <Button variant="outline" onClick={onClose} disabled={isLoading}>
             Cancelar
           </Button>
