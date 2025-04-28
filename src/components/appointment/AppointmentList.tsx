@@ -21,16 +21,10 @@ export function AppointmentList({
   const [appointmentToUpdate, setAppointmentToUpdate] = useState<{ id: string; status: AppointmentStatus } | null>(null);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [appointmentToCancel, setAppointmentToCancel] = useState<string | null>(null);
-  const [localAppointments, setLocalAppointments] = useState<AppointmentWithDetails[]>(appointments);
   
-  // Update local state when appointments prop changes
-  useEffect(() => {
-    setLocalAppointments(appointments);
-  }, [appointments]);
-  
-  // Group appointments by status
+  // Group appointments by status - using appointments directly from props
   const { groupedAppointments, isEmpty } = useAppointmentGrouper({ 
-    appointments: localAppointments, 
+    appointments, 
     showAll 
   });
 
@@ -47,7 +41,6 @@ export function AppointmentList({
       onAppointmentUpdated();
     }
     
-    // If we have a refresh function, use it
     console.log("Appointment updated, refreshing data...");
   };
 
