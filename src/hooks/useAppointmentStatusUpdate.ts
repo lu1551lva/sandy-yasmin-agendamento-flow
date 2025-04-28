@@ -1,16 +1,12 @@
 
-import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import { useToast } from '@/hooks/use-toast';
-import { AppointmentStatus } from '@/types/appointment.types';
 import { useUpdateAppointmentStatus } from './useUpdateAppointmentStatus';
+import { AppointmentStatus } from '@/types/appointment.types';
 
 export const useAppointmentStatusUpdate = () => {
   const { updateStatus, isLoading } = useUpdateAppointmentStatus();
 
-  const updateAppointmentStatus = async (appointmentId: string, newStatus: AppointmentStatus) => {
-    return await updateStatus(appointmentId, newStatus);
+  const updateAppointmentStatus = async (appointmentId: string, newStatus: AppointmentStatus, reason?: string) => {
+    return await updateStatus(appointmentId, newStatus, reason);
   };
 
   return {

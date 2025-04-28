@@ -42,6 +42,41 @@ export type Database = {
         }
         Relationships: []
       }
+      agendamento_historico: {
+        Row: {
+          agendamento_id: string
+          created_at: string
+          descricao: string | null
+          id: string
+          novo_valor: string | null
+          tipo: string
+        }
+        Insert: {
+          agendamento_id: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          novo_valor?: string | null
+          tipo: string
+        }
+        Update: {
+          agendamento_id?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          novo_valor?: string | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agendamento_historico_agendamento_id_fkey"
+            columns: ["agendamento_id"]
+            isOneToOne: false
+            referencedRelation: "agendamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agendamentos: {
         Row: {
           avaliado: boolean | null
@@ -50,6 +85,7 @@ export type Database = {
           data: string
           hora: string
           id: string
+          motivo_cancelamento: string | null
           profissional_id: string
           servico_id: string
           status: string
@@ -62,6 +98,7 @@ export type Database = {
           data: string
           hora: string
           id?: string
+          motivo_cancelamento?: string | null
           profissional_id: string
           servico_id: string
           status?: string
@@ -74,6 +111,7 @@ export type Database = {
           data?: string
           hora?: string
           id?: string
+          motivo_cancelamento?: string | null
           profissional_id?: string
           servico_id?: string
           status?: string

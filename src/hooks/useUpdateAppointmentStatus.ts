@@ -19,7 +19,7 @@ export const useUpdateAppointmentStatus = () => {
         if (!oldData) return oldData;
         return oldData.map((appointment: any) => 
           appointment.id === appointmentId 
-            ? { ...appointment, status: status }
+            ? { ...appointment, status: status, ...(reason ? { motivo_cancelamento: reason } : {}) }
             : appointment
         );
       });

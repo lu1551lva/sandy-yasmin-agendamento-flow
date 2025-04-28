@@ -25,7 +25,7 @@ export function AppointmentHistory({ appointmentId }: AppointmentHistoryProps) {
         .from("agendamento_historico")
         .select("*")
         .eq("agendamento_id", appointmentId)
-        .order("criado_em", { ascending: false });
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data || [];
@@ -99,11 +99,11 @@ export function AppointmentHistory({ appointmentId }: AppointmentHistoryProps) {
           </div>
           <div className="flex-1">
             <p className="font-medium">{getActionText(entry)}</p>
-            {entry.observacao && (
-              <p className="text-sm text-muted-foreground">{entry.observacao}</p>
+            {entry.descricao && (
+              <p className="text-sm text-muted-foreground">{entry.descricao}</p>
             )}
             <p className="text-xs text-muted-foreground mt-1">
-              {format(parseISO(entry.criado_em), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+              {format(parseISO(entry.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
             </p>
           </div>
         </div>
