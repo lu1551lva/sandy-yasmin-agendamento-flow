@@ -5,6 +5,7 @@ export interface AppointmentWithDetails extends Appointment {
   cliente: Client;
   servico: Service;
   profissional: Professional;
+  motivo_cancelamento?: string;
 }
 
 export interface AppointmentData {

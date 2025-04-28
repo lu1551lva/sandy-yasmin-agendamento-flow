@@ -10,14 +10,27 @@ export const useUpdateAppointmentStatus = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const updateStatus = async (appointmentId: string, status: AppointmentStatus) => {
+  const updateStatus = async (appointmentId: string, status: AppointmentStatus, reason?: string) => {
     try {
       setIsLoading(true);
+
+      // Optimistically update UI first
+      queryClient.setQueryData(['appointments'], (oldData: any) => {
+        if (!oldData) return oldData;
+        return oldData.map((appointment: any) => 
+          appointment.id === appointmentId 
+            ? { ...appointment, status: status }
+            : appointment
+        );
+      });
 
       // Update the appointment status
       const { error } = await supabase
         .from('agendamentos')
-        .update({ status })
+        .update({ 
+          status,
+          ...(reason ? { motivo_cancelamento: reason } : {})
+        })
         .eq('id', appointmentId);
 
       if (error) {
@@ -31,14 +44,22 @@ export const useUpdateAppointmentStatus = () => {
       }
 
       // Create history entry
-      await supabase
-        .from('agendamento_historico')
-        .insert({
-          agendamento_id: appointmentId,
-          tipo: status,
-          descricao: `Status alterado para ${status}`,
-          novo_valor: status,
-        });
+      const historyEntry = {
+        agendamento_id: appointmentId,
+        tipo: status,
+        descricao: `Status alterado para ${status}${reason ? ` - Motivo: ${reason}` : ''}`,
+        novo_valor: status,
+      };
+      
+      await supabase.from('agendamento_historico').insert(historyEntry);
+
+      // Show success toast
+      toast({
+        title: status === 'concluido' ? 'Agendamento concluído' : 'Agendamento cancelado',
+        description: status === 'concluido' 
+          ? 'O agendamento foi marcado como concluído com sucesso.'
+          : 'O agendamento foi cancelado com sucesso.',
+      });
 
       // Invalidate and refetch relevant queries
       await queryClient.invalidateQueries({ queryKey: ['dashboard-appointments'] });
@@ -85,6 +106,11 @@ export const useUpdateAppointmentStatus = () => {
         });
         return false;
       }
+
+      toast({
+        title: "Agendamento excluído",
+        description: "O agendamento foi excluído permanentemente.",
+      });
 
       // Invalidate and refetch relevant queries
       await queryClient.invalidateQueries({ queryKey: ['dashboard-appointments'] });
