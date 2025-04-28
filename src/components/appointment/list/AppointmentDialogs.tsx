@@ -1,12 +1,10 @@
 
 import { AppointmentWithDetails, AppointmentStatus } from "@/types/appointment.types";
-import { CancelAppointmentDialog } from "@/components/appointment/CancelAppointmentDialog";
-import { StatusUpdateDialog } from "@/components/appointment/StatusUpdateDialog";
-import { AppointmentDialog } from "@/components/appointment/AppointmentDialog";
-import { RescheduleDialog } from "@/components/appointment/RescheduleDialog";
-import { useState } from "react";
-import { useAppointmentStatusUpdate } from "@/hooks/useAppointmentStatusUpdate";
-import { useRescheduleAppointment } from "@/hooks/useRescheduleAppointment";
+import { useAppointmentDialogsState } from "./hooks/useAppointmentDialogsState";
+import { AppointmentDetailsDialog } from "./components/AppointmentDetailsDialog";
+import { AppointmentStatusUpdateDialog } from "./components/AppointmentStatusUpdateDialog";
+import { AppointmentCancelDialog } from "./components/AppointmentCancelDialog";
+import { AppointmentRescheduleDialog } from "./components/AppointmentRescheduleDialog";
 
 interface AppointmentDialogsProps {
   selectedAppointment: AppointmentWithDetails | null;
@@ -31,78 +29,30 @@ export function AppointmentDialogs({
   setAppointmentToCancel,
   onAppointmentUpdated
 }: AppointmentDialogsProps) {
-  const [cancelReason, setCancelReason] = useState("");
-  const [isRescheduleDialogOpen, setIsRescheduleDialogOpen] = useState(false);
-  const { updateStatus, isLoading } = useAppointmentStatusUpdate();
-  const { rescheduleAppointment, isLoading: isReschedulingLoading } = useRescheduleAppointment();
-
-  // Handle updating appointment status
-  const handleUpdateStatus = async () => {
-    if (!appointmentToUpdate) return;
-    
-    const success = await updateStatus(
-      appointmentToUpdate.id, 
-      appointmentToUpdate.status
-    );
-    
-    if (success) {
-      setAppointmentToUpdate(null);
-      onAppointmentUpdated();
-    }
-  };
-
-  // Handle cancelling appointment
-  const handleCancel = async () => {
-    if (!appointmentToCancel) return;
-    
-    const success = await updateStatus(
-      appointmentToCancel, 
-      "cancelado", 
-      cancelReason || "Cancelamento sem motivo especificado"
-    );
-    
-    if (success) {
-      setIsCancelDialogOpen(false);
-      setAppointmentToCancel(null);
-      setCancelReason("");
-      onAppointmentUpdated();
-    }
-  };
-
-  // Handle appointment reschedule
-  const handleReschedule = async (date: Date, time: string) => {
-    if (!selectedAppointment) return;
-    
-    try {
-      await rescheduleAppointment(
-        selectedAppointment.id, 
-        date, 
-        time,
-        selectedAppointment.profissional.id
-      );
-      setIsRescheduleDialogOpen(false);
-      onAppointmentUpdated();
-      return Promise.resolve();
-    } catch (error) {
-      console.error("Erro ao reagendar:", error);
-      return Promise.reject(error);
-    }
-  };
+  const {
+    cancelReason,
+    setCancelReason,
+    isRescheduleDialogOpen,
+    setIsRescheduleDialogOpen,
+    isLoading,
+    isReschedulingLoading,
+    handleUpdateStatus,
+    handleCancel,
+    handleReschedule
+  } = useAppointmentDialogsState(onAppointmentUpdated);
 
   return (
     <>
       {/* Appointment Details Dialog */}
-      {selectedAppointment && (
-        <AppointmentDialog
-          appointment={selectedAppointment}
-          isOpen={!!selectedAppointment}
-          onClose={() => setSelectedAppointment(null)}
-          onAppointmentUpdated={onAppointmentUpdated}
-        />
-      )}
+      <AppointmentDetailsDialog
+        appointment={selectedAppointment}
+        isOpen={!!selectedAppointment}
+        onClose={() => setSelectedAppointment(null)}
+        onAppointmentUpdated={onAppointmentUpdated}
+      />
       
       {/* Status Update Dialog (Complete) */}
-      <StatusUpdateDialog
+      <AppointmentStatusUpdateDialog
         isOpen={!!appointmentToUpdate}
         onOpenChange={(open) => !open && setAppointmentToUpdate(null)}
         status={appointmentToUpdate?.status || null}
@@ -111,7 +61,7 @@ export function AppointmentDialogs({
       />
       
       {/* Cancel Dialog */}
-      <CancelAppointmentDialog
+      <AppointmentCancelDialog
         isOpen={isCancelDialogOpen}
         onClose={() => setIsCancelDialogOpen(false)}
         reason={cancelReason}
@@ -121,15 +71,13 @@ export function AppointmentDialogs({
       />
       
       {/* Reschedule Dialog */}
-      {selectedAppointment && (
-        <RescheduleDialog
-          appointment={selectedAppointment}
-          isOpen={isRescheduleDialogOpen}
-          onClose={() => setIsRescheduleDialogOpen(false)}
-          onReschedule={handleReschedule}
-          isLoading={isReschedulingLoading}
-        />
-      )}
+      <AppointmentRescheduleDialog
+        appointment={selectedAppointment}
+        isOpen={isRescheduleDialogOpen}
+        onClose={() => setIsRescheduleDialogOpen(false)}
+        onReschedule={handleReschedule}
+        isLoading={isReschedulingLoading}
+      />
     </>
   );
 }
