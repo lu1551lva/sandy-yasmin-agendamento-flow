@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -9,6 +10,7 @@ import NotFound from "./pages/NotFound";
 import PublicLayout from "./components/layouts/PublicLayout";
 import AdminLayout from "./components/layouts/AdminLayout";
 import Appointment from "./pages/public/Appointment";
+import ClientArea from "./pages/public/ClientArea"; // New import
 import AdminLogin from "./pages/admin/Login";
 import Dashboard from "./pages/admin/Dashboard";
 import AppointmentList from "./pages/admin/AppointmentList";
@@ -53,6 +55,7 @@ const App = () => {
               <Route element={<PublicLayout />}>
                 <Route path="/" element={<Navigate to="/agendar" replace />} />
                 <Route path="/agendar" element={<Appointment />} />
+                <Route path="/cliente" element={<ClientArea />} />
               </Route>
 
               <Route path="/admin/login" element={<AdminLogin />} />

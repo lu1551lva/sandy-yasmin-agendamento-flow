@@ -16,3 +16,25 @@ export interface BlockFormValues {
   hora_fim?: string;
   observacao?: string;
 }
+
+// Convert form values to database format
+export const blockFormToDbFormat = (values: BlockFormValues): Omit<Block, 'id' | 'created_at'> => {
+  return {
+    data_inicio: values.data_inicio.toISOString().split('T')[0],
+    data_fim: values.data_fim.toISOString().split('T')[0],
+    hora_inicio: values.hora_inicio || null,
+    hora_fim: values.hora_fim || null,
+    observacao: values.observacao || null,
+  };
+};
+
+// Convert database values to form format
+export const dbToBlockFormValues = (block: Block): BlockFormValues => {
+  return {
+    data_inicio: new Date(block.data_inicio),
+    data_fim: new Date(block.data_fim),
+    hora_inicio: block.hora_inicio || undefined,
+    hora_fim: block.hora_fim || undefined,
+    observacao: block.observacao || undefined,
+  };
+};

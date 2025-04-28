@@ -13,6 +13,11 @@ const PublicLayout = () => {
             Studio Sandy Yasmin
           </Link>
           <div className="flex items-center space-x-3">
+            <Button variant="ghost" asChild>
+              <Link to="/cliente" className="flex items-center">
+                Área do Cliente
+              </Link>
+            </Button>
             <Button variant="outline" asChild>
               <Link to="/admin/login" className="flex items-center">
                 Área Administrativa
