@@ -50,6 +50,13 @@ export const useRescheduleAppointment = () => {
         return false;
       }
 
+      // Get the original appointment data for history
+      const { data: originalAppointment } = await supabase
+        .from('agendamentos')
+        .select('*')
+        .eq('id', appointmentId)
+        .single();
+
       // Update the appointment
       const { error } = await supabase
         .from('agendamentos')
@@ -67,6 +74,7 @@ export const useRescheduleAppointment = () => {
       // Invalidate and refetch relevant queries
       await queryClient.invalidateQueries({ queryKey: ['dashboard-appointments'] });
       await queryClient.invalidateQueries({ queryKey: ['weekly-appointments'] });
+      await queryClient.invalidateQueries({ queryKey: ['appointments'] });
 
       toast({
         title: "Agendamento reagendado",
