@@ -15,6 +15,8 @@ import { Loader2, XCircle } from "lucide-react";
 interface CancelAppointmentDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  reason: string;
+  onReasonChange: (reason: string) => void;
   onConfirm: (reason: string) => void;
   isLoading: boolean;
 }
@@ -22,17 +24,17 @@ interface CancelAppointmentDialogProps {
 export function CancelAppointmentDialog({
   isOpen,
   onClose,
+  reason,
+  onReasonChange,
   onConfirm,
   isLoading
 }: CancelAppointmentDialogProps) {
-  const [reason, setReason] = useState("");
-
   const handleConfirm = () => {
     onConfirm(reason);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Cancelar agendamento</DialogTitle>
@@ -44,7 +46,7 @@ export function CancelAppointmentDialog({
           <Textarea
             placeholder="Ex: Cliente faltou, reagendamento solicitado, etc."
             value={reason}
-            onChange={(e) => setReason(e.target.value)}
+            onChange={(e) => onReasonChange(e.target.value)}
             className="min-h-[100px]"
           />
         </div>
