@@ -10,7 +10,7 @@ interface DashboardStats {
   totalAppointments: number;
   totalProfessionals: number;
   totalServices: number;
-  // Add the missing properties needed in Dashboard.tsx
+  // Properties needed in Dashboard.tsx
   appointmentsThisMonth: number;
   revenueThisMonth: number;
   newClientsThisMonth: number;
@@ -20,7 +20,7 @@ interface DashboardStats {
 }
 
 export const useDashboardStats = () => {
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats>({
     totalSalons: 0,
     activeSalons: 0,
@@ -79,9 +79,11 @@ export const useDashboardStats = () => {
           .select('servico:servicos(valor)')
           .gte('data', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString());
 
-        // Calculate revenue from appointments
+        // Calculate revenue from appointments - Fix the valor access
         const revenue = monthlyRevenue?.reduce((total, item) => {
-          return total + (item.servico?.valor || 0);
+          // Fix: Access valor from the servico object, not from servico array
+          const servicoValor = item.servico && typeof item.servico === 'object' ? (item.servico as any).valor : 0;
+          return total + (servicoValor || 0);
         }, 0) || 0;
 
         // Get new clients this month (simplified)
@@ -115,6 +117,6 @@ export const useDashboardStats = () => {
     fetchStats();
   }, []);
 
-  // Change the property name to match what Dashboard.tsx expects
-  return { stats, isLoading: loading };
+  // Return isLoading instead of loading to match the expected property name
+  return { stats, isLoading };
 };

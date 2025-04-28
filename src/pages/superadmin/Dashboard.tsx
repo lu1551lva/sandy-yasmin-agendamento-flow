@@ -7,10 +7,10 @@ import { useRecentSalons } from "@/hooks/useRecentSalons";
 import { StatCardGrid } from "@/components/admin/dashboard/StatCardSkeleton";
 
 const SuperAdminDashboard = () => {
-  const { stats, loading } = useDashboardStats();
+  const { stats, isLoading } = useDashboardStats();
   const recentSalons = useRecentSalons();
   
-  if (loading) {
+  if (isLoading) {
     return <StatCardGrid />;
   }
 
@@ -28,19 +28,19 @@ const SuperAdminDashboard = () => {
         <StatsCard 
           title="Agendamentos"
           value={stats.totalAppointments}
-          icon={Calendar}
+          icon={<Calendar className="h-6 w-6" />}
         />
         
         <StatsCard 
           title="Profissionais"
           value={stats.totalProfessionals}
-          icon={Users}
+          icon={<Users className="h-6 w-6" />}
         />
         
         <StatsCard 
           title="Serviços"
           value={stats.totalServices}
-          icon={Scissors}
+          icon={<Scissors className="h-6 w-6" />}
         />
       </div>
       
