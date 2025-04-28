@@ -1,4 +1,3 @@
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,7 +8,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -18,12 +16,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { format, parseISO, isToday } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState } from "react";
 import { AppointmentStatus } from "@/types/appointment.types";
-import { CalendarDays, Clock, User, Phone, Mail, CheckCircle, XCircle, CalendarPlus, Trash2, History } from "lucide-react";
-import { createWhatsAppLink, formatCurrency } from "@/lib/supabase";
+import { createWhatsAppLink } from "@/lib/supabase";
 import { RescheduleDialog } from "@/components/appointment/RescheduleDialog";
 import { useRescheduleAppointment } from "@/hooks/useRescheduleAppointment";
 import { useUpdateAppointmentStatus } from "@/hooks/useUpdateAppointmentStatus";
@@ -32,6 +29,10 @@ import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { AppointmentHistory } from "./AppointmentHistory";
+import { ClientDetailsSection } from "./dialog/ClientDetailsSection";
+import { ServiceDetailsSection } from "./dialog/ServiceDetailsSection";
+import { AppointmentDetailsSection } from "./dialog/AppointmentDetailsSection";
+import { DialogActions } from "./dialog/DialogActions";
 
 interface AppointmentDialogProps {
   appointment: any;
@@ -125,123 +126,25 @@ export function AppointmentDialog({ appointment, isOpen, onClose, onAppointmentU
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <h3 className="text-lg font-medium">Cliente</h3>
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4" />
-                <p>{appointment.cliente.nome}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Phone className="h-4 w-4" />
-                <a href={`tel:${appointment.cliente.telefone}`} className="hover:underline">
-                  {appointment.cliente.telefone}
-                </a>
-              </div>
-              <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4" />
-                <a href={`mailto:${appointment.cliente.email}`} className="hover:underline">
-                  {appointment.cliente.email}
-                </a>
-              </div>
-            </div>
-
+            <ClientDetailsSection cliente={appointment.cliente} />
             <Separator />
-
-            <div className="space-y-2">
-              <h3 className="text-lg font-medium">Serviço</h3>
-              <p>{appointment.servico.nome}</p>
-              <p className="text-sm text-muted-foreground">
-                Valor: {formatCurrency(appointment.servico.valor)}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Duração: {appointment.servico.duracao_em_minutos} minutos
-              </p>
-            </div>
-
+            <ServiceDetailsSection servico={appointment.servico} />
             <Separator />
-
-            <div className="space-y-2">
-              <h3 className="text-lg font-medium">Agendamento</h3>
-              <div className="flex items-center gap-2">
-                <CalendarDays className="h-4 w-4" />
-                <p>
-                  {format(parseISO(appointment.data), "dd 'de' MMMM 'às' HH:mm", {
-                    locale: ptBR,
-                  })}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                <p>Horário: {appointment.hora}</p>
-              </div>
-            </div>
+            <AppointmentDetailsSection data={appointment.data} hora={appointment.hora} />
           </div>
           
           <DialogFooter className="flex flex-col gap-4 mt-4">
-            {/* Botões principais agrupados por ação */}
-            <div className="grid grid-cols-1 gap-3 w-full">
-              {/* Ações principais - mostrar apenas para agendamentos não cancelados */}
-              {appointment.status === "agendado" && (
-                <div className="grid grid-cols-2 gap-3">
-                  <Button 
-                    variant="default" 
-                    onClick={() => handleStatusUpdate('concluido')}
-                    disabled={isUpdatingStatus}
-                  >
-                    <CheckCircle className="h-4 w-4 mr-2" /> Concluir
-                  </Button>
-                  
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setShowCancelConfirm(true)}
-                    disabled={isUpdatingStatus}
-                    className="text-red-500 border-red-500 hover:bg-red-50"
-                  >
-                    <XCircle className="h-4 w-4 mr-2" /> Cancelar
-                  </Button>
-                </div>
-              )}
-              
-              {/* Ações secundárias */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowReschedule(true)}
-                  disabled={appointment.status === 'cancelado'}
-                >
-                  <CalendarPlus className="h-4 w-4 mr-2" /> Reagendar
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleSendWhatsApp()}
-                >
-                  <Phone className="h-4 w-4 mr-2" /> WhatsApp
-                </Button>
-
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowHistory(true)}
-                >
-                  <History className="h-4 w-4 mr-2" /> Histórico
-                </Button>
-              </div>
-
-              {/* Ações de controle */}
-              <div className="grid grid-cols-2 gap-3">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="text-red-600"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" /> Excluir
-                </Button>
-                
-                <Button variant="ghost" onClick={onClose}>
-                  Fechar
-                </Button>
-              </div>
-            </div>
+            <DialogActions 
+              status={appointment.status}
+              isUpdatingStatus={isUpdatingStatus}
+              onComplete={() => handleStatusUpdate('concluido')}
+              onShowCancelConfirm={() => setShowCancelConfirm(true)}
+              onShowReschedule={() => setShowReschedule(true)}
+              onSendWhatsApp={handleSendWhatsApp}
+              onShowHistory={() => setShowHistory(true)}
+              onShowDeleteConfirm={() => setShowDeleteConfirm(true)}
+              onClose={onClose}
+            />
           </DialogFooter>
         </DialogContent>
       </Dialog>
