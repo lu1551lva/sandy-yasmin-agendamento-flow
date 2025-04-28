@@ -21,14 +21,18 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
   const handleUpdateStatus = async () => {
     if (!appointmentToUpdate) return;
     
+    console.log(`Tentando atualizar agendamento ${appointmentToUpdate.id} para status ${appointmentToUpdate.status}`);
     const success = await updateStatus(
       appointmentToUpdate.id, 
       appointmentToUpdate.status
     );
     
     if (success) {
+      console.log(`Agendamento ${appointmentToUpdate.id} atualizado com sucesso para ${appointmentToUpdate.status}`);
       setAppointmentToUpdate(null);
       onAppointmentUpdated();
+    } else {
+      console.error(`Falha ao atualizar agendamento ${appointmentToUpdate.id}`);
     }
   };
 
@@ -36,6 +40,7 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
   const handleCancel = async () => {
     if (!appointmentToCancel) return;
     
+    console.log(`Tentando cancelar agendamento ${appointmentToCancel} com motivo: ${cancelReason || "Não especificado"}`);
     const success = await updateStatus(
       appointmentToCancel, 
       "cancelado", 
@@ -43,10 +48,13 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
     );
     
     if (success) {
+      console.log(`Agendamento ${appointmentToCancel} cancelado com sucesso`);
       setIsCancelDialogOpen(false);
       setAppointmentToCancel(null);
       setCancelReason("");
       onAppointmentUpdated();
+    } else {
+      console.error(`Falha ao cancelar agendamento ${appointmentToCancel}`);
     }
   };
 
@@ -55,6 +63,7 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
     if (!selectedAppointment) return;
     
     try {
+      console.log(`Tentando reagendar agendamento ${selectedAppointment.id} para ${date} às ${time}`);
       await rescheduleAppointment(
         selectedAppointment.id, 
         date, 
@@ -63,6 +72,7 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
       );
       setIsRescheduleDialogOpen(false);
       onAppointmentUpdated();
+      console.log(`Agendamento ${selectedAppointment.id} reagendado com sucesso`);
       return Promise.resolve();
     } catch (error) {
       console.error("Erro ao reagendar:", error);

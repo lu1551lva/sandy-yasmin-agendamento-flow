@@ -11,45 +11,56 @@ export const useUpdateAppointmentStatus = () => {
   const queryClient = useQueryClient();
 
   const invalidateAppointmentQueries = async () => {
-    console.log('Invalidating appointment queries...');
-    // Invalidate all appointment-related queries
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['appointments'] }),
-      queryClient.invalidateQueries({ queryKey: ['dashboard-appointments'] }),
-      queryClient.invalidateQueries({ queryKey: ['weekly-appointments'] })
-    ]);
-    
-    // Force a refetch of appointments query to update UI immediately
-    await queryClient.refetchQueries({ queryKey: ['appointments'] });
-    
-    // Add a small delay to ensure the UI has time to update
-    return new Promise(resolve => setTimeout(resolve, 100));
+    console.log('Invalidando caches de agendamentos...');
+    try {
+      // Invalidate all appointment-related queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['appointments'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-appointments'] }),
+        queryClient.invalidateQueries({ queryKey: ['weekly-appointments'] })
+      ]);
+      
+      // Force a refetch of appointments query to update UI immediately
+      await queryClient.refetchQueries({ queryKey: ['appointments'] });
+      
+      console.log('Cache invalidado e dados recarregados com sucesso.');
+      // Add a small delay to ensure the UI has time to update
+      return new Promise(resolve => setTimeout(resolve, 100));
+    } catch (error) {
+      console.error('Erro ao invalidar cache:', error);
+      throw error;
+    }
   };
 
   const updateStatus = async (appointmentId: string, status: AppointmentStatus, reason?: string) => {
     try {
+      console.log(`Iniciando atualização do agendamento ${appointmentId} para status ${status}`);
       setIsLoading(true);
 
-      // Update appointment status in the database
-      const { error } = await supabase
+      // Step 1: Update appointment status in the database
+      const { data: appointmentData, error: updateError } = await supabase
         .from('agendamentos')
         .update({ 
           status,
           ...(reason ? { motivo_cancelamento: reason } : {})
         })
-        .eq('id', appointmentId);
+        .eq('id', appointmentId)
+        .select();
 
-      if (error) {
-        console.error("Erro ao atualizar status:", error);
+      // Log the result of the update operation
+      if (updateError) {
+        console.error("Erro ao atualizar status do agendamento:", updateError);
         toast({
           title: "Erro ao atualizar status",
-          description: "Não foi possível atualizar o status do agendamento.",
+          description: `Não foi possível atualizar o status do agendamento: ${updateError.message}`,
           variant: "destructive",
         });
         return false;
       }
+      
+      console.log("Agendamento atualizado com sucesso:", appointmentData);
 
-      // Create history entry
+      // Step 2: Create history entry after successful update
       const historyEntry = {
         agendamento_id: appointmentId,
         tipo: status,
@@ -57,7 +68,21 @@ export const useUpdateAppointmentStatus = () => {
         novo_valor: status,
       };
       
-      await supabase.from('agendamento_historico').insert(historyEntry);
+      const { error: historyError } = await supabase
+        .from('agendamento_historico')
+        .insert(historyEntry);
+
+      if (historyError) {
+        console.error("Erro ao registrar histórico:", historyError);
+        // Still show success toast since the main update succeeded
+        toast({
+          title: "Aviso",
+          description: "Status atualizado, mas houve um problema ao registrar o histórico.",
+          variant: "default",
+        });
+      } else {
+        console.log("Histórico registrado com sucesso:", historyEntry);
+      }
 
       // Show success toast
       toast({
@@ -67,7 +92,8 @@ export const useUpdateAppointmentStatus = () => {
           : 'O agendamento foi cancelado com sucesso.',
       });
 
-      // Invalidate and reload relevant queries
+      // Step 3: Invalidate and reload relevant queries
+      console.log("Atualizando interface...");
       await invalidateAppointmentQueries();
       
       // Additionally invalidate the specific appointment history query
@@ -75,7 +101,7 @@ export const useUpdateAppointmentStatus = () => {
 
       return true;
     } catch (error) {
-      console.error("Erro na atualização de status:", error);
+      console.error("Erro geral na atualização de status:", error);
       toast({
         title: "Erro ao atualizar status",
         description: "Não foi possível atualizar o status do agendamento. Tente novamente.",
@@ -90,24 +116,30 @@ export const useUpdateAppointmentStatus = () => {
   const deleteAppointment = async (appointmentId: string) => {
     try {
       setIsLoading(true);
+      console.log(`Iniciando exclusão do agendamento ${appointmentId}`);
 
       // Delete appointment history first
-      await supabase
+      const { error: historyDeleteError } = await supabase
         .from('agendamento_historico')
         .delete()
         .eq('agendamento_id', appointmentId);
 
+      if (historyDeleteError) {
+        console.error("Erro ao excluir histórico do agendamento:", historyDeleteError);
+        // Continue with deletion even if history deletion fails
+      }
+
       // Then delete the appointment itself
-      const { error } = await supabase
+      const { error: appointmentDeleteError } = await supabase
         .from('agendamentos')
         .delete()
         .eq('id', appointmentId);
 
-      if (error) {
-        console.error("Erro ao excluir agendamento:", error);
+      if (appointmentDeleteError) {
+        console.error("Erro ao excluir agendamento:", appointmentDeleteError);
         toast({
           title: "Erro ao excluir",
-          description: "Não foi possível excluir o agendamento.",
+          description: `Não foi possível excluir o agendamento: ${appointmentDeleteError.message}`,
           variant: "destructive",
         });
         return false;
@@ -119,11 +151,12 @@ export const useUpdateAppointmentStatus = () => {
       });
 
       // Invalidate and reload relevant queries
+      console.log("Atualizando interface após exclusão...");
       await invalidateAppointmentQueries();
 
       return true;
     } catch (error) {
-      console.error("Erro na exclusão do agendamento:", error);
+      console.error("Erro geral na exclusão do agendamento:", error);
       toast({
         title: "Erro ao excluir",
         description: "Não foi possível excluir o agendamento. Tente novamente.",
