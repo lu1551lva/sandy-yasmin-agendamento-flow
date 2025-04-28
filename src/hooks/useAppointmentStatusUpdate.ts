@@ -6,10 +6,17 @@ export const useAppointmentStatusUpdate = () => {
   const { updateStatus, deleteAppointment, isLoading } = useUpdateAppointmentStatus();
 
   const updateAppointmentStatus = async (appointmentId: string, newStatus: AppointmentStatus, reason?: string) => {
-    // Delegate to the main hook and return the result
-    console.log(`Chamando updateStatus para agendamento ${appointmentId} com status ${newStatus}`);
+    console.log(`Iniciando atualização do agendamento ${appointmentId} para status ${newStatus}${reason ? ' com motivo: ' + reason : ''}`);
+    
+    // Delegate to the main hook and log the result
     const result = await updateStatus(appointmentId, newStatus, reason);
-    console.log(`Resultado da atualização para agendamento ${appointmentId}: ${result ? 'sucesso' : 'falha'}`);
+    
+    if (result) {
+      console.log(`Atualização do agendamento ${appointmentId} para status ${newStatus} concluída com sucesso`);
+    } else {
+      console.error(`Falha na atualização do agendamento ${appointmentId} para status ${newStatus}`);
+    }
+    
     return result;
   };
 

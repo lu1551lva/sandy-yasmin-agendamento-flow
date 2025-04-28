@@ -24,11 +24,10 @@ export const useUpdateAppointmentStatus = () => {
       await queryClient.refetchQueries({ queryKey: ['appointments'] });
       
       console.log('Cache invalidado e dados recarregados com sucesso.');
-      // Add a small delay to ensure the UI has time to update
-      return new Promise(resolve => setTimeout(resolve, 100));
+      return true;
     } catch (error) {
       console.error('Erro ao invalidar cache:', error);
-      throw error;
+      return false;
     }
   };
 
@@ -37,13 +36,19 @@ export const useUpdateAppointmentStatus = () => {
       console.log(`Iniciando atualização do agendamento ${appointmentId} para status ${status}`);
       setIsLoading(true);
 
-      // Step 1: Update appointment status in the database
+      // STEP 1: Update appointment status in the database
+      const updateData = { status };
+      
+      // Add cancellation reason if provided
+      if (reason && status === 'cancelado') {
+        updateData['motivo_cancelamento'] = reason;
+      }
+
+      console.log('Dados para atualização:', updateData);
+      
       const { data: appointmentData, error: updateError } = await supabase
         .from('agendamentos')
-        .update({ 
-          status,
-          ...(reason ? { motivo_cancelamento: reason } : {})
-        })
+        .update(updateData)
         .eq('id', appointmentId)
         .select();
 
@@ -60,13 +65,15 @@ export const useUpdateAppointmentStatus = () => {
       
       console.log("Agendamento atualizado com sucesso:", appointmentData);
 
-      // Step 2: Create history entry after successful update
+      // STEP 2: Create history entry after successful update
       const historyEntry = {
         agendamento_id: appointmentId,
         tipo: status,
         descricao: `Status alterado para ${status}${reason ? ` - Motivo: ${reason}` : ''}`,
         novo_valor: status,
       };
+      
+      console.log("Inserindo entrada no histórico:", historyEntry);
       
       const { error: historyError } = await supabase
         .from('agendamento_historico')
@@ -81,7 +88,7 @@ export const useUpdateAppointmentStatus = () => {
           variant: "default",
         });
       } else {
-        console.log("Histórico registrado com sucesso:", historyEntry);
+        console.log("Histórico registrado com sucesso");
       }
 
       // Show success toast
@@ -92,7 +99,7 @@ export const useUpdateAppointmentStatus = () => {
           : 'O agendamento foi cancelado com sucesso.',
       });
 
-      // Step 3: Invalidate and reload relevant queries
+      // STEP 3: Invalidate and reload relevant queries
       console.log("Atualizando interface...");
       await invalidateAppointmentQueries();
       

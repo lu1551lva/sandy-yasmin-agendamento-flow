@@ -12,35 +12,53 @@ export const useRescheduleAppointment = () => {
 
   const invalidateAppointmentQueries = async () => {
     console.log('Invalidating and refetching appointment queries after reschedule...');
-    // Invalidate all appointment-related queries
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['dashboard-appointments'] }),
-      queryClient.invalidateQueries({ queryKey: ['weekly-appointments'] }),
-      queryClient.invalidateQueries({ queryKey: ['appointments'] })
-    ]);
     
-    // Force a refetch of appointments query to update UI immediately
-    await queryClient.refetchQueries({ queryKey: ['appointments'] });
-    
-    // Add a small delay to ensure the UI has time to update
-    return new Promise(resolve => setTimeout(resolve, 100));
+    try {
+      // Invalidate all appointment-related queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['dashboard-appointments'] }),
+        queryClient.invalidateQueries({ queryKey: ['weekly-appointments'] }),
+        queryClient.invalidateQueries({ queryKey: ['appointments'] })
+      ]);
+      
+      // Force a refetch of appointments query to update UI immediately
+      await queryClient.refetchQueries({ queryKey: ['appointments'] });
+      
+      console.log('Successfully invalidated and refetched appointment queries');
+      
+      // Add a small delay to ensure the UI has time to update
+      return new Promise(resolve => setTimeout(resolve, 100));
+    } catch (error) {
+      console.error('Error invalidating queries:', error);
+      throw error;
+    }
   };
 
   const checkAvailability = async (professionalId: string, date: string, time: string) => {
-    const { data: existingAppointments, error } = await supabase
-      .from('agendamentos')
-      .select('*')
-      .eq('profissional_id', professionalId)
-      .eq('data', date)
-      .eq('hora', time)
-      .eq('status', 'agendado');
+    console.log(`Verificando disponibilidade para ${date} às ${time} com profissional ${professionalId}`);
+    
+    try {
+      const { data: existingAppointments, error } = await supabase
+        .from('agendamentos')
+        .select('*')
+        .eq('profissional_id', professionalId)
+        .eq('data', date)
+        .eq('hora', time)
+        .eq('status', 'agendado');
+        
+      if (error) {
+        console.error("Erro ao verificar disponibilidade:", error);
+        return false;
+      }
+
+      const isAvailable = existingAppointments?.length === 0;
+      console.log(`Horário ${isAvailable ? 'disponível' : 'indisponível'}`);
       
-    if (error) {
+      return isAvailable;
+    } catch (error) {
       console.error("Erro ao verificar disponibilidade:", error);
       return false;
     }
-
-    return existingAppointments?.length === 0;
   };
 
   const rescheduleAppointment = async (
@@ -50,6 +68,7 @@ export const useRescheduleAppointment = () => {
     professionalId: string
   ) => {
     try {
+      console.log(`Iniciando reagendamento do agendamento ${appointmentId}`);
       setIsLoading(true);
 
       const formattedDate = format(newDate, 'yyyy-MM-dd');
@@ -58,6 +77,7 @@ export const useRescheduleAppointment = () => {
       const isAvailable = await checkAvailability(professionalId, formattedDate, newTime);
       
       if (!isAvailable) {
+        console.error("Horário indisponível");
         toast({
           title: "Horário indisponível",
           description: "Este horário já está ocupado. Por favor, selecione outro.",
@@ -67,25 +87,36 @@ export const useRescheduleAppointment = () => {
       }
 
       // Get the original appointment data for history
-      const { data: originalAppointment } = await supabase
+      const { data: originalAppointment, error: fetchError } = await supabase
         .from('agendamentos')
         .select('*')
         .eq('id', appointmentId)
         .single();
+        
+      if (fetchError) {
+        console.error("Erro ao buscar agendamento original:", fetchError);
+        throw fetchError;
+      }
+      
+      console.log("Dados do agendamento original:", originalAppointment);
 
       // Update the appointment
-      const { error } = await supabase
+      console.log(`Atualizando agendamento para ${formattedDate} às ${newTime}`);
+      const { data: updatedAppointment, error } = await supabase
         .from('agendamentos')
         .update({
           data: formattedDate,
           hora: newTime,
         })
-        .eq('id', appointmentId);
+        .eq('id', appointmentId)
+        .select();
 
       if (error) {
         console.error("Erro ao atualizar agendamento:", error);
         throw error;
       }
+      
+      console.log("Agendamento atualizado com sucesso:", updatedAppointment);
 
       // Invalidate and refetch relevant queries to update UI
       await invalidateAppointmentQueries();

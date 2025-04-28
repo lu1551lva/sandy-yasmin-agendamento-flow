@@ -3,6 +3,7 @@ import { useState } from "react";
 import { AppointmentStatus, AppointmentWithDetails } from "@/types/appointment.types";
 import { useAppointmentStatusUpdate } from "@/hooks/useAppointmentStatusUpdate";
 import { useRescheduleAppointment } from "@/hooks/useRescheduleAppointment";
+import { useToast } from "@/hooks/use-toast";
 
 export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
   // Dialog states
@@ -12,6 +13,7 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [isRescheduleDialogOpen, setIsRescheduleDialogOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
+  const { toast } = useToast();
 
   // Hooks for API operations
   const { updateStatus, isLoading } = useAppointmentStatusUpdate();
@@ -33,6 +35,11 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
       onAppointmentUpdated();
     } else {
       console.error(`Falha ao atualizar agendamento ${appointmentToUpdate.id}`);
+      toast({
+        title: "Falha na operação",
+        description: "Não foi possível atualizar o status do agendamento. Tente novamente.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -55,6 +62,11 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
       onAppointmentUpdated();
     } else {
       console.error(`Falha ao cancelar agendamento ${appointmentToCancel}`);
+      toast({
+        title: "Falha na operação",
+        description: "Não foi possível cancelar o agendamento. Tente novamente.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -70,12 +82,20 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
         time,
         selectedAppointment.profissional.id
       );
+      
       setIsRescheduleDialogOpen(false);
+      // Explicitly call onAppointmentUpdated to refresh the list
       onAppointmentUpdated();
+      
       console.log(`Agendamento ${selectedAppointment.id} reagendado com sucesso`);
       return Promise.resolve();
     } catch (error) {
       console.error("Erro ao reagendar:", error);
+      toast({
+        title: "Erro ao reagendar",
+        description: "Não foi possível reagendar o agendamento. Tente novamente.",
+        variant: "destructive",
+      });
       return Promise.reject(error);
     }
   };
