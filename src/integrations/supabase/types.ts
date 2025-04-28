@@ -100,6 +100,36 @@ export type Database = {
           },
         ]
       }
+      bloqueios: {
+        Row: {
+          created_at: string
+          data_fim: string
+          data_inicio: string
+          hora_fim: string | null
+          hora_inicio: string | null
+          id: string
+          observacao: string | null
+        }
+        Insert: {
+          created_at?: string
+          data_fim: string
+          data_inicio: string
+          hora_fim?: string | null
+          hora_inicio?: string | null
+          id?: string
+          observacao?: string | null
+        }
+        Update: {
+          created_at?: string
+          data_fim?: string
+          data_inicio?: string
+          hora_fim?: string | null
+          hora_inicio?: string | null
+          id?: string
+          observacao?: string | null
+        }
+        Relationships: []
+      }
       categorias_servico: {
         Row: {
           created_at: string

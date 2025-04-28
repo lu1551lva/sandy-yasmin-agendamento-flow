@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -22,6 +21,7 @@ import { AuthProvider } from "./context/auth-context";
 import Register from "./pages/auth/Register";
 import Login from "./pages/auth/Login";
 import { initializeDefaultData } from "@/lib/initData";
+import BlocksList from "./pages/admin/blocks/BlocksList";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,7 +34,6 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
-  // Initialize default data
   useEffect(() => {
     const initData = async () => {
       await initializeDefaultData();
@@ -51,21 +50,17 @@ const App = () => {
             <Toaster />
             <Sonner />
             <Routes>
-              {/* Public Routes */}
               <Route element={<PublicLayout />}>
                 <Route path="/" element={<Navigate to="/agendar" replace />} />
                 <Route path="/agendar" element={<Appointment />} />
               </Route>
 
-              {/* Auth Routes */}
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin/register" element={<Register />} />
 
-              {/* Auth Routes (legacy) */}
               <Route path="/auth/login" element={<Login />} />
               <Route path="/auth/register" element={<Register />} />
 
-              {/* Admin Routes */}
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<Dashboard />} />
                 <Route path="agendamentos" element={<AppointmentList />} />
@@ -74,9 +69,9 @@ const App = () => {
                 <Route path="servicos" element={<Services />} />
                 <Route path="mensagens" element={<WhatsAppMessages />} />
                 <Route path="perfil" element={<Profile />} />
+                <Route path="bloqueios" element={<BlocksList />} />
               </Route>
 
-              {/* Catch-all */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>

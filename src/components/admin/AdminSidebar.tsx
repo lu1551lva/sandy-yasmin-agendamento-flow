@@ -1,4 +1,3 @@
-
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { 
@@ -65,6 +64,11 @@ const AdminSidebar = () => {
       title: "Meu Perfil",
       href: "/admin/perfil",
       icon: <User className="h-4 w-4" />,
+    },
+    {
+      title: "Bloqueios",
+      href: "/admin/bloqueios",
+      icon: <CalendarDays className="h-4 w-4" />,
     },
   ];
 

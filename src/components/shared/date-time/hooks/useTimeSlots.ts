@@ -1,8 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Professional, Service } from "@/lib/supabase";
+import { useQuery } from "react-query";
+import { Block } from "@/pages/admin/blocks/types";
 
 interface UseTimeSlotsProps {
   date: Date | undefined;
@@ -19,6 +20,18 @@ export const useTimeSlots = ({
 }: UseTimeSlotsProps) => {
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
 
+  const { data: blocks = [] } = useQuery({
+    queryKey: ["blocks"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bloqueios")
+        .select("*");
+
+      if (error) throw error;
+      return data as Block[];
+    },
+  });
+
   useEffect(() => {
     if (!date || !selectedService || !professional) {
       setAvailableTimes([]);
@@ -31,10 +44,8 @@ export const useTimeSlots = ({
       console.log("Horário início:", professional.horario_inicio);
       console.log("Horário fim:", professional.horario_fim);
       
-      // Verificar se a data selecionada é um dia de atendimento do profissional
       const dayName = format(date, 'EEEE', { locale: ptBR });
       
-      // Mapeamento dos dias da semana para o formato usado no banco
       const dayMap: { [key: string]: string } = {
         'domingo': 'domingo',
         'segunda-feira': 'segunda', 
@@ -48,13 +59,11 @@ export const useTimeSlots = ({
       const normalizedDay = dayMap[dayName];
       console.log("Dia selecionado:", dayName, "Dia normalizado:", normalizedDay);
       
-      // Verificar se o array dias_atendimento existe e é um array
       if (!Array.isArray(professional.dias_atendimento)) {
         console.error("dias_atendimento não é um array:", professional.dias_atendimento);
         return [];
       }
       
-      // Se o profissional não atende neste dia, retornar array vazio
       if (!professional.dias_atendimento.includes(normalizedDay)) {
         console.log("Profissional não atende neste dia");
         return [];
@@ -65,7 +74,6 @@ export const useTimeSlots = ({
 
       console.log(`Gerando horários disponíveis entre ${horario_inicio} e ${horario_fim} com duração de ${serviceDuration} minutos`);
 
-      // Parse start and end hours
       const [startHour, startMinute] = horario_inicio.split(':').map(Number);
       const [endHour, endMinute] = horario_fim.split(':').map(Number);
 
@@ -73,14 +81,12 @@ export const useTimeSlots = ({
       let currentHour = startHour;
       let currentMinute = startMinute;
 
-      // Generate slots until end time
       while (
         currentHour < endHour ||
         (currentHour === endHour && currentMinute <= endMinute - serviceDuration)
       ) {
         const timeSlot = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
         
-        // Check if this slot is available (not booked)
         const isSlotBooked = appointments?.some(
           (appointment) => appointment.hora === timeSlot
         );
@@ -89,7 +95,6 @@ export const useTimeSlots = ({
           slots.push(timeSlot);
         }
 
-        // Increment by service duration
         currentMinute += serviceDuration;
         while (currentMinute >= 60) {
           currentMinute -= 60;
@@ -97,12 +102,42 @@ export const useTimeSlots = ({
         }
       }
       
-      console.log(`Horários disponíveis: ${slots.join(', ')}`);
-      return slots;
+      const formattedDate = format(date, "yyyy-MM-dd");
+      
+      const filteredSlots = slots.filter(time => {
+        const currentDateTime = new Date(`${formattedDate}T${time}`);
+
+        return !blocks.some(block => {
+          const blockStart = new Date(block.data_inicio);
+          const blockEnd = new Date(block.data_fim);
+
+          if (block.hora_inicio && block.hora_fim) {
+            const [blockStartHour, blockStartMinute] = block.hora_inicio.split(':').map(Number);
+            const [blockEndHour, blockEndMinute] = block.hora_fim.split(':').map(Number);
+            
+            const timeHour = parseInt(time.split(':')[0]);
+            const timeMinute = parseInt(time.split(':')[1]);
+
+            return (
+              currentDateTime >= blockStart &&
+              currentDateTime <= blockEnd &&
+              (
+                (timeHour > blockStartHour || (timeHour === blockStartHour && timeMinute >= blockStartMinute)) &&
+                (timeHour < blockEndHour || (timeHour === blockEndHour && timeMinute < blockEndMinute))
+              )
+            );
+          }
+
+          return currentDateTime >= blockStart && currentDateTime <= blockEnd;
+        });
+      });
+
+      console.log(`Horários disponíveis: ${filteredSlots.join(', ')}`);
+      return filteredSlots;
     };
 
     setAvailableTimes(generateTimeSlots());
-  }, [date, professional, selectedService, appointments]);
+  }, [date, professional, selectedService, appointments, blocks]);
 
   return availableTimes;
 };
