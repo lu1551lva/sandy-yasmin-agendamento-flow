@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { format, parseISO } from "date-fns";
+import { format, parseISO as dateFnsParseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +15,7 @@ import { DateSelector } from "@/components/shared/date-time/DateSelector";
 import { TimeSelector } from "@/components/shared/date-time/TimeSelector";
 import { useTimeSlots } from "@/components/shared/date-time/hooks/useTimeSlots";
 import { AppointmentWithDetails } from "@/types/appointment.types";
-import { Loader2, CalendarClock, AlertTriangle } from "lucide-react";
+import { Loader2, CalendarClock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
@@ -82,7 +82,9 @@ export function RescheduleDialog({
     }
   };
 
-  const currentDateTime = `${format(parseISO(appointment.data), 'dd/MM/yyyy')} às ${appointment.hora}`;
+  // Parse the date string using our utility function
+  const parsedDate = safeDateParse(appointment.data);
+  const currentDateTime = `${format(parsedDate, 'dd/MM/yyyy')} às ${appointment.hora}`;
   const newDateTime = selectedDate && selectedTime 
     ? `${format(selectedDate, 'dd/MM/yyyy')} às ${selectedTime}` 
     : "Selecione data e hora";
@@ -172,12 +174,18 @@ export function RescheduleDialog({
   );
 }
 
-// Helper function to parse ISO date string
-function parseISO(dateString: string): Date {
+// Helper function to safely parse a date string
+function safeDateParse(dateString: string): Date {
   try {
-    return new Date(dateString);
+    // Try using date-fns parseISO first
+    return dateFnsParseISO(dateString);
   } catch (error) {
-    console.error('Error parsing date:', error);
-    return new Date();
+    // Fallback to native Date constructor
+    try {
+      return new Date(dateString);
+    } catch (secondError) {
+      console.error('Error parsing date:', secondError);
+      return new Date();
+    }
   }
 }
