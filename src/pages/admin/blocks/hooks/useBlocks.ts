@@ -3,9 +3,8 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { Block } from "../types";
-
-export type BlockFormData = Omit<Block, "id" | "created_at">;
+import { Block, BlockFormValues } from "../types";
+import { formatDate } from "@/lib/dateUtils";
 
 export function useBlocks() {
   const { toast } = useToast();
@@ -33,8 +32,17 @@ export function useBlocks() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (blockData: BlockFormData) => {
-      const { error } = await supabase.from("bloqueios").insert([blockData]);
+    mutationFn: async (blockData: BlockFormValues) => {
+      // Convert Date objects to string format for database
+      const dbBlockData = {
+        data_inicio: formatDate(blockData.data_inicio),
+        data_fim: formatDate(blockData.data_fim),
+        hora_inicio: blockData.hora_inicio,
+        hora_fim: blockData.hora_fim,
+        observacao: blockData.observacao,
+      };
+      
+      const { error } = await supabase.from("bloqueios").insert([dbBlockData]);
       
       if (error) {
         toast({
@@ -55,10 +63,19 @@ export function useBlocks() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, ...blockData }: Partial<BlockFormData> & { id: string }) => {
+    mutationFn: async ({ id, ...blockData }: BlockFormValues & { id: string }) => {
+      // Convert Date objects to string format for database
+      const dbBlockData = {
+        data_inicio: formatDate(blockData.data_inicio),
+        data_fim: formatDate(blockData.data_fim),
+        hora_inicio: blockData.hora_inicio,
+        hora_fim: blockData.hora_fim,
+        observacao: blockData.observacao,
+      };
+
       const { error } = await supabase
         .from("bloqueios")
-        .update(blockData)
+        .update(dbBlockData)
         .eq("id", id);
 
       if (error) {

@@ -8,3 +8,11 @@ export interface Block {
   observacao?: string | null;
   created_at: string;
 }
+
+export interface BlockFormValues {
+  data_inicio: Date;
+  data_fim: Date;
+  hora_inicio?: string;
+  hora_fim?: string;
+  observacao?: string;
+}

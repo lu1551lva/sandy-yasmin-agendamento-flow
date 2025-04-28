@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form";
 import { format } from "date-fns";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,7 +20,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useBlocks } from "./hooks/useBlocks";
-import { Block } from "./types";
+import { Block, BlockFormValues } from "./types";
 import { CalendarIcon } from "lucide-react";
 import { ptBR } from "date-fns/locale";
 
@@ -41,8 +40,6 @@ const formSchema = z.object({
   hora_fim: z.string().optional(),
   observacao: z.string().optional(),
 });
-
-type BlockFormValues = z.infer<typeof formSchema>;
 
 export default function BlockForm({ block, onClose }: BlockFormProps) {
   const { createBlock, updateBlock } = useBlocks();
