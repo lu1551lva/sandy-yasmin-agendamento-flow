@@ -38,6 +38,7 @@ export function AppointmentList({
           : "O status do agendamento foi atualizado com sucesso.",
       });
       
+      // Garantir que a lista seja atualizada
       if (onAppointmentUpdated) {
         onAppointmentUpdated();
       }
@@ -55,6 +56,7 @@ export function AppointmentList({
         description: "O agendamento foi cancelado com sucesso.",
       });
       
+      // Garantir que a lista seja atualizada
       if (onAppointmentUpdated) {
         onAppointmentUpdated();
       }
@@ -70,6 +72,7 @@ export function AppointmentList({
 
   const handleAppointmentDialogClose = () => {
     setSelectedAppointment(null);
+    // Garantir que a lista seja atualizada
     if (onAppointmentUpdated) {
       onAppointmentUpdated();
     }
@@ -109,31 +112,27 @@ export function AppointmentList({
           isLoading={isLoading}
         />
         
-        {/* Concluídos */}
-        {groupedAppointments.concluido.length > 0 && (
-          <AppointmentsSection
-            title="Agendamentos Concluídos"
-            titleClassName="text-green-800"
-            appointments={groupedAppointments.concluido}
-            onShowDetails={setSelectedAppointment}
-            onComplete={(id) => setAppointmentToUpdate({ id, status: "concluido" })}
-            onCancel={openCancelDialog}
-            isLoading={isLoading}
-          />
-        )}
+        {/* Concluídos - Só mostrar se houver agendamentos concluídos */}
+        <AppointmentsSection
+          title="Agendamentos Concluídos"
+          titleClassName="text-green-800"
+          appointments={groupedAppointments.concluido}
+          onShowDetails={setSelectedAppointment}
+          onComplete={(id) => setAppointmentToUpdate({ id, status: "concluido" })}
+          onCancel={openCancelDialog}
+          isLoading={isLoading}
+        />
         
-        {/* Cancelados - Só mostrar se showAll estiver ativo */}
-        {groupedAppointments.cancelado.length > 0 && (
-          <AppointmentsSection
-            title="Agendamentos Cancelados"
-            titleClassName="text-red-800"
-            appointments={groupedAppointments.cancelado}
-            onShowDetails={setSelectedAppointment}
-            onComplete={(id) => setAppointmentToUpdate({ id, status: "concluido" })}
-            onCancel={openCancelDialog}
-            isLoading={isLoading}
-          />
-        )}
+        {/* Cancelados - Só mostrar se showAll estiver ativo E se houver agendamentos cancelados */}
+        <AppointmentsSection
+          title="Agendamentos Cancelados"
+          titleClassName="text-red-800"
+          appointments={groupedAppointments.cancelado}
+          onShowDetails={setSelectedAppointment}
+          onComplete={(id) => setAppointmentToUpdate({ id, status: "concluido" })}
+          onCancel={openCancelDialog}
+          isLoading={isLoading}
+        />
       </div>
       
       {selectedAppointment && (

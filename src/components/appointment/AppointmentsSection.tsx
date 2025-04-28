@@ -22,7 +22,7 @@ export function AppointmentsSection({
   isLoading
 }: AppointmentsSectionProps) {
   // Se não houver agendamentos, não renderizar a seção
-  if (appointments.length === 0) {
+  if (!appointments || appointments.length === 0) {
     return null;
   }
 

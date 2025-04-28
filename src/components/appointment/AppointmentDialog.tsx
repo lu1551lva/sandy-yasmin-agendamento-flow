@@ -18,7 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState } from "react";
 import { AppointmentStatus } from "@/types/appointment.types";
@@ -178,70 +178,69 @@ export function AppointmentDialog({ appointment, isOpen, onClose, onAppointmentU
           </div>
           
           <DialogFooter className="flex flex-col gap-4 mt-4">
-            {/* Ações principais - mostrar apenas para agendamentos não cancelados */}
-            {appointment.status === "agendado" && (
-              <div className="grid grid-cols-2 gap-2 w-full">
+            {/* Botões principais agrupados por ação */}
+            <div className="grid grid-cols-1 gap-3 w-full">
+              {/* Ações principais - mostrar apenas para agendamentos não cancelados */}
+              {appointment.status === "agendado" && (
+                <div className="grid grid-cols-2 gap-3">
+                  <Button 
+                    variant="default" 
+                    onClick={() => handleStatusUpdate('concluido')}
+                    disabled={isUpdatingStatus}
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" /> Concluir
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowCancelConfirm(true)}
+                    disabled={isUpdatingStatus}
+                    className="text-red-500 border-red-500 hover:bg-red-50"
+                  >
+                    <XCircle className="h-4 w-4 mr-2" /> Cancelar
+                  </Button>
+                </div>
+              )}
+              
+              {/* Ações secundárias */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <Button 
-                  variant="default" 
-                  onClick={() => handleStatusUpdate('concluido')}
-                  disabled={isUpdatingStatus}
-                  className="w-full"
+                  variant="outline" 
+                  onClick={() => setShowReschedule(true)}
+                  disabled={appointment.status === 'cancelado'}
                 >
-                  <CheckCircle className="h-4 w-4 mr-2" /> Concluir
+                  <CalendarPlus className="h-4 w-4 mr-2" /> Reagendar
                 </Button>
                 
                 <Button 
                   variant="outline" 
-                  onClick={() => setShowCancelConfirm(true)}
-                  disabled={isUpdatingStatus}
-                  className="w-full text-red-500 border-red-500 hover:bg-red-50"
+                  onClick={() => handleSendWhatsApp()}
                 >
-                  <XCircle className="h-4 w-4 mr-2" /> Cancelar
+                  <Phone className="h-4 w-4 mr-2" /> WhatsApp
+                </Button>
+
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowHistory(true)}
+                >
+                  <History className="h-4 w-4 mr-2" /> Histórico
                 </Button>
               </div>
-            )}
-            
-            {/* Ações secundárias */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full">
-              <Button 
-                variant="outline" 
-                onClick={() => setShowReschedule(true)}
-                disabled={appointment.status === 'cancelado'}
-                className="w-full"
-              >
-                <CalendarPlus className="h-4 w-4 mr-2" /> Reagendar
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                onClick={() => handleSendWhatsApp()}
-                className="w-full"
-              >
-                <Phone className="h-4 w-4 mr-2" /> WhatsApp
-              </Button>
 
-              <Button 
-                variant="outline" 
-                onClick={() => setShowHistory(true)}
-                className="w-full"
-              >
-                <History className="h-4 w-4 mr-2" /> Histórico
-              </Button>
-            </div>
-
-            {/* Ações terciárias */}
-            <div className="grid grid-cols-2 gap-2 w-full">
-              <Button 
-                variant="outline" 
-                onClick={() => setShowDeleteConfirm(true)}
-                className="w-full text-red-600"
-              >
-                <Trash2 className="h-4 w-4 mr-2" /> Excluir
-              </Button>
-              
-              <Button variant="ghost" onClick={onClose} className="w-full">
-                Fechar
-              </Button>
+              {/* Ações de controle */}
+              <div className="grid grid-cols-2 gap-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="text-red-600"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                </Button>
+                
+                <Button variant="ghost" onClick={onClose}>
+                  Fechar
+                </Button>
+              </div>
             </div>
           </DialogFooter>
         </DialogContent>

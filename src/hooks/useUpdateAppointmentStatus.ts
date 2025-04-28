@@ -10,6 +10,16 @@ export const useUpdateAppointmentStatus = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const invalidateQueries = async () => {
+    // Invalidar todas as queries relacionadas a agendamentos
+    await queryClient.invalidateQueries({ queryKey: ['appointments'] });
+    await queryClient.invalidateQueries({ queryKey: ['dashboard-appointments'] });
+    await queryClient.invalidateQueries({ queryKey: ['weekly-appointments'] });
+    
+    // Aguardar para garantir que a UI seja atualizada
+    return new Promise(resolve => setTimeout(resolve, 100));
+  };
+
   const updateStatus = async (appointmentId: string, status: AppointmentStatus, reason?: string) => {
     try {
       setIsLoading(true);
@@ -52,9 +62,9 @@ export const useUpdateAppointmentStatus = () => {
       });
 
       // Invalidar e recarregar as queries relevantes
-      await queryClient.invalidateQueries({ queryKey: ['appointments'] });
-      await queryClient.invalidateQueries({ queryKey: ['dashboard-appointments'] });
-      await queryClient.invalidateQueries({ queryKey: ['weekly-appointments'] });
+      await invalidateQueries();
+      
+      // Adicionalmente invalidar a query do histórico específico
       await queryClient.invalidateQueries({ queryKey: ['appointment-history', appointmentId] });
 
       return true;
@@ -103,9 +113,7 @@ export const useUpdateAppointmentStatus = () => {
       });
 
       // Invalidar e recarregar as queries relevantes
-      await queryClient.invalidateQueries({ queryKey: ['appointments'] });
-      await queryClient.invalidateQueries({ queryKey: ['dashboard-appointments'] });
-      await queryClient.invalidateQueries({ queryKey: ['weekly-appointments'] });
+      await invalidateQueries();
 
       return true;
     } catch (error) {
