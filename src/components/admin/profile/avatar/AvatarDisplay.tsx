@@ -5,7 +5,6 @@ import { X } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
@@ -20,20 +19,18 @@ export const AvatarDisplay = ({ image, isUploading, onRemove }: AvatarDisplayPro
     <div className="relative">
       {image ? (
         <div className="relative">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <img 
-                  src={image} 
-                  alt="Foto de perfil" 
-                  className="w-32 h-32 rounded-full object-cover border-2 border-primary transition-all hover:border-primary/80"
-                />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Foto de perfil atual</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <img 
+                src={image} 
+                alt="Foto de perfil" 
+                className="w-32 h-32 rounded-full object-cover border-2 border-primary transition-all hover:border-primary/80"
+              />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Foto de perfil atual</p>
+            </TooltipContent>
+          </Tooltip>
           <Button 
             size="icon" 
             variant="destructive" 

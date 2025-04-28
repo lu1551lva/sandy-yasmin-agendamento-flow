@@ -10,7 +10,7 @@ import NotFound from "./pages/NotFound";
 import PublicLayout from "./components/layouts/PublicLayout";
 import AdminLayout from "./components/layouts/AdminLayout";
 import Appointment from "./pages/public/Appointment";
-import ClientArea from "./pages/public/ClientArea"; // New import
+import ClientArea from "./pages/public/ClientArea"; 
 import AdminLogin from "./pages/admin/Login";
 import Dashboard from "./pages/admin/Dashboard";
 import AppointmentList from "./pages/admin/AppointmentList";
@@ -19,7 +19,7 @@ import Professionals from "./pages/admin/Professionals";
 import Services from "./pages/admin/Services";
 import WhatsAppMessages from "./pages/admin/WhatsAppMessages";
 import Profile from "./pages/admin/Profile";
-import Reviews from "./pages/admin/Reviews"; // Import the new Reviews page
+import Reviews from "./pages/admin/Reviews";
 import { AuthProvider } from "./context/auth-context";
 import Register from "./pages/auth/Register";
 import Login from "./pages/auth/Login";
