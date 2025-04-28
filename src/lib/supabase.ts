@@ -25,6 +25,10 @@ export type Service = Tables['servicos']['Row'] & {
     id: string;
     nome: string;
   } | null;
+  // Adding the missing properties to match the updated database schema
+  descricao?: string | null;
+  categoria_id?: string | null;
+  imagem_url?: string | null;
 };
 export type Appointment = Tables['agendamentos']['Row'];
 
