@@ -21,6 +21,7 @@ export function AppointmentsSection({
   onCancel,
   isLoading
 }: AppointmentsSectionProps) {
+  // Se não houver agendamentos, não renderizar a seção
   if (appointments.length === 0) {
     return null;
   }
@@ -28,16 +29,18 @@ export function AppointmentsSection({
   return (
     <div className="space-y-4">
       <h3 className={`text-lg font-medium ${titleClassName}`}>{title}</h3>
-      {appointments.map((appointment) => (
-        <AppointmentCard
-          key={appointment.id}
-          appointment={appointment}
-          onShowDetails={onShowDetails}
-          onComplete={onComplete}
-          onCancel={onCancel}
-          isLoading={isLoading}
-        />
-      ))}
+      <div className="space-y-3">
+        {appointments.map((appointment) => (
+          <AppointmentCard
+            key={appointment.id}
+            appointment={appointment}
+            onShowDetails={onShowDetails}
+            onComplete={onComplete}
+            onCancel={onCancel}
+            isLoading={isLoading}
+          />
+        ))}
+      </div>
     </div>
   );
 }

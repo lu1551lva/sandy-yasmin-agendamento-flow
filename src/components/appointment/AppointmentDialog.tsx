@@ -8,7 +8,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,13 +17,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState } from "react";
 import { AppointmentStatus } from "@/types/appointment.types";
-import { CheckCircle, Clock, User, Phone, Mail, CalendarDays, XCircle, CalendarPlus, Edit, Trash2, History } from "lucide-react";
+import { CalendarDays, Clock, User, Phone, Mail, CheckCircle, XCircle, CalendarPlus, Trash2, History } from "lucide-react";
 import { createWhatsAppLink, formatCurrency } from "@/lib/supabase";
 import { RescheduleDialog } from "@/components/appointment/RescheduleDialog";
 import { useRescheduleAppointment } from "@/hooks/useRescheduleAppointment";
@@ -41,12 +39,6 @@ interface AppointmentDialogProps {
   onClose: () => void;
   onAppointmentUpdated?: () => void;
 }
-
-const statusColors = {
-  agendado: "bg-blue-500 text-white",
-  concluido: "bg-green-500 text-white",
-  cancelado: "bg-red-500 text-white",
-};
 
 export function AppointmentDialog({ appointment, isOpen, onClose, onAppointmentUpdated }: AppointmentDialogProps) {
   const [showReschedule, setShowReschedule] = useState(false);
@@ -185,32 +177,32 @@ export function AppointmentDialog({ appointment, isOpen, onClose, onAppointmentU
             </div>
           </div>
           
-          <DialogFooter className="flex-col space-y-2">
-            <div className="grid grid-cols-2 gap-2 w-full">
-              {appointment.status === "agendado" && (
-                <>
-                  <Button 
-                    variant="default" 
-                    onClick={() => handleStatusUpdate('concluido')}
-                    disabled={isUpdatingStatus}
-                    className="w-full"
-                  >
-                    <CheckCircle className="h-4 w-4 mr-2" /> Concluir
-                  </Button>
-                  
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setShowCancelConfirm(true)}
-                    disabled={isUpdatingStatus}
-                    className="w-full text-red-500 border-red-500 hover:bg-red-50"
-                  >
-                    <XCircle className="h-4 w-4 mr-2" /> Cancelar
-                  </Button>
-                </>
-              )}
-            </div>
+          <DialogFooter className="flex flex-col gap-4 mt-4">
+            {/* Ações principais - mostrar apenas para agendamentos não cancelados */}
+            {appointment.status === "agendado" && (
+              <div className="grid grid-cols-2 gap-2 w-full">
+                <Button 
+                  variant="default" 
+                  onClick={() => handleStatusUpdate('concluido')}
+                  disabled={isUpdatingStatus}
+                  className="w-full"
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" /> Concluir
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowCancelConfirm(true)}
+                  disabled={isUpdatingStatus}
+                  className="w-full text-red-500 border-red-500 hover:bg-red-50"
+                >
+                  <XCircle className="h-4 w-4 mr-2" /> Cancelar
+                </Button>
+              </div>
+            )}
             
-            <div className="grid grid-cols-3 gap-2 w-full">
+            {/* Ações secundárias */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full">
               <Button 
                 variant="outline" 
                 onClick={() => setShowReschedule(true)}
@@ -237,6 +229,7 @@ export function AppointmentDialog({ appointment, isOpen, onClose, onAppointmentU
               </Button>
             </div>
 
+            {/* Ações terciárias */}
             <div className="grid grid-cols-2 gap-2 w-full">
               <Button 
                 variant="outline" 

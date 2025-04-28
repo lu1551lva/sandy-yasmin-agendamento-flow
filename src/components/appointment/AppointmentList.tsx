@@ -6,6 +6,7 @@ import { CancelAppointmentDialog } from "./CancelAppointmentDialog";
 import { AppointmentsSection } from "./AppointmentsSection";
 import { AppointmentWithDetails, AppointmentStatus } from "@/types/appointment.types";
 import { useAppointmentStatusUpdate } from "@/hooks/useAppointmentStatusUpdate";
+import { useToast } from "@/hooks/use-toast";
 
 interface AppointmentListProps {
   appointments: AppointmentWithDetails[];
@@ -23,13 +24,23 @@ export function AppointmentList({
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [appointmentToCancel, setAppointmentToCancel] = useState<string | null>(null);
   const { updateStatus, isLoading } = useAppointmentStatusUpdate();
+  const { toast } = useToast();
 
   const handleStatusUpdate = async () => {
     if (!appointmentToUpdate) return;
     
     const success = await updateStatus(appointmentToUpdate.id, appointmentToUpdate.status);
-    if (success && onAppointmentUpdated) {
-      onAppointmentUpdated();
+    if (success) {
+      toast({
+        title: appointmentToUpdate.status === 'concluido' ? "Agendamento concluído" : "Status atualizado",
+        description: appointmentToUpdate.status === 'concluido' 
+          ? "O agendamento foi marcado como concluído com sucesso."
+          : "O status do agendamento foi atualizado com sucesso.",
+      });
+      
+      if (onAppointmentUpdated) {
+        onAppointmentUpdated();
+      }
     }
     setAppointmentToUpdate(null);
   };
@@ -38,8 +49,15 @@ export function AppointmentList({
     if (!appointmentToCancel) return;
     
     const success = await updateStatus(appointmentToCancel, "cancelado", reason);
-    if (success && onAppointmentUpdated) {
-      onAppointmentUpdated();
+    if (success) {
+      toast({
+        title: "Agendamento cancelado",
+        description: "O agendamento foi cancelado com sucesso.",
+      });
+      
+      if (onAppointmentUpdated) {
+        onAppointmentUpdated();
+      }
     }
     setIsCancelDialogOpen(false);
     setAppointmentToCancel(null);
@@ -48,6 +66,13 @@ export function AppointmentList({
   const openCancelDialog = (appointmentId: string) => {
     setAppointmentToCancel(appointmentId);
     setIsCancelDialogOpen(true);
+  };
+
+  const handleAppointmentDialogClose = () => {
+    setSelectedAppointment(null);
+    if (onAppointmentUpdated) {
+      onAppointmentUpdated();
+    }
   };
 
   // Filter active appointments unless showAll is true
@@ -85,33 +110,37 @@ export function AppointmentList({
         />
         
         {/* Concluídos */}
-        <AppointmentsSection
-          title="Agendamentos Concluídos"
-          titleClassName="text-green-800"
-          appointments={groupedAppointments.concluido}
-          onShowDetails={setSelectedAppointment}
-          onComplete={(id) => setAppointmentToUpdate({ id, status: "concluido" })}
-          onCancel={openCancelDialog}
-          isLoading={isLoading}
-        />
+        {groupedAppointments.concluido.length > 0 && (
+          <AppointmentsSection
+            title="Agendamentos Concluídos"
+            titleClassName="text-green-800"
+            appointments={groupedAppointments.concluido}
+            onShowDetails={setSelectedAppointment}
+            onComplete={(id) => setAppointmentToUpdate({ id, status: "concluido" })}
+            onCancel={openCancelDialog}
+            isLoading={isLoading}
+          />
+        )}
         
         {/* Cancelados - Só mostrar se showAll estiver ativo */}
-        <AppointmentsSection
-          title="Agendamentos Cancelados"
-          titleClassName="text-red-800"
-          appointments={groupedAppointments.cancelado}
-          onShowDetails={setSelectedAppointment}
-          onComplete={(id) => setAppointmentToUpdate({ id, status: "concluido" })}
-          onCancel={openCancelDialog}
-          isLoading={isLoading}
-        />
+        {groupedAppointments.cancelado.length > 0 && (
+          <AppointmentsSection
+            title="Agendamentos Cancelados"
+            titleClassName="text-red-800"
+            appointments={groupedAppointments.cancelado}
+            onShowDetails={setSelectedAppointment}
+            onComplete={(id) => setAppointmentToUpdate({ id, status: "concluido" })}
+            onCancel={openCancelDialog}
+            isLoading={isLoading}
+          />
+        )}
       </div>
       
       {selectedAppointment && (
         <AppointmentDialog
           appointment={selectedAppointment}
           isOpen={!!selectedAppointment}
-          onClose={() => setSelectedAppointment(null)}
+          onClose={handleAppointmentDialogClose}
           onAppointmentUpdated={onAppointmentUpdated}
         />
       )}
