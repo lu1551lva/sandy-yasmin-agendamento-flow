@@ -1,41 +1,27 @@
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { format, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { useState } from "react";
-import { AppointmentStatus } from "@/types/appointment.types";
-import { createWhatsAppLink } from "@/lib/supabase";
-import { RescheduleDialog } from "@/components/appointment/RescheduleDialog";
-import { useRescheduleAppointment } from "@/hooks/useRescheduleAppointment";
-import { useUpdateAppointmentStatus } from "@/hooks/useUpdateAppointmentStatus";
-import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { AppointmentHistory } from "./AppointmentHistory";
 import { ClientDetailsSection } from "./dialog/ClientDetailsSection";
 import { ServiceDetailsSection } from "./dialog/ServiceDetailsSection";
 import { AppointmentDetailsSection } from "./dialog/AppointmentDetailsSection";
 import { DialogActions } from "./dialog/DialogActions";
+import { AppointmentWithDetails } from "@/types/appointment.types";
+import { ConfirmationDialogs } from "./dialog/ConfirmationDialogs";
+import { RescheduleDialog } from "./RescheduleDialog";
+import { useAppointmentDialog } from "./hooks/useAppointmentDialog";
 
 interface AppointmentDialogProps {
-  appointment: any;
+  appointment: AppointmentWithDetails;
   isOpen: boolean;
   onClose: () => void;
   onAppointmentUpdated?: () => void;
@@ -46,63 +32,21 @@ export function AppointmentDialog({ appointment, isOpen, onClose, onAppointmentU
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const { rescheduleAppointment, isLoading: isRescheduling } = useRescheduleAppointment();
-  const { updateStatus, isLoading: isUpdatingStatus, deleteAppointment, isLoading: isDeleting } = useUpdateAppointmentStatus();
-  const { toast } = useToast();
 
-  const handleReschedule = async (date: Date, time: string) => {
-    const success = await rescheduleAppointment(
-      appointment.id,
-      date,
-      time,
-      appointment.profissional.id
-    );
-
-    if (success) {
-      setShowReschedule(false);
-      toast({
-        title: "Agendamento reagendado",
-        description: "O agendamento foi reagendado com sucesso.",
-      });
-      if (onAppointmentUpdated) onAppointmentUpdated();
-      onClose();
-    }
-  };
-
-  const handleStatusUpdate = async (status: AppointmentStatus) => {
-    const success = await updateStatus(appointment.id, status);
-    
-    if (success) {
-      toast({
-        title: status === 'concluido' ? "Agendamento concluído" : "Agendamento cancelado",
-        description: status === 'concluido' 
-          ? "O agendamento foi marcado como concluído."
-          : "O agendamento foi cancelado com sucesso.",
-      });
-      
-      if (onAppointmentUpdated) onAppointmentUpdated();
-      onClose();
-    }
-  };
-
-  const handleDelete = async () => {
-    const success = await deleteAppointment(appointment.id);
-    
-    if (success) {
-      toast({
-        title: "Agendamento excluído",
-        description: "O agendamento foi excluído permanentemente.",
-      });
-      
-      if (onAppointmentUpdated) onAppointmentUpdated();
-      onClose();
-    }
-  };
-
-  const handleSendWhatsApp = () => {
-    const message = `Olá ${appointment.cliente.nome.split(' ')[0]}! Confirmamos seu agendamento para ${appointment.servico.nome} no dia ${format(parseISO(appointment.data), "dd/MM", { locale: ptBR })} às ${appointment.hora}.`;
-    window.open(createWhatsAppLink(appointment.cliente.telefone, message), "_blank");
-  };
+  const { 
+    handleReschedule,
+    handleStatusUpdate,
+    handleDelete,
+    handleSendWhatsApp,
+    isRescheduling,
+    isUpdatingStatus,
+    isDeleting
+  } = useAppointmentDialog({
+    appointment,
+    onAppointmentUpdated,
+    onClose,
+    setShowReschedule
+  });
 
   return (
     <>
@@ -133,69 +77,29 @@ export function AppointmentDialog({ appointment, isOpen, onClose, onAppointmentU
             <AppointmentDetailsSection data={appointment.data} hora={appointment.hora} />
           </div>
           
-          <DialogFooter className="flex flex-col gap-4 mt-4">
-            <DialogActions 
-              status={appointment.status}
-              isUpdatingStatus={isUpdatingStatus}
-              onComplete={() => handleStatusUpdate('concluido')}
-              onShowCancelConfirm={() => setShowCancelConfirm(true)}
-              onShowReschedule={() => setShowReschedule(true)}
-              onSendWhatsApp={handleSendWhatsApp}
-              onShowHistory={() => setShowHistory(true)}
-              onShowDeleteConfirm={() => setShowDeleteConfirm(true)}
-              onClose={onClose}
-            />
-          </DialogFooter>
+          <DialogActions 
+            status={appointment.status}
+            isUpdatingStatus={isUpdatingStatus}
+            onComplete={() => handleStatusUpdate('concluido')}
+            onShowCancelConfirm={() => setShowCancelConfirm(true)}
+            onShowReschedule={() => setShowReschedule(true)}
+            onSendWhatsApp={handleSendWhatsApp}
+            onShowHistory={() => setShowHistory(true)}
+            onShowDeleteConfirm={() => setShowDeleteConfirm(true)}
+            onClose={onClose}
+          />
         </DialogContent>
       </Dialog>
 
-      {/* Cancel confirmation dialog */}
-      <AlertDialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Cancelar agendamento?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta ação não pode ser desfeita. O horário ficará disponível para outro cliente.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Voltar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                setShowCancelConfirm(false);
-                handleStatusUpdate('cancelado');
-              }}
-              className="bg-red-500 hover:bg-red-600"
-            >
-              Cancelar agendamento
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Delete confirmation dialog */}
-      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Excluir agendamento permanentemente?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta ação não pode ser desfeita. O agendamento será removido permanentemente do sistema.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Voltar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                setShowDeleteConfirm(false);
-                handleDelete();
-              }}
-              className="bg-red-500 hover:bg-red-600"
-            >
-              Excluir permanentemente
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Confirmation dialogs (Cancel and Delete) */}
+      <ConfirmationDialogs
+        showCancelConfirm={showCancelConfirm}
+        setShowCancelConfirm={setShowCancelConfirm}
+        showDeleteConfirm={showDeleteConfirm}
+        setShowDeleteConfirm={setShowDeleteConfirm}
+        onCancel={() => handleStatusUpdate('cancelado')}
+        onDelete={handleDelete}
+      />
 
       {/* Reschedule dialog */}
       {showReschedule && (
