@@ -7,42 +7,32 @@ import { ClientDetailsSection } from "./sections/ClientDetailsSection";
 import { ServiceDetailsSection } from "./sections/ServiceDetailsSection";
 import { AppointmentDetailsSection } from "./sections/AppointmentDetailsSection";
 import { DialogActions } from "./actions/DialogActions";
-import { useAppointmentDialog } from "../hooks/useAppointmentDialog";
-import { useState } from "react";
 
 interface AppointmentDetailsDialogProps {
   appointment: AppointmentWithDetails;
   isOpen: boolean;
   onClose: () => void;
-  onAppointmentUpdated?: () => void;
+  onComplete: () => void;
+  onShowCancelConfirm: () => void;
+  onShowReschedule: () => void;
+  onSendWhatsApp: () => void;
+  onShowHistory: () => void;
+  onShowDeleteConfirm: () => void;
+  isUpdatingStatus: boolean;
 }
 
 export function AppointmentDetailsDialog({
   appointment,
   isOpen,
   onClose,
-  onAppointmentUpdated
+  onComplete,
+  onShowCancelConfirm,
+  onShowReschedule,
+  onSendWhatsApp,
+  onShowHistory,
+  onShowDeleteConfirm,
+  isUpdatingStatus
 }: AppointmentDetailsDialogProps) {
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showReschedule, setShowReschedule] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
-
-  const { 
-    handleReschedule,
-    handleStatusUpdate,
-    handleDelete,
-    handleSendWhatsApp,
-    isRescheduling,
-    isUpdatingStatus,
-    isDeleting
-  } = useAppointmentDialog({
-    appointment,
-    onAppointmentUpdated,
-    onClose,
-    setShowReschedule
-  });
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case "agendado": return "bg-blue-500";
@@ -78,16 +68,14 @@ export function AppointmentDetailsDialog({
         <DialogActions 
           status={appointment.status}
           isUpdatingStatus={isUpdatingStatus}
-          onComplete={() => handleStatusUpdate('concluido')}
-          onShowCancelConfirm={() => setShowCancelConfirm(true)}
-          onShowReschedule={() => setShowReschedule(true)}
-          onSendWhatsApp={handleSendWhatsApp}
-          onShowHistory={() => setShowHistory(true)}
-          onShowDeleteConfirm={() => setShowDeleteConfirm(true)}
+          onComplete={onComplete}
+          onShowCancelConfirm={onShowCancelConfirm}
+          onShowReschedule={onShowReschedule}
+          onSendWhatsApp={onSendWhatsApp}
+          onShowHistory={onShowHistory}
+          onShowDeleteConfirm={onShowDeleteConfirm}
           onClose={onClose}
         />
-
-        {/* As janelas de diálogo de confirmação e histórico serão importadas em outro componente */}
       </DialogContent>
     </Dialog>
   );

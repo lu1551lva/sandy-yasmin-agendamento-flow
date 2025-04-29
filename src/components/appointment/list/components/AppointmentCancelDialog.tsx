@@ -10,59 +10,35 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, XCircle } from "lucide-react";
-import { 
-  logAppointmentAction, 
-  logAppointmentError, 
-  validateAppointmentId 
-} from "@/utils/debugUtils";
+import { useAppointmentDialog } from "../../context/AppointmentDialogContext";
 
 interface AppointmentCancelDialogProps {
   isOpen: boolean;
-  onClose: () => void;
-  reason: string;
-  onReasonChange: (reason: string) => void;
-  onConfirm: () => void;
-  isLoading: boolean;
-  appointmentId: string | null;
+  onOpenChange: (open: boolean) => void;
 }
 
 export function AppointmentCancelDialog({
   isOpen,
-  onClose,
-  reason,
-  onReasonChange,
-  onConfirm,
-  isLoading,
-  appointmentId
+  onOpenChange,
 }: AppointmentCancelDialogProps) {
+  const { 
+    appointmentToCancel, 
+    cancelReason, 
+    setCancelReason,
+    handleCancel, 
+    isLoading,
+    validateAppointmentExists
+  } = useAppointmentDialog();
+
   // Don't render the dialog if there is no appointment ID
-  if (!appointmentId || !validateAppointmentId(appointmentId)) {
+  if (!appointmentToCancel || !validateAppointmentExists(appointmentToCancel)) {
     return null;
   }
 
-  // Log action and validate before confirming
-  const handleConfirm = () => {
-    // Double-check appointmentId before proceeding
-    if (!validateAppointmentId(appointmentId)) {
-      logAppointmentError("Tentativa de cancelar agendamento com ID inválido", appointmentId || "null");
-      onClose();
-      return;
-    }
-    
-    logAppointmentAction("Confirmando cancelamento em AppointmentCancelDialog", appointmentId, {
-      motivo: reason || 'Cancelamento sem motivo especificado'
-    });
-    
-    // Execute the cancel action
-    onConfirm();
-  };
-
   return (
     <Dialog 
-      open={isOpen && !!appointmentId} 
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
+      open={isOpen} 
+      onOpenChange={onOpenChange}
     >
       <DialogContent>
         <DialogHeader>
@@ -75,8 +51,8 @@ export function AppointmentCancelDialog({
         <div className="py-4">
           <Textarea
             placeholder="Ex: Cliente faltou, reagendamento solicitado, etc."
-            value={reason}
-            onChange={(e) => onReasonChange(e.target.value)}
+            value={cancelReason}
+            onChange={(e) => setCancelReason(e.target.value)}
             className="h-24"
           />
         </div>
@@ -84,7 +60,7 @@ export function AppointmentCancelDialog({
         <DialogFooter>
           <Button 
             variant="outline" 
-            onClick={onClose} 
+            onClick={() => onOpenChange(false)} 
             disabled={isLoading}
             aria-label="Fechar diálogo de cancelamento"
           >
@@ -93,7 +69,7 @@ export function AppointmentCancelDialog({
 
           <Button 
             variant="destructive"
-            onClick={handleConfirm}
+            onClick={handleCancel}
             disabled={isLoading}
           >
             {isLoading ? (

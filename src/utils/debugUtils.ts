@@ -59,3 +59,25 @@ export const logDatabaseOperation = (operation: string, table: string, result: a
     });
   }
 };
+
+/**
+ * Função para debug de diálogos de agendamento
+ */
+export const logDialogState = (dialog: string, isOpen: boolean, data?: any) => {
+  console.log(`[DIALOG STATE] ${dialog}: ${isOpen ? 'Aberto' : 'Fechado'}`, data || '');
+};
+
+/**
+ * Função para verificar a consistência dos IDs entre componentes
+ */
+export const verifyIdConsistency = (componentName: string, expectedId: string | null, actualId: string | null) => {
+  const isConsistent = expectedId === actualId;
+  const logFn = isConsistent ? console.log : console.error;
+  
+  logFn(`[ID CONSISTENCY] ${componentName}: ${isConsistent ? 'OK' : 'FALHA'}`, {
+    expected: expectedId,
+    actual: actualId
+  });
+  
+  return isConsistent;
+};

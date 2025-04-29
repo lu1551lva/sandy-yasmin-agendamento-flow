@@ -1,9 +1,10 @@
 
-import { useState, useEffect } from "react";
-import { AppointmentWithDetails, AppointmentStatus } from "@/types/appointment.types";
+import { useState } from "react";
+import { AppointmentWithDetails } from "@/types/appointment.types";
 import { AppointmentStatusSection } from "./list/AppointmentStatusSection";
 import { AppointmentDialogs } from "./list/AppointmentDialogs";
 import { useAppointmentGrouper } from "./list/AppointmentGrouper";
+import { AppointmentDialogProvider, useAppointmentDialog } from "./context/AppointmentDialogContext";
 
 interface AppointmentListProps {
   appointments: AppointmentWithDetails[];
@@ -11,39 +12,23 @@ interface AppointmentListProps {
   showAll?: boolean;
 }
 
-export function AppointmentList({ 
-  appointments, 
-  onAppointmentUpdated, 
-  showAll = false 
-}: AppointmentListProps) {
-  // State for dialogs and appointment actions
-  const [selectedAppointment, setSelectedAppointment] = useState<AppointmentWithDetails | null>(null);
-  const [appointmentToUpdate, setAppointmentToUpdate] = useState<{ id: string; status: AppointmentStatus } | null>(null);
-  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
-  const [appointmentToCancel, setAppointmentToCancel] = useState<string | null>(null);
-  
+// Internal component that uses the context
+function AppointmentListContent({
+  appointments,
+  showAll = false
+}: Omit<AppointmentListProps, 'onAppointmentUpdated'>) {
+  const { 
+    openAppointmentDetails, 
+    openStatusUpdateDialog,
+    openCancelDialog,
+    isLoading
+  } = useAppointmentDialog();
+
   // Group appointments by status - using appointments directly from props
   const { groupedAppointments, isEmpty } = useAppointmentGrouper({ 
     appointments, 
     showAll 
   });
-
-  // Handle appointment actions
-  const openCancelDialog = (appointmentId: string) => {
-    console.log(`Opening cancel dialog for appointment ID: ${appointmentId}`);
-    setAppointmentToCancel(appointmentId);
-    setIsCancelDialogOpen(true);
-  };
-
-  // Handle appointment updates
-  const handleAppointmentUpdated = () => {
-    // Call parent callback if provided
-    if (onAppointmentUpdated) {
-      onAppointmentUpdated();
-    }
-    
-    console.log("Appointment updated, refreshing data...");
-  };
 
   // If no appointments, show empty state
   if (isEmpty) {
@@ -55,58 +40,57 @@ export function AppointmentList({
   }
 
   return (
-    <>
-      <div className="space-y-6">
-        {/* Active Appointments */}
-        <AppointmentStatusSection
-          title="Agendamentos Ativos"
-          titleClassName="text-blue-800"
-          appointments={groupedAppointments.agendado}
-          onShowDetails={setSelectedAppointment}
-          onComplete={(id) => setAppointmentToUpdate({ id, status: "concluido" })}
-          onCancel={openCancelDialog}
-          isLoading={false}
-        />
-        
-        {/* Completed Appointments */}
-        {showAll && groupedAppointments.concluido.length > 0 && (
-          <AppointmentStatusSection
-            title="Agendamentos Concluídos"
-            titleClassName="text-green-800"
-            appointments={groupedAppointments.concluido}
-            onShowDetails={setSelectedAppointment}
-            onComplete={(id) => setAppointmentToUpdate({ id, status: "concluido" })}
-            onCancel={openCancelDialog}
-            isLoading={false}
-          />
-        )}
-        
-        {/* Canceled Appointments */}
-        {showAll && groupedAppointments.cancelado.length > 0 && (
-          <AppointmentStatusSection
-            title="Agendamentos Cancelados"
-            titleClassName="text-red-800"
-            appointments={groupedAppointments.cancelado}
-            onShowDetails={setSelectedAppointment}
-            onComplete={(id) => setAppointmentToUpdate({ id, status: "concluido" })}
-            onCancel={openCancelDialog}
-            isLoading={false}
-          />
-        )}
-      </div>
-      
-      {/* Dialogs for appointments */}
-      <AppointmentDialogs
-        selectedAppointment={selectedAppointment}
-        setSelectedAppointment={setSelectedAppointment}
-        appointmentToUpdate={appointmentToUpdate}
-        setAppointmentToUpdate={setAppointmentToUpdate}
-        isCancelDialogOpen={isCancelDialogOpen}
-        setIsCancelDialogOpen={setIsCancelDialogOpen}
-        appointmentToCancel={appointmentToCancel}
-        setAppointmentToCancel={setAppointmentToCancel}
-        onAppointmentUpdated={handleAppointmentUpdated}
+    <div className="space-y-6">
+      {/* Active Appointments */}
+      <AppointmentStatusSection
+        title="Agendamentos Ativos"
+        titleClassName="text-blue-800"
+        appointments={groupedAppointments.agendado}
+        onShowDetails={openAppointmentDetails}
+        onComplete={(id) => openStatusUpdateDialog(id, "concluido")}
+        onCancel={openCancelDialog}
+        isLoading={isLoading}
       />
-    </>
+      
+      {/* Completed Appointments */}
+      {showAll && groupedAppointments.concluido.length > 0 && (
+        <AppointmentStatusSection
+          title="Agendamentos Concluídos"
+          titleClassName="text-green-800"
+          appointments={groupedAppointments.concluido}
+          onShowDetails={openAppointmentDetails}
+          onComplete={(id) => openStatusUpdateDialog(id, "concluido")}
+          onCancel={openCancelDialog}
+          isLoading={isLoading}
+        />
+      )}
+      
+      {/* Canceled Appointments */}
+      {showAll && groupedAppointments.cancelado.length > 0 && (
+        <AppointmentStatusSection
+          title="Agendamentos Cancelados"
+          titleClassName="text-red-800"
+          appointments={groupedAppointments.cancelado}
+          onShowDetails={openAppointmentDetails}
+          onComplete={(id) => openStatusUpdateDialog(id, "concluido")}
+          onCancel={openCancelDialog}
+          isLoading={isLoading}
+        />
+      )}
+    </div>
+  );
+}
+
+// Main export component that provides the context
+export function AppointmentList({ 
+  appointments, 
+  onAppointmentUpdated = () => {}, 
+  showAll = false 
+}: AppointmentListProps) {
+  return (
+    <AppointmentDialogProvider onAppointmentUpdated={onAppointmentUpdated}>
+      <AppointmentListContent appointments={appointments} showAll={showAll} />
+      <AppointmentDialogs onAppointmentUpdated={onAppointmentUpdated} />
+    </AppointmentDialogProvider>
   );
 }

@@ -2,7 +2,6 @@
 import { format, parseISO, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { 
-  CalendarClock, 
   ArrowRight, 
   CheckCircle, 
   XCircle, 
@@ -14,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AppointmentWithDetails } from "@/types/appointment.types";
 import { formatCurrency } from "@/lib/supabase";
+import { logUIEvent } from "@/utils/debugUtils";
 
 interface AppointmentCardProps {
   appointment: AppointmentWithDetails;
@@ -59,17 +59,17 @@ export function AppointmentCard({
   };
 
   const handleCancel = () => {
-    console.log(`Cancelando agendamento ${appointment.id}`);
+    logUIEvent(`Cancelando agendamento ${appointment.id}`);
     onCancel(appointment.id);
   };
 
   const handleComplete = () => {
-    console.log(`Concluindo agendamento ${appointment.id}`);
+    logUIEvent(`Concluindo agendamento ${appointment.id}`);
     onComplete(appointment.id);
   };
 
   const handleShowDetails = () => {
-    console.log(`Mostrando detalhes do agendamento ${appointment.id}`);
+    logUIEvent(`Mostrando detalhes do agendamento ${appointment.id}`);
     onShowDetails(appointment);
   };
 

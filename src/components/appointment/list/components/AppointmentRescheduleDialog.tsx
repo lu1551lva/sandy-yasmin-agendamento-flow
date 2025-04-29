@@ -1,33 +1,29 @@
 
-import { AppointmentWithDetails } from "@/types/appointment.types";
+import { useAppointmentDialog } from "../../context/AppointmentDialogContext";
 import { RescheduleDialog } from "../../RescheduleDialog";
 
 interface AppointmentRescheduleDialogProps {
-  appointment: AppointmentWithDetails | null;
   isOpen: boolean;
-  onClose: () => void;
-  onReschedule: (date: Date, time: string) => Promise<boolean>;
-  isLoading: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 export function AppointmentRescheduleDialog({
-  appointment,
   isOpen,
-  onClose,
-  onReschedule,
-  isLoading
+  onOpenChange,
 }: AppointmentRescheduleDialogProps) {
-  if (!appointment) {
+  const { selectedAppointment, handleReschedule, isReschedulingLoading } = useAppointmentDialog();
+  
+  if (!selectedAppointment) {
     return null;
   }
 
   return (
     <RescheduleDialog
-      appointment={appointment}
+      appointment={selectedAppointment}
       isOpen={isOpen}
-      onClose={onClose}
-      onReschedule={onReschedule}
-      isLoading={isLoading}
+      onClose={() => onOpenChange(false)}
+      onReschedule={handleReschedule}
+      isLoading={isReschedulingLoading}
     />
   );
 }
