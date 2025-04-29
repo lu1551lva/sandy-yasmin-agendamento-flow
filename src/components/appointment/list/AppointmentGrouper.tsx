@@ -1,27 +1,42 @@
 
+import { useState, useEffect, useMemo } from "react";
 import { AppointmentWithDetails } from "@/types/appointment.types";
 
-interface AppointmentGrouperProps {
+interface UseAppointmentGrouperProps {
   appointments: AppointmentWithDetails[];
   showAll: boolean;
 }
 
-export function useAppointmentGrouper({ appointments, showAll }: AppointmentGrouperProps) {
-  // Filter active appointments unless showAll is true
-  const filteredAppointments = showAll 
-    ? appointments 
-    : appointments.filter(appointment => appointment.status !== "cancelado");
-
-  // Group appointments by status for better organization
-  const groupedAppointments = {
-    agendado: filteredAppointments.filter(app => app.status === "agendado"),
-    concluido: filteredAppointments.filter(app => app.status === "concluido"),
-    cancelado: filteredAppointments.filter(app => app.status === "cancelado" && showAll),
-  };
-
-  return {
-    filteredAppointments,
-    groupedAppointments,
-    isEmpty: !filteredAppointments || filteredAppointments.length === 0
-  };
+export function useAppointmentGrouper({ appointments, showAll }: UseAppointmentGrouperProps) {
+  // Group appointments by status
+  const groupedAppointments = useMemo(() => {
+    const grouped = {
+      agendado: [] as AppointmentWithDetails[],
+      concluido: [] as AppointmentWithDetails[],
+      cancelado: [] as AppointmentWithDetails[],
+    };
+    
+    if (!appointments) return grouped;
+    
+    return appointments.reduce((acc, appointment) => {
+      if (appointment.status in acc) {
+        acc[appointment.status as keyof typeof acc].push(appointment);
+      }
+      return acc;
+    }, grouped);
+  }, [appointments]);
+  
+  // Check if there are any appointments
+  const isEmpty = useMemo(() => {
+    if (!appointments) return true;
+    
+    if (showAll) {
+      return appointments.length === 0;
+    } else {
+      // In non-showAll mode, we only care about active appointments
+      return groupedAppointments.agendado.length === 0;
+    }
+  }, [appointments, groupedAppointments, showAll]);
+  
+  return { groupedAppointments, isEmpty };
 }

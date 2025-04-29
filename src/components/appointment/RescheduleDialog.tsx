@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { format, parseISO as dateFnsParseISO } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import {
@@ -166,11 +166,27 @@ export function RescheduleDialog({
     }
   };
 
-  // Parse the date string using our utility function
-  const parsedDate = safeDateParse(appointment.data);
-  const currentDateTime = `${format(parsedDate, 'dd/MM/yyyy')} às ${appointment.hora}`;
+  // Parse the date string safely
+  const parsedDate = (() => {
+    try {
+      // Try using parseISO for ISO format dates
+      return parseISO(appointment.data);
+    } catch (error) {
+      console.error("Error parsing date with parseISO:", error);
+      try {
+        // Fallback to Date constructor
+        return new Date(appointment.data);
+      } catch (secondError) {
+        console.error("Error parsing date with Date constructor:", secondError);
+        // Ultimate fallback
+        return new Date();
+      }
+    }
+  })();
+
+  const currentDateTime = `${format(parsedDate, 'dd/MM/yyyy', { locale: ptBR })} às ${appointment.hora}`;
   const newDateTime = selectedDate && selectedTime 
-    ? `${format(selectedDate, 'dd/MM/yyyy')} às ${selectedTime}` 
+    ? `${format(selectedDate, 'dd/MM/yyyy', { locale: ptBR })} às ${selectedTime}` 
     : "Selecione data e hora";
 
   return (
@@ -235,13 +251,14 @@ export function RescheduleDialog({
           </Alert>
         )}
 
-        <DialogFooter className="flex-none mt-4 border-t pt-4">
-          <Button variant="outline" onClick={onClose} disabled={isLoading}>
+        <DialogFooter className="flex-none mt-4 border-t pt-4 flex flex-col sm:flex-row gap-2">
+          <Button variant="outline" onClick={onClose} disabled={isLoading} className="w-full sm:w-auto">
             Cancelar
           </Button>
           <Button 
             onClick={handleReschedule} 
             disabled={!selectedDate || !selectedTime || isLoading}
+            className="w-full sm:w-auto"
           >
             {isLoading ? (
               <>
@@ -256,20 +273,4 @@ export function RescheduleDialog({
       </DialogContent>
     </Dialog>
   );
-}
-
-// Helper function to safely parse a date string
-function safeDateParse(dateString: string): Date {
-  try {
-    // Try using date-fns parseISO first
-    return dateFnsParseISO(dateString);
-  } catch (error) {
-    // Fallback to native Date constructor
-    try {
-      return new Date(dateString);
-    } catch (secondError) {
-      console.error('Error parsing date:', secondError);
-      return new Date();
-    }
-  }
 }
