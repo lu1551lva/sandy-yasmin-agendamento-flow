@@ -49,6 +49,15 @@ export function AppointmentDialogs({
     return handleReschedule(date, time);
   };
 
+  // Create a wrapper function for handleUpdateStatus that doesn't require parameters
+  // This fixes the type mismatch error
+  const handleConfirmStatusUpdate = () => {
+    if (appointmentToUpdate && appointmentToUpdate.status) {
+      return handleUpdateStatus(appointmentToUpdate.status);
+    }
+    return Promise.resolve(false);
+  };
+
   // Check if we should render each dialog based on valid IDs
   const showDetailsDialog = !!selectedAppointment && validateAppointmentId(selectedAppointment.id);
   const showStatusUpdateDialog = !!appointmentToUpdate && validateAppointmentId(appointmentToUpdate.id);
@@ -73,7 +82,7 @@ export function AppointmentDialogs({
           isOpen={true}
           onOpenChange={(open) => !open && setAppointmentToUpdate(null)}
           status={appointmentToUpdate.status || null}
-          onConfirm={handleUpdateStatus}
+          onConfirm={handleConfirmStatusUpdate}
           isLoading={isLoading}
         />
       )}

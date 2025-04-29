@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { AppointmentStatus } from "@/types/appointment.types";
 import { Loader2 } from "lucide-react";
-import { validateAppointmentId } from "@/utils/debugUtils";
 
 interface StatusUpdateDialogProps {
   isOpen: boolean;

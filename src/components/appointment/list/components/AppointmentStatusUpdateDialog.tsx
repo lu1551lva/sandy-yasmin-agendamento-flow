@@ -1,7 +1,6 @@
 
 import { StatusUpdateDialog } from "../../StatusUpdateDialog";
 import { AppointmentStatus } from "@/types/appointment.types";
-import { validateAppointmentId } from "@/utils/debugUtils";
 
 interface AppointmentStatusUpdateDialogProps {
   isOpen: boolean;
