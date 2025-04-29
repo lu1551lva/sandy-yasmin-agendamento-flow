@@ -68,7 +68,7 @@ export function AppointmentDialogs({
         onReasonChange={setCancelReason}
         onConfirm={handleCancel}
         isLoading={isLoading}
-        appointmentId={appointmentToCancel} // Pass the appointment ID to the cancel dialog
+        appointmentId={appointmentToCancel}
       />
       
       {/* Reschedule Dialog */}

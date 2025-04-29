@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { AppointmentStatus, AppointmentWithDetails } from "@/types/appointment.types";
-import { useAppointmentStatusUpdate } from "@/hooks/useAppointmentStatusUpdate";
+import { useUpdateAppointmentStatus } from "@/hooks/useAppointmentStatusUpdate";
 import { useRescheduleAppointment } from "@/hooks/useRescheduleAppointment";
 import { useToast } from "@/hooks/use-toast";
 
@@ -16,7 +16,7 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
   const { toast } = useToast();
 
   // Hooks for API operations
-  const { updateStatus, isLoading } = useAppointmentStatusUpdate();
+  const { updateStatus, isLoading } = useUpdateAppointmentStatus();
   const { rescheduleAppointment, isLoading: isReschedulingLoading } = useRescheduleAppointment();
 
   // Handle updating appointment status
