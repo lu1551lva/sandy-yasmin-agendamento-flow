@@ -22,12 +22,13 @@ export function AppointmentCancelDialog({
   appointmentId
 }: AppointmentCancelDialogProps) {
   const handleConfirm = (cancelReason: string) => {
+    // Debug log to check if appointmentId exists
+    logAppointmentAction('Confirmando cancelamento em AppointmentCancelDialog', appointmentId || 'null', { motivo: cancelReason });
+    
     if (!validateAppointmentId(appointmentId)) {
-      logAppointmentError('Nenhum agendamento selecionado para cancelamento', appointmentId || 'null');
+      logAppointmentError('Nenhum agendamento selecionado para cancelamento em AppointmentCancelDialog', appointmentId || 'null');
       return;
     }
-    
-    logAppointmentAction('Confirmando cancelamento', appointmentId!, { motivo: cancelReason });
     
     // Passing the reason to onConfirm
     onConfirm(cancelReason);

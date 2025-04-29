@@ -106,6 +106,12 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
       return;
     }
 
+    // Log more details about the appointment to cancel
+    logAppointmentAction("Detalhes do agendamento a cancelar", appointmentToCancel, { 
+      appointmentToCancel, 
+      cancelReason 
+    });
+
     const reasonToUse = cancelReason || "Cancelamento sem motivo especificado";
     traceAppointmentFlow("Iniciando cancelamento", appointmentToCancel, { motivo: reasonToUse });
 

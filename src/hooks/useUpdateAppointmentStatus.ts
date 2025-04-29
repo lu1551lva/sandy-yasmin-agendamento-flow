@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { AppointmentStatus } from '@/types/appointment.types';
 import { useAppointmentDatabase } from './appointment/useAppointmentDatabase';
@@ -59,14 +60,14 @@ export const useUpdateAppointmentStatus = () => {
     traceAppointmentFlow("Iniciando atualização", appointmentId, { status });
 
     try {
-      const { data, error } = await updateAppointmentStatus(appointmentId, status, reason);
+      const result = await updateAppointmentStatus(appointmentId, status, reason);
 
-      if (error || !data?.length) {
-        const message = error 
-          ? `Não foi possível atualizar o status: ${error.message}` 
+      if (result.error || !result.data) {
+        const message = result.error 
+          ? `Não foi possível atualizar o status: ${result.error.message}` 
           : "O agendamento não foi encontrado ou não pôde ser atualizado.";
         
-        handleError("Erro ao atualizar agendamento", appointmentId, error);
+        handleError("Erro ao atualizar agendamento", appointmentId, result.error);
         showStatusUpdateError(message);
         return false;
       }
@@ -74,10 +75,10 @@ export const useUpdateAppointmentStatus = () => {
       logAppointmentAction("Status atualizado com sucesso", appointmentId, { novoStatus: status });
 
       const description = `Status alterado para ${status}${reason ? ` - Motivo: ${reason}` : ''}`;
-      const { error: historyError } = await createHistoryEntry(appointmentId, status, description);
+      const historyResult = await createHistoryEntry(appointmentId, status, description);
 
-      if (historyError) {
-        handleError("Erro ao registrar histórico", appointmentId, historyError);
+      if (historyResult.error) {
+        handleError("Erro ao registrar histórico", appointmentId, historyResult.error);
         showHistoryWarning();
       } else {
         logAppointmentAction("Histórico registrado", appointmentId);

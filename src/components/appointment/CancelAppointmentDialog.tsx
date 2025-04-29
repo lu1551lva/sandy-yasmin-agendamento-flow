@@ -1,3 +1,4 @@
+
 import { 
   Dialog,
   DialogContent,
@@ -29,8 +30,11 @@ export function CancelAppointmentDialog({
   isLoading,
 }: CancelAppointmentDialogProps) {
   const handleConfirm = () => {
+    // Always log before executing the action
     logAppointmentAction('Executando cancelamento com motivo', 'dialog', reason);
-    onConfirm(reason);
+    
+    // Pass the reason directly to the parent component
+    onConfirm(reason || 'Cancelamento sem motivo especificado');
   };
 
   const handleOpenChange = (open: boolean) => {
