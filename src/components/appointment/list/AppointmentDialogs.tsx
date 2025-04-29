@@ -66,6 +66,7 @@ export function AppointmentDialogs({
         onClose={() => {
           setIsCancelDialogOpen(false);
           setAppointmentToCancel(null);
+          setCancelReason("");
         }}
         reason={cancelReason}
         onReasonChange={setCancelReason}

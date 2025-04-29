@@ -58,6 +58,21 @@ export function AppointmentCard({
     }
   };
 
+  const handleCancel = () => {
+    console.log(`Cancelando agendamento ${appointment.id}`);
+    onCancel(appointment.id);
+  };
+
+  const handleComplete = () => {
+    console.log(`Concluindo agendamento ${appointment.id}`);
+    onComplete(appointment.id);
+  };
+
+  const handleShowDetails = () => {
+    console.log(`Mostrando detalhes do agendamento ${appointment.id}`);
+    onShowDetails(appointment);
+  };
+
   return (
     <div className={getCardClassName()}>
       <div className="flex flex-col sm:flex-row justify-between">
@@ -103,7 +118,7 @@ export function AppointmentCard({
                   size="sm"
                   variant="outline"
                   className="text-green-600 border-green-600 hover:bg-green-50"
-                  onClick={() => onComplete(appointment.id)}
+                  onClick={handleComplete}
                 >
                   <CheckCircle className="h-4 w-4 mr-1" />
                   Concluir
@@ -113,7 +128,7 @@ export function AppointmentCard({
                   size="sm"
                   variant="outline"
                   className="text-red-600 border-red-600 hover:bg-red-50"
-                  onClick={() => onCancel(appointment.id)}
+                  onClick={handleCancel}
                 >
                   <XCircle className="h-4 w-4 mr-1" />
                   Cancelar
@@ -131,7 +146,7 @@ export function AppointmentCard({
             <Button
               size="sm"
               variant="outline"
-              onClick={() => onShowDetails(appointment)}
+              onClick={handleShowDetails}
             >
               Detalhes <ArrowRight className="h-3 w-3 ml-1" />
             </Button>

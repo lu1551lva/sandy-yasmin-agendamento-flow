@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { AppointmentStatus, AppointmentWithDetails } from "@/types/appointment.types";
-import { useUpdateAppointmentStatus } from "@/hooks/useAppointmentStatusUpdate";
+import { useUpdateAppointmentStatus } from "@/hooks/useUpdateAppointmentStatus";
 import { useRescheduleAppointment } from "@/hooks/useRescheduleAppointment";
 import { useToast } from "@/hooks/use-toast";
 
@@ -23,6 +23,11 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
   const handleUpdateStatus = async () => {
     if (!appointmentToUpdate) {
       console.error("Nenhum agendamento selecionado para atualização");
+      toast({
+        title: "Erro na operação",
+        description: "ID de agendamento inválido. Por favor, tente novamente.",
+        variant: "destructive",
+      });
       return;
     }
     

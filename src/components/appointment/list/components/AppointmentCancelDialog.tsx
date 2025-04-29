@@ -20,7 +20,7 @@ export function AppointmentCancelDialog({
   isLoading,
   appointmentId
 }: AppointmentCancelDialogProps) {
-  // Validar que temos um appointmentId válido
+  // Validar que temos um appointmentId válido antes de prosseguir
   const handleConfirm = (cancelReason: string) => {
     if (!appointmentId) {
       console.error('Nenhum agendamento selecionado para cancelamento', {appointmentId});
