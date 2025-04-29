@@ -68,7 +68,7 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
   // Handle cancelling appointment
   const handleCancel = async () => {
     if (!appointmentToCancel) {
-      console.error("Nenhum agendamento selecionado para cancelamento");
+      console.error("Nenhum agendamento selecionado para cancelamento", { appointmentToCancel });
       return;
     }
     
