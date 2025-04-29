@@ -4,12 +4,23 @@ import AdminSidebar from "../admin/AdminSidebar";
 import AdminHeader from "../admin/AdminHeader";
 import { useAuth } from "@/context/auth-context";
 import Breadcrumbs from "../admin/Breadcrumbs";
+import { Loader2 } from "lucide-react";
 
 const AdminLayout = () => {
-  const { isLoggedIn, signOut } = useAuth();
+  const { isLoggedIn, signOut, isLoading } = useAuth();
   
-  // Proteger o layout administrativo
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+  
+  // Protect admin layout
   if (!isLoggedIn) {
+    console.log("Access denied: User not logged in. Redirecting to login from AdminLayout");
     return <Navigate to="/admin/login" replace />;
   }
 

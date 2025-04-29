@@ -25,13 +25,25 @@ import Register from "./pages/auth/Register";
 import Login from "./pages/auth/Login";
 import { initializeDefaultData } from "@/lib/initData";
 import BlocksList from "./pages/admin/blocks/BlocksList";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
+// Configure React Query with more robust error handling
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
-      staleTime: 1000 * 60 * 5, 
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 2, // Retry failed requests twice
+      retryDelay: attempt => Math.min(attempt > 1 ? 2000 : 1000, 30000), // Exponential backoff
+      onError: (error) => {
+        console.error("Query error:", error);
+      },
+    },
+    mutations: {
       retry: 1,
+      onError: (error) => {
+        console.error("Mutation error:", error);
+      },
     },
   },
 });
@@ -39,7 +51,13 @@ const queryClient = new QueryClient({
 const App = () => {
   useEffect(() => {
     const initData = async () => {
-      await initializeDefaultData();
+      try {
+        console.log("Initializing default data...");
+        await initializeDefaultData();
+        console.log("Default data initialized successfully");
+      } catch (error) {
+        console.error("Error initializing default data:", error);
+      }
     };
     
     initData();
@@ -59,12 +77,13 @@ const App = () => {
                 <Route path="/cliente" element={<ClientArea />} />
               </Route>
 
+              {/* Authentication routes - not protected */}
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin/register" element={<Register />} />
-
               <Route path="/auth/login" element={<Login />} />
               <Route path="/auth/register" element={<Register />} />
 
+              {/* Protected admin routes */}
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<Dashboard />} />
                 <Route path="agendamentos" element={<AppointmentList />} />
@@ -77,6 +96,7 @@ const App = () => {
                 <Route path="avaliacoes" element={<Reviews />} />
               </Route>
 
+              {/* Fallback route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>

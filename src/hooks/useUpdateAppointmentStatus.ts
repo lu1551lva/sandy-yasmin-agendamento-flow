@@ -14,19 +14,30 @@ export const useUpdateAppointmentStatus = () => {
     console.log('Invalidando caches de agendamentos...');
     try {
       // Invalidate all appointment-related queries
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['appointments'] }),
-        queryClient.invalidateQueries({ queryKey: ['dashboard-appointments'] }),
-        queryClient.invalidateQueries({ queryKey: ['weekly-appointments'] })
-      ]);
+      const queries = [
+        'appointments',
+        'dashboard-appointments',
+        'weekly-appointments',
+        'week-appointments' // Also invalidate weekly view
+      ];
       
-      // Force a refetch of appointments query to update UI immediately
+      // Invalidate all queries in parallel
+      await Promise.all(
+        queries.map(query => queryClient.invalidateQueries({ queryKey: [query] }))
+      );
+      
+      // Force immediate refetch of the main appointments query
       await queryClient.refetchQueries({ queryKey: ['appointments'] });
       
       console.log('Cache invalidado e dados recarregados com sucesso.');
       return true;
     } catch (error) {
       console.error('Erro ao invalidar cache:', error);
+      toast({
+        title: "Erro ao atualizar dados",
+        description: "Não foi possível atualizar os dados na tela. Tente recarregar a página.",
+        variant: "destructive",
+      });
       return false;
     }
   };
@@ -37,7 +48,7 @@ export const useUpdateAppointmentStatus = () => {
       setIsLoading(true);
 
       // STEP 1: Update appointment status in the database
-      const updateData = { status };
+      const updateData: any = { status };
       
       // Add cancellation reason if provided
       if (reason && status === 'cancelado') {
@@ -58,6 +69,16 @@ export const useUpdateAppointmentStatus = () => {
         toast({
           title: "Erro ao atualizar status",
           description: `Não foi possível atualizar o status do agendamento: ${updateError.message}`,
+          variant: "destructive",
+        });
+        return false;
+      }
+      
+      if (!appointmentData || appointmentData.length === 0) {
+        console.error("Agendamento não encontrado ou não atualizado");
+        toast({
+          title: "Erro ao atualizar status",
+          description: "O agendamento não foi encontrado ou não pôde ser atualizado.",
           variant: "destructive",
         });
         return false;
@@ -133,6 +154,11 @@ export const useUpdateAppointmentStatus = () => {
 
       if (historyDeleteError) {
         console.error("Erro ao excluir histórico do agendamento:", historyDeleteError);
+        toast({
+          title: "Erro ao excluir histórico",
+          description: `Erro ao excluir histórico: ${historyDeleteError.message}`,
+          variant: "destructive",
+        });
         // Continue with deletion even if history deletion fails
       }
 

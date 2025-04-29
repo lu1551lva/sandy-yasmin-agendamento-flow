@@ -14,12 +14,20 @@ export const useRescheduleAppointment = () => {
     console.log('Invalidating and refetching appointment queries after reschedule...');
     
     try {
-      // Invalidate all appointment-related queries
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['dashboard-appointments'] }),
-        queryClient.invalidateQueries({ queryKey: ['weekly-appointments'] }),
-        queryClient.invalidateQueries({ queryKey: ['appointments'] })
-      ]);
+      // Define all query keys that need to be invalidated
+      const queriesToInvalidate = [
+        'dashboard-appointments',
+        'weekly-appointments',
+        'appointments',
+        'week-appointments'
+      ];
+      
+      // Invalidate all queries in parallel
+      await Promise.all(
+        queriesToInvalidate.map(queryKey => 
+          queryClient.invalidateQueries({ queryKey: [queryKey] })
+        )
+      );
       
       // Force a refetch of appointments query to update UI immediately
       await queryClient.refetchQueries({ queryKey: ['appointments'] });
@@ -117,6 +125,25 @@ export const useRescheduleAppointment = () => {
       }
       
       console.log("Agendamento atualizado com sucesso:", updatedAppointment);
+
+      // Add entry to appointment history
+      const historyEntry = {
+        agendamento_id: appointmentId,
+        tipo: "reagendado",
+        descricao: `Reagendado de ${originalAppointment.data} ${originalAppointment.hora} para ${formattedDate} ${newTime}`,
+        novo_valor: `${formattedDate} ${newTime}`,
+      };
+      
+      const { error: historyError } = await supabase
+        .from('agendamento_historico')
+        .insert(historyEntry);
+        
+      if (historyError) {
+        console.error("Erro ao registrar histórico:", historyError);
+        // Continue anyway as the main update succeeded
+      } else {
+        console.log("Histórico de reagendamento registrado com sucesso");
+      }
 
       // Invalidate and refetch relevant queries to update UI
       await invalidateAppointmentQueries();
