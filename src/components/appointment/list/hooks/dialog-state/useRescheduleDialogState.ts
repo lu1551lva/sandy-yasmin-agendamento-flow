@@ -19,11 +19,19 @@ export function useRescheduleDialogState(onAppointmentUpdated: () => void) {
   const { toast } = useToast();
   const { rescheduleAppointment, isLoading: isReschedulingLoading } = useRescheduleAppointment();
 
+  /**
+   * Handles rescheduling an appointment
+   */
   const handleReschedule = async (appointment: AppointmentWithDetails | null, date: Date, time: string) => {
     logStackTrace("handleReschedule chamado");
 
-    if (!appointment) {
+    if (!appointment || !appointment.id) {
       logAppointmentError("Nenhum agendamento selecionado para reagendamento", "null");
+      toast({
+        title: "Erro na operação",
+        description: "Agendamento inválido. Por favor, tente novamente.",
+        variant: "destructive",
+      });
       return Promise.reject("Nenhum agendamento selecionado");
     }
 

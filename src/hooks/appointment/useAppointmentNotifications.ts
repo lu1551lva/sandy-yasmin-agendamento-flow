@@ -3,7 +3,7 @@ import { useToast } from '@/hooks/use-toast';
 import { AppointmentStatus } from '@/types/appointment.types';
 
 /**
- * Manages user notifications for appointment operations
+ * Hook for managing user notifications related to appointment operations
  */
 export const useAppointmentNotifications = () => {
   const { toast } = useToast();
@@ -53,6 +53,27 @@ export const useAppointmentNotifications = () => {
   };
 
   /**
+   * Shows a success toast for appointment rescheduling
+   */
+  const showRescheduleSuccess = () => {
+    toast({
+      title: "Agendamento reagendado",
+      description: "O horário foi atualizado com sucesso!",
+    });
+  };
+
+  /**
+   * Shows an error toast for appointment rescheduling
+   */
+  const showRescheduleError = (message: string) => {
+    toast({
+      title: "Erro ao reagendar",
+      description: message,
+      variant: "destructive",
+    });
+  };
+
+  /**
    * Shows a warning toast when history update fails but status update succeeds
    */
   const showHistoryWarning = () => {
@@ -79,6 +100,8 @@ export const useAppointmentNotifications = () => {
     showStatusUpdateError,
     showDeleteSuccess,
     showDeleteError,
+    showRescheduleSuccess,
+    showRescheduleError,
     showHistoryWarning,
     showCacheError
   };

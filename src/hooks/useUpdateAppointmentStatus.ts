@@ -62,8 +62,7 @@ export const useUpdateAppointmentStatus = () => {
     try {
       const result = await updateAppointmentStatus(appointmentId, status, reason);
       
-      // Fix: Check if result has error property or if data doesn't exist or is empty
-      if (result.error || !result.data || (Array.isArray(result.data) && result.data.length === 0)) {
+      if (!result.success || !result.data) {
         const message = result.error 
           ? `Não foi possível atualizar o status: ${result.error.message}` 
           : "O agendamento não foi encontrado ou não pôde ser atualizado.";
@@ -76,9 +75,9 @@ export const useUpdateAppointmentStatus = () => {
       logAppointmentAction("Status atualizado com sucesso", appointmentId, { novoStatus: status });
 
       const description = `Status alterado para ${status}${reason ? ` - Motivo: ${reason}` : ''}`;
-      const historyResult = await createHistoryEntry(appointmentId, status, description);
+      const historyResult = await createHistoryEntry(appointmentId, status, description, null, status);
 
-      if (historyResult.error) {
+      if (!historyResult.success) {
         handleError("Erro ao registrar histórico", appointmentId, historyResult.error);
         showHistoryWarning();
       } else {
@@ -109,16 +108,11 @@ export const useUpdateAppointmentStatus = () => {
     traceAppointmentFlow("Iniciando exclusão", appointmentId);
 
     try {
-      const { historyResult, appointmentResult } = await deleteAppointmentWithHistory(appointmentId);
+      const result = await deleteAppointmentWithHistory(appointmentId);
 
-      if (historyResult.error) {
-        handleError("Erro ao excluir histórico", appointmentId, historyResult.error);
-        showDeleteError(`Erro ao excluir histórico: ${historyResult.error.message}`);
-      }
-
-      if (appointmentResult.error) {
-        handleError("Erro ao excluir agendamento", appointmentId, appointmentResult.error);
-        showDeleteError(`Não foi possível excluir o agendamento: ${appointmentResult.error.message}`);
+      if (!result.success) {
+        handleError("Erro ao excluir agendamento", appointmentId, result.error);
+        showDeleteError(`Não foi possível excluir o agendamento: ${result.error?.message || "Erro desconhecido"}`);
         return false;
       }
 

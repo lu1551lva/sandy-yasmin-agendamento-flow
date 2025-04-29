@@ -21,12 +21,23 @@ export function useCancelDialogState(onAppointmentUpdated: () => void) {
   const { toast } = useToast();
   const { updateStatus, isLoading } = useUpdateAppointmentStatus();
 
+  /**
+   * Opens the cancel dialog for an appointment
+   */
   const openCancelDialog = (appointmentId: string) => {
+    if (!appointmentId) {
+      console.error("Tentativa de abrir diálogo de cancelamento com ID vazio");
+      return;
+    }
+    
     logUIEvent("Opening cancel dialog", appointmentId);
     setAppointmentToCancel(appointmentId);
     setIsCancelDialogOpen(true);
   };
 
+  /**
+   * Closes the cancel dialog
+   */
   const closeCancelDialog = () => {
     logUIEvent("Closing cancel dialog");
     setIsCancelDialogOpen(false);
@@ -34,6 +45,9 @@ export function useCancelDialogState(onAppointmentUpdated: () => void) {
     setCancelReason("");
   };
 
+  /**
+   * Handles the cancellation of the current appointment
+   */
   const handleCancel = async () => {
     logStackTrace("handleCancel chamado");
     

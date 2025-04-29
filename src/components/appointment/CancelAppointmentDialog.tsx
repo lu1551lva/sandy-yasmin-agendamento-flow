@@ -10,7 +10,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Loader2, XCircle } from "lucide-react";
-import { logAppointmentAction } from "@/utils/debugUtils";
+import { logAppointmentAction, validateAppointmentId } from "@/utils/debugUtils";
 
 interface CancelAppointmentDialogProps {
   isOpen: boolean;
@@ -19,6 +19,7 @@ interface CancelAppointmentDialogProps {
   onReasonChange: (reason: string) => void;
   onConfirm: (reason: string) => void;
   isLoading: boolean;
+  appointmentId: string | null;
 }
 
 export function CancelAppointmentDialog({
@@ -28,10 +29,22 @@ export function CancelAppointmentDialog({
   onReasonChange,
   onConfirm,
   isLoading,
+  appointmentId
 }: CancelAppointmentDialogProps) {
   const handleConfirm = () => {
+    // Validate appointmentId before proceeding
+    if (!validateAppointmentId(appointmentId)) {
+      console.error("Tentativa de cancelar agendamento com ID inválido:", appointmentId);
+      return;
+    }
+    
     // Always log before executing the action
-    logAppointmentAction('Executando cancelamento com motivo', 'dialog', reason);
+    logAppointmentAction('Executando cancelamento com motivo', appointmentId || 'dialog', reason);
+    
+    // Log additional information about the cancellation being triggered from this dialog
+    logAppointmentAction('Confirmando cancelamento em AppointmentCancelDialog', appointmentId || '', {
+      motivo: reason || 'Cancelamento sem motivo especificado'
+    });
     
     // Pass the reason directly to the parent component
     onConfirm(reason || 'Cancelamento sem motivo especificado');
@@ -76,7 +89,7 @@ export function CancelAppointmentDialog({
           <Button 
             variant="destructive"
             onClick={handleConfirm}
-            disabled={isLoading}
+            disabled={isLoading || !validateAppointmentId(appointmentId)}
           >
             {isLoading ? (
               <>

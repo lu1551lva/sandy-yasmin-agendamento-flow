@@ -1,9 +1,11 @@
+
 import { AppointmentWithDetails, AppointmentStatus } from "@/types/appointment.types";
 import { useAppointmentDialogsState } from "./hooks/useAppointmentDialogsState";
 import { AppointmentDetailsDialog } from "./components/AppointmentDetailsDialog";
 import { AppointmentStatusUpdateDialog } from "./components/AppointmentStatusUpdateDialog";
 import { AppointmentCancelDialog } from "./components/AppointmentCancelDialog";
 import { AppointmentRescheduleDialog } from "./components/AppointmentRescheduleDialog";
+import { validateAppointmentId } from "@/utils/debugUtils";
 
 interface AppointmentDialogsProps {
   selectedAppointment: AppointmentWithDetails | null;
@@ -28,7 +30,7 @@ export function AppointmentDialogs({
   setAppointmentToCancel,
   onAppointmentUpdated
 }: AppointmentDialogsProps) {
-  // We're keeping the same component interface to minimize changes elsewhere
+  // Get dialog state and actions from the hooks
   const {
     cancelReason,
     setCancelReason,
@@ -41,6 +43,10 @@ export function AppointmentDialogs({
     handleReschedule
   } = useAppointmentDialogsState(onAppointmentUpdated);
 
+  // Validate IDs before rendering to prevent issues
+  const isAppointmentToUpdateValid = appointmentToUpdate && validateAppointmentId(appointmentToUpdate.id);
+  const isAppointmentToCancelValid = validateAppointmentId(appointmentToCancel);
+
   return (
     <>
       {/* Appointment Details Dialog */}
@@ -52,13 +58,15 @@ export function AppointmentDialogs({
       />
       
       {/* Status Update Dialog (Complete) */}
-      <AppointmentStatusUpdateDialog
-        isOpen={!!appointmentToUpdate}
-        onOpenChange={(open) => !open && setAppointmentToUpdate(null)}
-        status={appointmentToUpdate?.status || null}
-        onConfirm={handleUpdateStatus}
-        isLoading={isLoading}
-      />
+      {isAppointmentToUpdateValid && (
+        <AppointmentStatusUpdateDialog
+          isOpen={!!appointmentToUpdate}
+          onOpenChange={(open) => !open && setAppointmentToUpdate(null)}
+          status={appointmentToUpdate?.status || null}
+          onConfirm={handleUpdateStatus}
+          isLoading={isLoading}
+        />
+      )}
       
       {/* Cancel Dialog */}
       <AppointmentCancelDialog

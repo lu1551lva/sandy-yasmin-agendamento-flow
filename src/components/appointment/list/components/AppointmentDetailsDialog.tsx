@@ -1,6 +1,6 @@
 
+import { AppointmentDialog } from "../../AppointmentDialog";
 import { AppointmentWithDetails } from "@/types/appointment.types";
-import { AppointmentDialog } from "@/components/appointment/AppointmentDialog";
 
 interface AppointmentDetailsDialogProps {
   appointment: AppointmentWithDetails | null;
@@ -15,8 +15,10 @@ export function AppointmentDetailsDialog({
   onClose,
   onAppointmentUpdated
 }: AppointmentDetailsDialogProps) {
-  if (!appointment) return null;
-  
+  if (!appointment) {
+    return null;
+  }
+
   return (
     <AppointmentDialog
       appointment={appointment}

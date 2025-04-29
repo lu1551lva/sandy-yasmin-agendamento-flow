@@ -1,5 +1,5 @@
 
-import { StatusUpdateDialog } from "@/components/appointment/StatusUpdateDialog";
+import { StatusUpdateDialog } from "../../StatusUpdateDialog";
 import { AppointmentStatus } from "@/types/appointment.types";
 
 interface AppointmentStatusUpdateDialogProps {
@@ -17,18 +17,12 @@ export function AppointmentStatusUpdateDialog({
   onConfirm,
   isLoading
 }: AppointmentStatusUpdateDialogProps) {
-  // Adicione logs para depuração
-  const handleConfirm = () => {
-    console.log(`Confirmando atualização de status para: ${status}`);
-    onConfirm();
-  };
-
   return (
     <StatusUpdateDialog
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       status={status}
-      onConfirm={handleConfirm}
+      onConfirm={onConfirm}
       isLoading={isLoading}
     />
   );

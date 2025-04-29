@@ -4,9 +4,10 @@ import { useStatusUpdateState } from "./dialog-state/useStatusUpdateState";
 import { useCancelDialogState } from "./dialog-state/useCancelDialogState";
 import { useRescheduleDialogState } from "./dialog-state/useRescheduleDialogState";
 import { useDebugState } from "./dialog-state/useDebugState";
+import { logAppointmentAction, logUIEvent } from "@/utils/debugUtils";
 
 /**
- * Hook that combines all dialog state hooks to manage appointment dialogs state
+ * Hook that combines all dialog state hooks to manage appointment dialogs
  */
 export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
   // Appointment details state
@@ -49,6 +50,13 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
 
   // Wrapper for handleReschedule to provide the selectedAppointment
   const handleReschedule = (date: Date, time: string) => {
+    logUIEvent("Rescheduling appointment", selectedAppointment?.id || "unknown");
+    
+    if (!selectedAppointment || !selectedAppointment.id) {
+      logAppointmentAction("Tentativa de reagendamento com agendamento nulo", "unknown");
+      return Promise.reject("Nenhum agendamento selecionado");
+    }
+    
     return baseHandleReschedule(selectedAppointment, date, time);
   };
 
@@ -58,7 +66,7 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
   // Debug state
   const state = {
     selectedAppointment: selectedAppointment?.id || null,
-    appointmentToUpdate,
+    appointmentToUpdate: appointmentToUpdate?.id || null,
     appointmentToCancel,
     isCancelDialogOpen,
     isRescheduleDialogOpen,
@@ -73,6 +81,8 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
     // Details dialog
     selectedAppointment,
     setSelectedAppointment,
+    showAppointmentDetails,
+    closeAppointmentDetails,
     
     // Status update dialog
     appointmentToUpdate,
@@ -85,6 +95,8 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
     setIsCancelDialogOpen,
     cancelReason,
     setCancelReason,
+    openCancelDialog,
+    closeCancelDialog,
     
     // Reschedule dialog
     isRescheduleDialogOpen,

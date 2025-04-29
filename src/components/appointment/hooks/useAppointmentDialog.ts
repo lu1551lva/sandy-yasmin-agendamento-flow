@@ -7,6 +7,7 @@ import { createWhatsAppLink } from '@/lib/supabase';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { AppointmentStatus, AppointmentWithDetails } from '@/types/appointment.types';
+import { logAppointmentAction, logAppointmentError } from '@/utils/debugUtils';
 
 interface UseAppointmentDialogProps {
   appointment: AppointmentWithDetails;
@@ -30,58 +31,128 @@ export function useAppointmentDialog({
   } = useUpdateAppointmentStatus();
   const { toast } = useToast();
 
+  // Make sure we always have a valid appointment object
+  if (!appointment || !appointment.id) {
+    logAppointmentError("Agendamento inválido em useAppointmentDialog", "unknown");
+    throw new Error("Agendamento inválido");
+  }
+
+  /**
+   * Handles rescheduling an appointment
+   */
   const handleReschedule = async (date: Date, time: string) => {
-    const success = await rescheduleAppointment(
-      appointment.id,
-      date,
-      time,
-      appointment.profissional.id
-    );
+    logAppointmentAction("Iniciando reagendamento via diálogo", appointment.id, { date, time });
+    
+    try {
+      const success = await rescheduleAppointment(
+        appointment.id,
+        date,
+        time,
+        appointment.profissional.id
+      );
 
-    if (success) {
-      setShowReschedule(false);
-      toast({
-        title: "Agendamento reagendado",
-        description: "O agendamento foi reagendado com sucesso.",
-      });
-      if (onAppointmentUpdated) onAppointmentUpdated();
-      onClose();
+      if (success) {
+        setShowReschedule(false);
+        toast({
+          title: "Agendamento reagendado",
+          description: "O agendamento foi reagendado com sucesso.",
+        });
+        
+        if (onAppointmentUpdated) {
+          onAppointmentUpdated();
+        }
+        
+        onClose();
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      logAppointmentError("Erro ao reagendar via diálogo", appointment.id, error);
+      return false;
     }
   };
 
+  /**
+   * Handles updating an appointment status
+   */
   const handleStatusUpdate = async (status: AppointmentStatus) => {
-    const success = await updateStatus(appointment.id, status);
+    logAppointmentAction("Iniciando atualização de status via diálogo", appointment.id, { status });
     
-    if (success) {
-      toast({
-        title: status === 'concluido' ? "Agendamento concluído" : "Agendamento cancelado",
-        description: status === 'concluido' 
-          ? "O agendamento foi marcado como concluído."
-          : "O agendamento foi cancelado com sucesso.",
-      });
+    try {
+      const success = await updateStatus(appointment.id, status);
       
-      if (onAppointmentUpdated) onAppointmentUpdated();
-      onClose();
+      if (success) {
+        toast({
+          title: status === 'concluido' ? "Agendamento concluído" : "Agendamento cancelado",
+          description: status === 'concluido' 
+            ? "O agendamento foi marcado como concluído."
+            : "O agendamento foi cancelado com sucesso.",
+        });
+        
+        if (onAppointmentUpdated) {
+          onAppointmentUpdated();
+        }
+        
+        onClose();
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      logAppointmentError("Erro ao atualizar status via diálogo", appointment.id, error);
+      return false;
     }
   };
 
+  /**
+   * Handles deleting an appointment
+   */
   const handleDelete = async () => {
-    const success = await deleteAppointment(appointment.id);
+    logAppointmentAction("Iniciando exclusão via diálogo", appointment.id);
     
-    if (success) {
-      toast({
-        title: "Agendamento excluído",
-        description: "O agendamento foi excluído permanentemente.",
-      });
+    try {
+      const success = await deleteAppointment(appointment.id);
       
-      if (onAppointmentUpdated) onAppointmentUpdated();
-      onClose();
+      if (success) {
+        toast({
+          title: "Agendamento excluído",
+          description: "O agendamento foi excluído permanentemente.",
+        });
+        
+        if (onAppointmentUpdated) {
+          onAppointmentUpdated();
+        }
+        
+        onClose();
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      logAppointmentError("Erro ao excluir via diálogo", appointment.id, error);
+      return false;
     }
   };
 
+  /**
+   * Handles sending a WhatsApp message to the client
+   */
   const handleSendWhatsApp = () => {
-    const message = `Olá ${appointment.cliente.nome.split(' ')[0]}! Confirmamos seu agendamento para ${appointment.servico.nome} no dia ${format(parseISO(appointment.data), "dd/MM", { locale: ptBR })} às ${appointment.hora}.`;
-    window.open(createWhatsAppLink(appointment.cliente.telefone, message), "_blank");
+    try {
+      const message = `Olá ${appointment.cliente.nome.split(' ')[0]}! Confirmamos seu agendamento para ${appointment.servico.nome} no dia ${format(parseISO(appointment.data), "dd/MM", { locale: ptBR })} às ${appointment.hora}.`;
+      
+      logAppointmentAction("Enviando WhatsApp", appointment.id, { 
+        cliente: appointment.cliente.nome,
+        telefone: appointment.cliente.telefone
+      });
+      
+      window.open(createWhatsAppLink(appointment.cliente.telefone, message), "_blank");
+      return true;
+    } catch (error) {
+      logAppointmentError("Erro ao enviar WhatsApp", appointment.id, error);
+      return false;
+    }
   };
 
   return {
@@ -91,6 +162,7 @@ export function useAppointmentDialog({
     handleSendWhatsApp,
     isRescheduling,
     isUpdatingStatus,
-    isDeleting
+    isDeleting,
+    isLoading: isRescheduling || isUpdatingStatus || isDeleting
   };
 }

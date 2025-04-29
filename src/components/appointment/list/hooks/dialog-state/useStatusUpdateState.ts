@@ -18,10 +18,13 @@ export function useStatusUpdateState(onAppointmentUpdated: () => void) {
   const { toast } = useToast();
   const { updateStatus, isLoading } = useUpdateAppointmentStatus();
 
+  /**
+   * Updates the status of the current appointment
+   */
   const handleUpdateStatus = async () => {
     logUIEvent("Status update initiated");
     
-    if (!appointmentToUpdate) {
+    if (!appointmentToUpdate || !appointmentToUpdate.id) {
       logAppointmentError("Nenhum agendamento selecionado para atualização", "undefined");
       toast({
         title: "Erro na operação",

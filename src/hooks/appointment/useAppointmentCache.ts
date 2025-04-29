@@ -3,28 +3,33 @@ import { useQueryClient } from '@tanstack/react-query';
 import { logAppointmentAction, logAppointmentError } from '@/utils/debugUtils';
 
 /**
- * Manages appointment-related cache invalidation and refetching
+ * Hook for managing appointment-related cache invalidation
  */
 export const useAppointmentCache = () => {
   const queryClient = useQueryClient();
 
   /**
-   * Invalidates and refetches all appointment-related queries
+   * List of all appointment-related query keys to invalidate
    */
-  const invalidateAppointmentQueries = async () => {
+  const APPOINTMENT_QUERY_KEYS = [
+    'appointments',
+    'dashboard-appointments',
+    'weekly-appointments',
+    'week-appointments',
+    'appointment-details'
+  ];
+
+  /**
+   * Invalidates all appointment-related queries
+   */
+  const invalidateAppointmentQueries = async (): Promise<boolean> => {
     logAppointmentAction('Invalidando caches', 'all-queries');
     try {
-      // List of all appointment-related query keys
-      const queries = [
-        'appointments',
-        'dashboard-appointments',
-        'weekly-appointments',
-        'week-appointments'
-      ];
-
       // Invalidate all queries in parallel
       await Promise.all(
-        queries.map(query => queryClient.invalidateQueries({ queryKey: [query] }))
+        APPOINTMENT_QUERY_KEYS.map(query => 
+          queryClient.invalidateQueries({ queryKey: [query] })
+        )
       );
 
       // Force immediate refetch of the main appointments query
@@ -41,13 +46,27 @@ export const useAppointmentCache = () => {
   /**
    * Invalidates a specific appointment's history
    */
-  const invalidateAppointmentHistory = async (appointmentId: string) => {
-    await queryClient.invalidateQueries({ queryKey: ['appointment-history', appointmentId] });
+  const invalidateAppointmentHistory = async (appointmentId: string): Promise<void> => {
+    await queryClient.invalidateQueries({ 
+      queryKey: ['appointment-history', appointmentId] 
+    });
     logAppointmentAction('Histórico invalidado', appointmentId);
+  };
+
+  /**
+   * Invalidates a specific appointment's details
+   */
+  const invalidateAppointmentDetails = async (appointmentId: string): Promise<void> => {
+    await queryClient.invalidateQueries({ 
+      queryKey: ['appointment-details', appointmentId] 
+    });
+    logAppointmentAction('Detalhes do agendamento invalidados', appointmentId);
   };
 
   return {
     invalidateAppointmentQueries,
-    invalidateAppointmentHistory
+    invalidateAppointmentHistory,
+    invalidateAppointmentDetails,
+    APPOINTMENT_QUERY_KEYS
   };
 };
