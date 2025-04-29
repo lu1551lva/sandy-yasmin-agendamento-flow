@@ -10,8 +10,16 @@ import {
   Star
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/auth-context";
 
-const AdminSidebar = () => {
+interface AdminSidebarProps {
+  onItemClick?: () => void;
+}
+
+const AdminSidebar = ({ onItemClick }: AdminSidebarProps) => {
+  const { signOut } = useAuth();
+  
   const menuItems = [
     {
       title: "Dashboard",
@@ -61,24 +69,34 @@ const AdminSidebar = () => {
   ];
 
   return (
-    <div className="h-full px-3 py-4">
-      <div className="space-y-1">
-        {menuItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            className={({ isActive }) =>
-              `flex items-center px-3 py-2 rounded-md text-sm transition-colors
-              ${isActive 
-                ? "bg-primary text-primary-foreground" 
-                : "hover:bg-muted text-muted-foreground hover:text-foreground"}`
-            }
-            end={item.path === "/admin"}
-          >
-            <span className="mr-2">{item.icon}</span>
-            {item.title}
-          </NavLink>
-        ))}
+    <div className="h-full flex flex-col bg-background">
+      <div className="p-4 border-b">
+        <h1 className="text-xl font-bold">Sandy Yasmin</h1>
+        <p className="text-sm text-muted-foreground">Painel Admin</p>
+      </div>
+      
+      <div className="flex-1 overflow-auto py-2">
+        <nav className="space-y-1 px-2">
+          {menuItems.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              onClick={onItemClick}
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center px-3 py-2 rounded-md text-sm transition-colors",
+                  isActive 
+                    ? "bg-primary text-primary-foreground" 
+                    : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                )
+              }
+              end={item.path === "/admin"}
+            >
+              <span className="mr-2">{item.icon}</span>
+              {item.title}
+            </NavLink>
+          ))}
+        </nav>
       </div>
     </div>
   );

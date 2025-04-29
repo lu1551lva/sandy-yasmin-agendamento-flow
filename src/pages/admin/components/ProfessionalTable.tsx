@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Edit, Trash2 } from "lucide-react";
@@ -41,9 +42,9 @@ const ProfessionalTable: React.FC<ProfessionalTableProps> = ({
           <Badge 
             key={dia}
             variant={dias.includes(dia) ? "default" : "outline"} 
-            className={!dias.includes(dia) ? "opacity-40" : ""}
+            className={!dias.includes(dia) ? "opacity-40 text-xs" : "text-xs"}
           >
-            {diasSemanaCompletos[index]}
+            {window.innerWidth < 640 ? diasSemanaCompletos[index].substring(0, 1) : diasSemanaCompletos[index]}
           </Badge>
         ))}
       </div>
@@ -62,10 +63,10 @@ const ProfessionalTable: React.FC<ProfessionalTableProps> = ({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Dias de Atendimento</TableHead>
-                  <TableHead>Horários</TableHead>
-                  <TableHead className="w-[100px]">Ações</TableHead>
+                  <TableHead className="w-[30%]">Nome</TableHead>
+                  <TableHead className="w-[40%]">Dias</TableHead>
+                  <TableHead className="w-[20%]">Horários</TableHead>
+                  <TableHead className="w-[10%]">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -77,24 +78,26 @@ const ProfessionalTable: React.FC<ProfessionalTableProps> = ({
                     <TableCell>
                       {renderDiasBadges(professional.dias_atendimento)}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="whitespace-nowrap">
                       {professional.horario_inicio} às {professional.horario_fim}
                     </TableCell>
                     <TableCell>
-                      <div className="flex space-x-2">
+                      <div className="flex space-x-1">
                         <Button
                           variant="outline"
                           size="icon"
+                          className="h-8 w-8"
                           onClick={() => onEdit(professional)}
                         >
-                          <Edit className="h-4 w-4" />
+                          <Edit className="h-3 w-3" />
                         </Button>
                         <Button
                           variant="outline"
                           size="icon"
+                          className="h-8 w-8"
                           onClick={() => onDelete(professional)}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3 w-3" />
                         </Button>
                       </div>
                     </TableCell>

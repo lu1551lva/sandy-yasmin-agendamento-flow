@@ -14,12 +14,12 @@ const AdminHeader = ({ onLogout }: AdminHeaderProps) => {
   const { adminData, isLoading } = useAdminProfile();
   
   return (
-    <header className="sticky top-0 z-10 h-16 border-b bg-background flex items-center px-4 md:px-6">
-      <div className="flex-1 ml-10 md:ml-0">
-        <h1 className="text-lg font-semibold md:text-xl">Studio Sandy Yasmin</h1>
-        <p className="text-sm text-muted-foreground">Painel Administrativo</p>
+    <div className="flex-1 flex items-center justify-between h-16 px-2 sm:px-4">
+      <div className="flex-1 truncate">
+        <h1 className="text-base sm:text-lg font-semibold truncate">Studio Sandy Yasmin</h1>
+        <p className="text-xs sm:text-sm text-muted-foreground truncate">Painel Administrativo</p>
       </div>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4">
         <ThemeToggle />
         
         <div className="flex items-center gap-2">
@@ -31,7 +31,7 @@ const AdminHeader = ({ onLogout }: AdminHeaderProps) => {
               <AvatarFallback>{adminData?.nome?.charAt(0) || "A"}</AvatarFallback>
             </Avatar>
           )}
-          <span className="text-sm font-medium hidden md:block">
+          <span className="text-sm font-medium hidden sm:block max-w-[100px] truncate">
             {isLoading ? (
               <Skeleton className="w-24 h-4" />
             ) : (
@@ -40,12 +40,12 @@ const AdminHeader = ({ onLogout }: AdminHeaderProps) => {
           </span>
         </div>
         
-        <Button variant="outline" size="sm" onClick={onLogout}>
-          <LogOut className="mr-2 h-4 w-4" />
-          <span className="hidden md:inline">Sair</span>
+        <Button variant="outline" size="sm" onClick={onLogout} className="px-2 sm:px-3">
+          <LogOut className="h-4 w-4" />
+          <span className="hidden sm:inline ml-2">Sair</span>
         </Button>
       </div>
-    </header>
+    </div>
   );
 };
 

@@ -81,15 +81,38 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-playfair;
   }
+  
+  /* Global responsive text adjustments */
+  h1 {
+    @apply text-xl md:text-2xl lg:text-3xl;
+  }
+  
+  h2 {
+    @apply text-lg md:text-xl lg:text-2xl;
+  }
+  
+  h3 {
+    @apply text-base md:text-lg lg:text-xl;
+  }
+  
+  /* Break long words to prevent overflow */
+  p, h1, h2, h3, h4, h5, h6, span, div {
+    @apply break-words;
+  }
+  
+  /* Improve table responsiveness */
+  table {
+    @apply w-full table-auto;
+  }
 }
 
 @layer components {
   .salon-container {
-    @apply container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl;
+    @apply container mx-auto px-2 sm:px-4 md:px-6 lg:px-8 max-w-7xl;
   }
   
   .card-salon {
-    @apply bg-white rounded-lg shadow-md p-6 transition-all hover:shadow-lg;
+    @apply bg-white rounded-lg shadow-md p-4 sm:p-6 transition-all hover:shadow-lg;
   }
   
   .btn-primary {
@@ -107,4 +130,22 @@
   .input-salon {
     @apply border border-border rounded-md p-2 focus:ring-2 focus:ring-primary focus:outline-none;
   }
+  
+  /* Responsive utilities */
+  .responsive-table-container {
+    @apply w-full overflow-x-auto;
+  }
+  
+  .mobile-only {
+    @apply block md:hidden;
+  }
+  
+  .desktop-only {
+    @apply hidden md:block;
+  }
+}
+
+/* Hide Lovable edit badge in production */
+.lovable-edit-badge {
+  display: none !important;
 }
