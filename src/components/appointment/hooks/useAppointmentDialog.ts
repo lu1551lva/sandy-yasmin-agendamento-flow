@@ -26,7 +26,7 @@ export function useAppointmentDialog({
   const { 
     updateStatus, 
     isLoading: isUpdatingStatus, 
-    deleteAppointment, 
+    deleteAppointment,
     isLoading: isDeleting 
   } = useUpdateAppointmentStatus();
   const { toast } = useToast();

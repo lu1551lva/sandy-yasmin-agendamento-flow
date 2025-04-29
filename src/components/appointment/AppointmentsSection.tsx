@@ -7,8 +7,7 @@ interface AppointmentsSectionProps {
   titleClassName: string;
   appointments: AppointmentWithDetails[];
   onShowDetails: (appointment: AppointmentWithDetails) => void;
-  onComplete: (appointmentId: string) => void;
-  onCancel: (appointmentId: string) => void;
+  onActionClick: (appointmentId: string, action: "complete" | "cancel" | "delete") => void;
   isLoading: boolean;
 }
 
@@ -17,8 +16,7 @@ export function AppointmentsSection({
   titleClassName,
   appointments,
   onShowDetails,
-  onComplete,
-  onCancel,
+  onActionClick,
   isLoading
 }: AppointmentsSectionProps) {
   // Se não houver agendamentos, não renderizar a seção
@@ -35,8 +33,7 @@ export function AppointmentsSection({
             key={appointment.id}
             appointment={appointment}
             onShowDetails={onShowDetails}
-            onComplete={onComplete}
-            onCancel={onCancel}
+            onActionClick={onActionClick}
             isLoading={isLoading}
           />
         ))}

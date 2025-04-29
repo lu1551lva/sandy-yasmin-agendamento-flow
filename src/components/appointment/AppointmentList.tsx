@@ -30,7 +30,7 @@ export function AppointmentList({
   const [cancelReason, setCancelReason] = useState('');
   
   // Status update hook
-  const { updateStatus, isLoading } = useUpdateAppointmentStatus();
+  const { updateStatus, deleteAppointment, isLoading } = useUpdateAppointmentStatus();
   const { toast } = useToast();
 
   // Group appointments by status
@@ -68,12 +68,7 @@ export function AppointmentList({
           success = await updateStatus(id, "cancelado", cancelReason);
           break;
         case "delete":
-          // Handle delete logic if needed
-          toast({
-            title: "Funcionalidade não implementada",
-            description: "A exclusão de agendamentos será implementada em breve.",
-            variant: "destructive",
-          });
+          success = await deleteAppointment(id);
           break;
       }
       
