@@ -30,6 +30,7 @@ export function CancelAppointmentDialog({
   isLoading
 }: CancelAppointmentDialogProps) {
   const handleConfirm = () => {
+    console.log("Confirmando cancelamento com motivo:", reason);
     onConfirm(reason);
   };
 

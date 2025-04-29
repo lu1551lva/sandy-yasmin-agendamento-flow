@@ -20,14 +20,14 @@ export function AppointmentCancelDialog({
   isLoading,
   appointmentId
 }: AppointmentCancelDialogProps) {
-  // Only call onConfirm if we have a valid appointmentId
-  const handleConfirm = () => {
+  // Validar que temos um appointmentId válido
+  const handleConfirm = (cancelReason: string) => {
     if (!appointmentId) {
       console.error('Nenhum agendamento selecionado para cancelamento', {appointmentId});
       return;
     }
     
-    console.log(`Confirmando cancelamento para agendamento ${appointmentId}`);
+    console.log(`Confirmando cancelamento para agendamento ${appointmentId} com motivo: ${cancelReason}`);
     onConfirm();
   };
 

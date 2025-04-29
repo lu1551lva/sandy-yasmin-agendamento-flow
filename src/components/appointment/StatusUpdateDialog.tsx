@@ -31,6 +31,11 @@ export function StatusUpdateDialog({
   
   const isCompleting = status === "concluido";
 
+  const handleConfirm = () => {
+    console.log(`Confirmando mudança de status para: ${status}`);
+    onConfirm();
+  };
+
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
       <AlertDialogContent>
@@ -47,7 +52,7 @@ export function StatusUpdateDialog({
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isLoading}>Voltar</AlertDialogCancel>
           <AlertDialogAction
-            onClick={onConfirm}
+            onClick={handleConfirm}
             disabled={isLoading}
             className={isCompleting
               ? "bg-green-600 hover:bg-green-700"

@@ -17,12 +17,18 @@ export function AppointmentStatusUpdateDialog({
   onConfirm,
   isLoading
 }: AppointmentStatusUpdateDialogProps) {
+  // Adicione logs para depuração
+  const handleConfirm = () => {
+    console.log(`Confirmando atualização de status para: ${status}`);
+    onConfirm();
+  };
+
   return (
     <StatusUpdateDialog
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       status={status}
-      onConfirm={onConfirm}
+      onConfirm={handleConfirm}
       isLoading={isLoading}
     />
   );

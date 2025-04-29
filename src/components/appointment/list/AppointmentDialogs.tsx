@@ -63,7 +63,10 @@ export function AppointmentDialogs({
       {/* Cancel Dialog */}
       <AppointmentCancelDialog
         isOpen={isCancelDialogOpen}
-        onClose={() => setIsCancelDialogOpen(false)}
+        onClose={() => {
+          setIsCancelDialogOpen(false);
+          setAppointmentToCancel(null);
+        }}
         reason={cancelReason}
         onReasonChange={setCancelReason}
         onConfirm={handleCancel}

@@ -69,6 +69,11 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
   const handleCancel = async () => {
     if (!appointmentToCancel) {
       console.error("Nenhum agendamento selecionado para cancelamento", { appointmentToCancel });
+      toast({
+        title: "Erro na operação",
+        description: "ID de agendamento inválido. Por favor, tente novamente.",
+        variant: "destructive",
+      });
       return;
     }
     
