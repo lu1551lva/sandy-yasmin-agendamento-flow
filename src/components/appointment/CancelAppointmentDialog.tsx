@@ -1,4 +1,3 @@
-
 import { 
   Dialog,
   DialogContent,
@@ -31,12 +30,16 @@ export function CancelAppointmentDialog({
 }: CancelAppointmentDialogProps) {
   const handleConfirm = () => {
     logAppointmentAction('Executando cancelamento com motivo', 'dialog', reason);
-    // Aqui garantimos que o motivo é passado para a função de confirmação
+    // Passa o motivo preenchido para quem chamou este diálogo (ex: atualização no banco)
     onConfirm(reason);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) {
+        onClose();
+      }
+    }}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Cancelar agendamento</DialogTitle>
@@ -49,7 +52,7 @@ export function CancelAppointmentDialog({
             placeholder="Ex: Cliente faltou, reagendamento solicitado, etc."
             value={reason}
             onChange={(e) => onReasonChange(e.target.value)}
-            className="min-h-[100px]"
+            className="h-24"
           />
         </div>
         <DialogFooter>
