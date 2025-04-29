@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AppointmentWithDetails } from "@/types/appointment.types";
 import { formatCurrency } from "@/lib/supabase";
-import { logUIEvent } from "@/utils/debugUtils";
 
 interface AppointmentCardProps {
   appointment: AppointmentWithDetails;
@@ -56,21 +55,6 @@ export function AppointmentCard({
       default:
         return baseClass;
     }
-  };
-
-  const handleCancel = () => {
-    logUIEvent(`Cancelando agendamento ${appointment.id}`);
-    onCancel(appointment.id);
-  };
-
-  const handleComplete = () => {
-    logUIEvent(`Concluindo agendamento ${appointment.id}`);
-    onComplete(appointment.id);
-  };
-
-  const handleShowDetails = () => {
-    logUIEvent(`Mostrando detalhes do agendamento ${appointment.id}`);
-    onShowDetails(appointment);
   };
 
   return (
@@ -118,7 +102,7 @@ export function AppointmentCard({
                   size="sm"
                   variant="outline"
                   className="text-green-600 border-green-600 hover:bg-green-50"
-                  onClick={handleComplete}
+                  onClick={() => onComplete(appointment.id)}
                 >
                   <CheckCircle className="h-4 w-4 mr-1" />
                   Concluir
@@ -128,7 +112,7 @@ export function AppointmentCard({
                   size="sm"
                   variant="outline"
                   className="text-red-600 border-red-600 hover:bg-red-50"
-                  onClick={handleCancel}
+                  onClick={() => onCancel(appointment.id)}
                 >
                   <XCircle className="h-4 w-4 mr-1" />
                   Cancelar
@@ -146,7 +130,7 @@ export function AppointmentCard({
             <Button
               size="sm"
               variant="outline"
-              onClick={handleShowDetails}
+              onClick={() => onShowDetails(appointment)}
             >
               Detalhes <ArrowRight className="h-3 w-3 ml-1" />
             </Button>

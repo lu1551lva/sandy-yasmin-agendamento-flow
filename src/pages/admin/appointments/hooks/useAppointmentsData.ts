@@ -13,69 +13,88 @@ export function useAppointmentsData() {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch appointments
-  const { data: appointments, isLoading, refetch } = useQuery({
+  const { 
+    data: appointments = [], 
+    isLoading, 
+    refetch,
+    error
+  } = useQuery({
     queryKey: ["appointments", selectedDate, statusFilter, professionalFilter, searchQuery],
     queryFn: async () => {
-      let query = supabase
-        .from("agendamentos")
-        .select(`
-          *,
-          cliente:clientes(*),
-          servico:servicos(*),
-          profissional:profissionais(*)
-        `);
-      
-      // Apply date filter
-      if (selectedDate) {
-        query = query.eq("data", format(selectedDate, "yyyy-MM-dd"));
+      try {
+        let query = supabase
+          .from("agendamentos")
+          .select(`
+            *,
+            cliente:clientes(*),
+            servico:servicos(*),
+            profissional:profissionais(*)
+          `);
+        
+        // Apply date filter
+        if (selectedDate) {
+          query = query.eq("data", format(selectedDate, "yyyy-MM-dd"));
+        }
+        
+        // Apply status filter
+        if (statusFilter !== "all") {
+          query = query.eq("status", statusFilter);
+        }
+        
+        // Apply professional filter
+        if (professionalFilter !== "all") {
+          query = query.eq("profissional_id", professionalFilter);
+        }
+        
+        console.log("Executing appointments query...");
+        const { data, error } = await query.order("hora");
+        
+        if (error) {
+          console.error("Error fetching appointments:", error);
+          throw error;
+        }
+        
+        // Apply search filter on client side
+        if (searchQuery && data) {
+          const lowerQuery = searchQuery.toLowerCase();
+          return data.filter((appt: any) => 
+            appt.cliente.nome.toLowerCase().includes(lowerQuery) ||
+            appt.cliente.telefone.includes(searchQuery) ||
+            appt.cliente.email?.toLowerCase().includes(lowerQuery) ||
+            appt.servico.nome.toLowerCase().includes(lowerQuery)
+          );
+        }
+        
+        return data || [];
+      } catch (err) {
+        console.error("Failed to fetch appointments:", err);
+        throw err;
       }
-      
-      // Apply status filter
-      if (statusFilter !== "all") {
-        query = query.eq("status", statusFilter);
-      }
-      
-      // Apply professional filter
-      if (professionalFilter !== "all") {
-        query = query.eq("profissional_id", professionalFilter);
-      }
-      
-      // Execute query
-      const { data, error } = await query.order("hora");
-      
-      if (error) throw error;
-      
-      // Apply search filter on client side
-      if (searchQuery) {
-        const lowerQuery = searchQuery.toLowerCase();
-        return (data || []).filter((appt: any) => 
-          appt.cliente.nome.toLowerCase().includes(lowerQuery) ||
-          appt.cliente.telefone.includes(searchQuery) ||
-          appt.cliente.email?.toLowerCase().includes(lowerQuery) ||
-          appt.servico.nome.toLowerCase().includes(lowerQuery)
-        );
-      }
-      
-      return data || [];
     },
   });
 
   // Fetch professionals for filter
-  const { data: professionals } = useQuery({
+  const { data: professionals = [] } = useQuery({
     queryKey: ["professionals"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profissionais")
-        .select("*")
-        .order("nome");
-      
-      if (error) throw error;
-      return data || [];
+      try {
+        const { data, error } = await supabase
+          .from("profissionais")
+          .select("*")
+          .order("nome");
+        
+        if (error) throw error;
+        return data || [];
+      } catch (err) {
+        console.error("Failed to fetch professionals:", err);
+        return [];
+      }
     },
   });
 
   // Handle appointment update
   const handleAppointmentUpdated = () => {
+    console.log("Appointment updated, refreshing data...");
     refetch();
   };
 
@@ -94,9 +113,11 @@ export function useAppointmentsData() {
     appointments: appointments as AppointmentWithDetails[],
     professionals,
     isLoading,
+    error,
     
     // Actions
     handleAppointmentUpdated,
+    refetch,
     
     // Computed values
     showAll: statusFilter === "all" || statusFilter === "cancelado"

@@ -10,37 +10,58 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, XCircle } from "lucide-react";
-import { useAppointmentDialog } from "../../context/AppointmentDialogContext";
+import { useUpdateAppointmentStatus } from "@/hooks/useUpdateAppointmentStatus";
+import { useState } from "react";
 
 interface AppointmentCancelDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  appointmentId: string;
+  reason: string;
+  onReasonChange: (reason: string) => void;
+  onCanceled: () => void;
 }
 
 export function AppointmentCancelDialog({
   isOpen,
   onOpenChange,
+  appointmentId,
+  reason,
+  onReasonChange,
+  onCanceled
 }: AppointmentCancelDialogProps) {
-  const { 
-    appointmentToCancel, 
-    cancelReason, 
-    setCancelReason,
-    handleCancel, 
-    isLoading,
-    validateAppointmentExists
-  } = useAppointmentDialog();
-
-  // Don't render the dialog if there is no appointment ID or ID is invalid
-  if (!appointmentToCancel || !validateAppointmentExists(appointmentToCancel)) {
-    return null;
-  }
-
+  const { updateStatus, isLoading } = useUpdateAppointmentStatus();
+  const [isUpdating, setIsUpdating] = useState(false);
+  
+  const handleCancel = async () => {
+    if (!appointmentId) return;
+    
+    setIsUpdating(true);
+    console.log(`Canceling appointment ${appointmentId} with reason: ${reason}`);
+    
+    try {
+      const reasonToUse = reason || "Cancelamento sem motivo especificado";
+      const success = await updateStatus(appointmentId, "cancelado", reasonToUse);
+      
+      if (success) {
+        console.log("Appointment canceled successfully");
+        onCanceled();
+      } else {
+        console.error("Failed to cancel appointment");
+      }
+    } catch (error) {
+      console.error("Error canceling appointment:", error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+  
   return (
     <Dialog 
       open={isOpen} 
       onOpenChange={(open) => {
         // Only allow closing if not loading
-        if (!isLoading || !open) {
+        if (!(isLoading || isUpdating) || !open) {
           onOpenChange(open);
         }
       }}
@@ -56,8 +77,8 @@ export function AppointmentCancelDialog({
         <div className="py-4">
           <Textarea
             placeholder="Ex: Cliente faltou, reagendamento solicitado, etc."
-            value={cancelReason}
-            onChange={(e) => setCancelReason(e.target.value)}
+            value={reason}
+            onChange={(e) => onReasonChange(e.target.value)}
             className="h-24"
           />
         </div>
@@ -66,23 +87,17 @@ export function AppointmentCancelDialog({
           <Button 
             variant="outline" 
             onClick={() => onOpenChange(false)} 
-            disabled={isLoading}
-            aria-label="Fechar diálogo de cancelamento"
+            disabled={isLoading || isUpdating}
           >
             Voltar
           </Button>
 
           <Button 
             variant="destructive"
-            onClick={async () => {
-              const success = await handleCancel();
-              if (success) {
-                onOpenChange(false);
-              }
-            }}
-            disabled={isLoading}
+            onClick={handleCancel}
+            disabled={isLoading || isUpdating}
           >
-            {isLoading ? (
+            {isLoading || isUpdating ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Cancelando...
