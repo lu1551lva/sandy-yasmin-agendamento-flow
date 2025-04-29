@@ -61,8 +61,9 @@ export const useUpdateAppointmentStatus = () => {
 
     try {
       const result = await updateAppointmentStatus(appointmentId, status, reason);
-
-      if (result.error || !result.data) {
+      
+      // Fix: Check if result has error property or if data doesn't exist or is empty
+      if (result.error || !result.data || (Array.isArray(result.data) && result.data.length === 0)) {
         const message = result.error 
           ? `Não foi possível atualizar o status: ${result.error.message}` 
           : "O agendamento não foi encontrado ou não pôde ser atualizado.";

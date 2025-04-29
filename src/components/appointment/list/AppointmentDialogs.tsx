@@ -1,4 +1,3 @@
-
 import { AppointmentWithDetails, AppointmentStatus } from "@/types/appointment.types";
 import { useAppointmentDialogsState } from "./hooks/useAppointmentDialogsState";
 import { AppointmentDetailsDialog } from "./components/AppointmentDetailsDialog";
@@ -29,6 +28,7 @@ export function AppointmentDialogs({
   setAppointmentToCancel,
   onAppointmentUpdated
 }: AppointmentDialogsProps) {
+  // We're keeping the same component interface to minimize changes elsewhere
   const {
     cancelReason,
     setCancelReason,
