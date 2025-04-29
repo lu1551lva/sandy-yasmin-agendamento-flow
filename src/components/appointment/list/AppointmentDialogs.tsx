@@ -52,8 +52,9 @@ export function AppointmentDialogs({
 
   // Check if we should render each dialog based on valid IDs
   const showDetailsDialog = !!selectedAppointment;
-  const showStatusUpdateDialog = !!appointmentToUpdate && appointmentToUpdate.id;
-  const showCancelDialog = isCancelDialogOpen && !!appointmentToCancel;
+  const showStatusUpdateDialog = !!appointmentToUpdate && validateAppointmentId(appointmentToUpdate.id);
+  const showCancelDialog = isCancelDialogOpen && validateAppointmentId(appointmentToCancel);
+  const showRescheduleDialog = showDetailsDialog && isRescheduleDialogOpen && selectedAppointment?.id;
 
   return (
     <>
@@ -67,7 +68,7 @@ export function AppointmentDialogs({
         />
       )}
       
-      {/* Status Update Dialog (Complete) */}
+      {/* Status Update Dialog */}
       {showStatusUpdateDialog && (
         <AppointmentStatusUpdateDialog
           isOpen={true}
@@ -84,7 +85,7 @@ export function AppointmentDialogs({
           isOpen={isCancelDialogOpen}
           onClose={() => {
             setIsCancelDialogOpen(false);
-            setAppointmentToCancel(null);
+            // Don't clear appointmentToCancel here, let the hook handle it
             setCancelReason("");
           }}
           reason={cancelReason}
@@ -96,7 +97,7 @@ export function AppointmentDialogs({
       )}
       
       {/* Reschedule Dialog */}
-      {showDetailsDialog && isRescheduleDialogOpen && (
+      {showRescheduleDialog && (
         <AppointmentRescheduleDialog
           appointment={selectedAppointment}
           isOpen={isRescheduleDialogOpen}

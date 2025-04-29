@@ -7,7 +7,8 @@ import {
   logAppointmentError,
   traceAppointmentFlow,
   logStackTrace,
-  logUIEvent
+  logUIEvent,
+  validateAppointmentId
 } from "@/utils/debugUtils";
 
 /**
@@ -41,8 +42,9 @@ export function useCancelDialogState(onAppointmentUpdated: () => void) {
   const closeCancelDialog = () => {
     logUIEvent("Closing cancel dialog");
     setIsCancelDialogOpen(false);
-    setAppointmentToCancel(null);
     setCancelReason("");
+    // Only clear appointmentToCancel after dialog is closed
+    setTimeout(() => setAppointmentToCancel(null), 100);
   };
 
   /**
@@ -51,60 +53,74 @@ export function useCancelDialogState(onAppointmentUpdated: () => void) {
   const handleCancel = async () => {
     logStackTrace("handleCancel chamado");
     
-    if (!appointmentToCancel) {
-      logAppointmentError("Nenhum ID para cancelamento", "null", { appointmentToCancel });
+    // Store the current ID to be used throughout this function
+    const currentAppointmentId = appointmentToCancel;
+    
+    if (!currentAppointmentId || !validateAppointmentId(currentAppointmentId)) {
+      logAppointmentError("Nenhum ID válido para cancelamento", "null", { appointmentToCancel });
       toast({
         title: "Erro na operação",
         description: "ID de agendamento inválido. Por favor, tente novamente.",
         variant: "destructive",
       });
-      return;
+      closeCancelDialog();
+      return false;
     }
 
     // Log more details about the appointment to cancel
-    logAppointmentAction("Detalhes do agendamento a cancelar", appointmentToCancel, { 
-      appointmentToCancel, 
+    logAppointmentAction("Detalhes do agendamento a cancelar", currentAppointmentId, { 
+      currentAppointmentId, 
       cancelReason 
     });
 
     const reasonToUse = cancelReason || "Cancelamento sem motivo especificado";
-    traceAppointmentFlow("Iniciando cancelamento", appointmentToCancel, { motivo: reasonToUse });
+    traceAppointmentFlow("Iniciando cancelamento", currentAppointmentId, { motivo: reasonToUse });
 
     try {
-      logAppointmentAction("Chamando updateStatus para cancelamento", appointmentToCancel, { 
+      logAppointmentAction("Chamando updateStatus para cancelamento", currentAppointmentId, { 
         status: "cancelado",
         motivo: reasonToUse,
-        params: [appointmentToCancel, "cancelado", reasonToUse]
+        params: [currentAppointmentId, "cancelado", reasonToUse]
       });
 
-      const success = await updateStatus(appointmentToCancel, "cancelado", reasonToUse);
+      const success = await updateStatus(currentAppointmentId, "cancelado", reasonToUse);
       
       if (success) {
-        logAppointmentAction("Cancelamento bem-sucedido", appointmentToCancel, { motivo: reasonToUse });
+        logAppointmentAction("Cancelamento bem-sucedido", currentAppointmentId, { motivo: reasonToUse });
         setIsCancelDialogOpen(false);
-        setAppointmentToCancel(null);
         setCancelReason("");
+        // Only clear appointmentToCancel after cancellation is successful
+        setTimeout(() => setAppointmentToCancel(null), 100);
+        
         logUIEvent("Chamando onAppointmentUpdated após cancelamento bem-sucedido");
         onAppointmentUpdated();
         toast({
           title: "Agendamento cancelado",
           description: "O agendamento foi cancelado com sucesso.",
         });
+        return true;
       } else {
-        logAppointmentError("Falha no cancelamento", appointmentToCancel);
+        logAppointmentError("Falha no cancelamento", currentAppointmentId);
         toast({
           title: "Falha na operação",
           description: "Não foi possível cancelar o agendamento. Tente novamente.",
           variant: "destructive",
         });
+        return false;
       }
     } catch (error) {
-      logAppointmentError("Erro inesperado no cancelamento", appointmentToCancel, error);
+      logAppointmentError("Erro inesperado no cancelamento", currentAppointmentId, error);
       toast({
         title: "Erro inesperado",
         description: "Ocorreu um erro ao processar sua solicitação. Tente novamente.",
         variant: "destructive",
       });
+      return false;
+    } finally {
+      // Make sure to clean up only after everything is done
+      if (!isLoading) {
+        closeCancelDialog();
+      }
     }
   };
 
