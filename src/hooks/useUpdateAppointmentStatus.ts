@@ -44,11 +44,22 @@ export const useUpdateAppointmentStatus = () => {
 
   const updateStatus = async (appointmentId: string, status: AppointmentStatus, reason?: string) => {
     try {
+      if (!appointmentId) {
+        const errorMsg = 'ID de agendamento inválido para atualização de status';
+        console.error(errorMsg, {appointmentId});
+        toast({
+          title: "Erro ao atualizar status",
+          description: "ID de agendamento inválido. Por favor, tente novamente.",
+          variant: "destructive",
+        });
+        return false;
+      }
+      
       console.log(`Iniciando atualização do agendamento ${appointmentId} para status ${status}`);
       setIsLoading(true);
 
       // STEP 1: Update appointment status in the database
-      const updateData: any = { status };
+      const updateData: Record<string, any> = { status };
       
       // Add cancellation reason if provided
       if (reason && status === 'cancelado') {
@@ -56,7 +67,9 @@ export const useUpdateAppointmentStatus = () => {
       }
 
       console.log('Dados para atualização:', updateData);
+      console.log('ID do agendamento:', appointmentId);
       
+      // Perform the update operation with detailed logging
       const { data: appointmentData, error: updateError } = await supabase
         .from('agendamentos')
         .update(updateData)
@@ -75,7 +88,7 @@ export const useUpdateAppointmentStatus = () => {
       }
       
       if (!appointmentData || appointmentData.length === 0) {
-        console.error("Agendamento não encontrado ou não atualizado");
+        console.error("Agendamento não encontrado ou não atualizado", {appointmentId, status});
         toast({
           title: "Erro ao atualizar status",
           description: "O agendamento não foi encontrado ou não pôde ser atualizado.",
@@ -143,6 +156,16 @@ export const useUpdateAppointmentStatus = () => {
 
   const deleteAppointment = async (appointmentId: string) => {
     try {
+      if (!appointmentId) {
+        console.error("ID de agendamento inválido para exclusão");
+        toast({
+          title: "Erro ao excluir",
+          description: "ID de agendamento inválido. Por favor, tente novamente.",
+          variant: "destructive",
+        });
+        return false;
+      }
+      
       setIsLoading(true);
       console.log(`Iniciando exclusão do agendamento ${appointmentId}`);
 
