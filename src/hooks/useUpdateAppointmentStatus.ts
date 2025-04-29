@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -17,22 +16,19 @@ export const useUpdateAppointmentStatus = () => {
   const invalidateAppointmentQueries = async () => {
     logAppointmentAction('Invalidando caches', 'all-queries');
     try {
-      // Invalidate all appointment-related queries
       const queries = [
         'appointments',
         'dashboard-appointments',
         'weekly-appointments',
-        'week-appointments' // Also invalidate weekly view
+        'week-appointments'
       ];
-      
-      // Invalidate all queries in parallel
+
       await Promise.all(
         queries.map(query => queryClient.invalidateQueries({ queryKey: [query] }))
       );
-      
-      // Force immediate refetch of the main appointments query to garantir a atualização da interface
+
       await queryClient.refetchQueries({ queryKey: ['appointments'] });
-      
+
       logAppointmentAction('Cache invalidado', 'all-queries', 'Dados recarregados com sucesso');
       return true;
     } catch (error) {
@@ -48,13 +44,9 @@ export const useUpdateAppointmentStatus = () => {
 
   /**
    * Atualiza o status de um agendamento no banco de dados
-   * @param appointmentId ID do agendamento
-   * @param status Novo status
-   * @param reason Motivo (opcional, para cancelamentos)
    */
   const updateStatus = async (appointmentId: string, status: AppointmentStatus, reason?: string) => {
     try {
-      // Validar o ID do agendamento primeiro
       if (!appointmentId || appointmentId.trim() === '') {
         const errorMsg = 'ID de agendamento inválido para atualização de status';
         logAppointmentError(errorMsg, appointmentId || 'null');
@@ -65,29 +57,24 @@ export const useUpdateAppointmentStatus = () => {
         });
         return false;
       }
-      
+
       traceAppointmentFlow(`Iniciando atualização`, appointmentId, { status });
       setIsLoading(true);
 
-      // STEP 1: Montar os dados para atualização
       const updateData: Record<string, any> = { status };
-      
-      // Adicionar motivo de cancelamento se fornecido e for um cancelamento
+
       if (reason && status === 'cancelado') {
         updateData['motivo_cancelamento'] = reason;
         logAppointmentAction(`Adicionando motivo`, appointmentId, { motivo: reason });
       }
 
       logAppointmentAction('Preparando update', appointmentId, { updateData });
-      
-      // STEP 2: Executar a atualização no Supabase com logs detalhados
-      const { data: appointmentData, error: updateError } = await supabase
+
+      const { error: updateError } = await supabase
         .from('agendamentos')
         .update(updateData)
-        .eq('id', appointmentId)
-        .select();
+        .eq('id', appointmentId);
 
-      // Log do resultado da operação de atualização
       if (updateError) {
         logAppointmentError("Erro do Supabase na atualização", appointmentId, updateError);
         toast({
@@ -97,40 +84,24 @@ export const useUpdateAppointmentStatus = () => {
         });
         return false;
       }
-      
-      // Verificar se o update realmente fez alterações
-      if (!appointmentData || appointmentData.length === 0) {
-        logAppointmentError("Nenhum dado retornado do update", appointmentId, { status });
-        toast({
-          title: "Erro ao atualizar status",
-          description: "O agendamento não foi encontrado ou não pôde ser atualizado.",
-          variant: "destructive",
-        });
-        return false;
-      }
-      
-      logAppointmentAction("Update realizado com sucesso", appointmentId, { 
-        novoDados: appointmentData,
-        novoStatus: status
-      });
 
-      // STEP 3: Criar entrada no histórico após atualização bem-sucedida
+      logAppointmentAction("Update realizado com sucesso", appointmentId, { novoStatus: status });
+
       const historyEntry = {
         agendamento_id: appointmentId,
         tipo: status,
         descricao: `Status alterado para ${status}${reason ? ` - Motivo: ${reason}` : ''}`,
         novo_valor: status,
       };
-      
+
       logAppointmentAction("Inserindo histórico", appointmentId, historyEntry);
-      
+
       const { error: historyError } = await supabase
         .from('agendamento_historico')
         .insert(historyEntry);
 
       if (historyError) {
         logAppointmentError("Erro ao registrar histórico", appointmentId, historyError);
-        // Still show success toast since the main update succeeded
         toast({
           title: "Aviso",
           description: "Status atualizado, mas houve um problema ao registrar o histórico.",
@@ -140,27 +111,24 @@ export const useUpdateAppointmentStatus = () => {
         logAppointmentAction("Histórico registrado", appointmentId);
       }
 
-      // Show success toast
       toast({
         title: status === 'concluido' ? 'Agendamento concluído' : 'Agendamento cancelado',
-        description: status === 'concluido' 
+        description: status === 'concluido'
           ? 'O agendamento foi marcado como concluído com sucesso.'
           : 'O agendamento foi cancelado com sucesso.',
       });
 
-      // STEP 4: Atualizar a interface invalidando e recarregando os dados
       logAppointmentAction("Atualizando interface", appointmentId);
       await invalidateAppointmentQueries();
-      
-      // Additionally invalidate the specific appointment history query
       await queryClient.invalidateQueries({ queryKey: ['appointment-history', appointmentId] });
 
       return true;
     } catch (error) {
-      logAppointmentError("Erro geral na atualização", appointmentId || 'unknown', error);
+      const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
+      logAppointmentError("Erro geral na atualização", appointmentId || 'unknown', errorMessage);
       toast({
         title: "Erro ao atualizar status",
-        description: "Não foi possível atualizar o status do agendamento. Tente novamente.",
+        description: `Erro: ${errorMessage}`,
         variant: "destructive",
       });
       return false;
@@ -171,7 +139,6 @@ export const useUpdateAppointmentStatus = () => {
 
   /**
    * Exclui um agendamento e seu histórico
-   * @param appointmentId ID do agendamento a ser excluído
    */
   const deleteAppointment = async (appointmentId: string) => {
     try {
@@ -184,11 +151,10 @@ export const useUpdateAppointmentStatus = () => {
         });
         return false;
       }
-      
+
       setIsLoading(true);
       traceAppointmentFlow(`Iniciando exclusão`, appointmentId);
 
-      // Delete appointment history first
       const { error: historyDeleteError } = await supabase
         .from('agendamento_historico')
         .delete()
@@ -201,10 +167,8 @@ export const useUpdateAppointmentStatus = () => {
           description: `Erro ao excluir histórico: ${historyDeleteError.message}`,
           variant: "destructive",
         });
-        // Continue with deletion even if history deletion fails
       }
 
-      // Then delete the appointment itself
       const { error: appointmentDeleteError } = await supabase
         .from('agendamentos')
         .delete()
@@ -226,16 +190,16 @@ export const useUpdateAppointmentStatus = () => {
         description: "O agendamento foi excluído permanentemente.",
       });
 
-      // Invalidate and reload relevant queries
       logAppointmentAction("Atualizando interface após exclusão", appointmentId);
       await invalidateAppointmentQueries();
 
       return true;
     } catch (error) {
-      logAppointmentError("Erro geral na exclusão", appointmentId || 'unknown', error);
+      const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
+      logAppointmentError("Erro geral na exclusão", appointmentId || 'unknown', errorMessage);
       toast({
         title: "Erro ao excluir",
-        description: "Não foi possível excluir o agendamento. Tente novamente.",
+        description: `Erro: ${errorMessage}`,
         variant: "destructive",
       });
       return false;
