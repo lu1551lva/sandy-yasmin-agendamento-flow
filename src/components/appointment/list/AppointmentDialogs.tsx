@@ -50,24 +50,27 @@ export function AppointmentDialogs({
     return handleReschedule(date, time);
   };
 
-  // Validate IDs before rendering to prevent issues
-  const isAppointmentToUpdateValid = appointmentToUpdate && validateAppointmentId(appointmentToUpdate.id);
-  const isAppointmentToCancelValid = validateAppointmentId(appointmentToCancel);
+  // Check if we should render each dialog based on valid IDs
+  const showDetailsDialog = !!selectedAppointment;
+  const showStatusUpdateDialog = !!appointmentToUpdate && appointmentToUpdate.id;
+  const showCancelDialog = isCancelDialogOpen && !!appointmentToCancel;
 
   return (
     <>
       {/* Appointment Details Dialog */}
-      <AppointmentDetailsDialog
-        appointment={selectedAppointment}
-        isOpen={!!selectedAppointment}
-        onClose={() => setSelectedAppointment(null)}
-        onAppointmentUpdated={onAppointmentUpdated}
-      />
+      {showDetailsDialog && (
+        <AppointmentDetailsDialog
+          appointment={selectedAppointment}
+          isOpen={true}
+          onClose={() => setSelectedAppointment(null)}
+          onAppointmentUpdated={onAppointmentUpdated}
+        />
+      )}
       
       {/* Status Update Dialog (Complete) */}
-      {isAppointmentToUpdateValid && (
+      {showStatusUpdateDialog && (
         <AppointmentStatusUpdateDialog
-          isOpen={!!appointmentToUpdate}
+          isOpen={true}
           onOpenChange={(open) => !open && setAppointmentToUpdate(null)}
           status={appointmentToUpdate?.status || null}
           onConfirm={handleUpdateStatus}
@@ -76,28 +79,32 @@ export function AppointmentDialogs({
       )}
       
       {/* Cancel Dialog */}
-      <AppointmentCancelDialog
-        isOpen={isCancelDialogOpen}
-        onClose={() => {
-          setIsCancelDialogOpen(false);
-          setAppointmentToCancel(null);
-          setCancelReason("");
-        }}
-        reason={cancelReason}
-        onReasonChange={setCancelReason}
-        onConfirm={handleCancel}
-        isLoading={isLoading}
-        appointmentId={appointmentToCancel}
-      />
+      {showCancelDialog && (
+        <AppointmentCancelDialog
+          isOpen={isCancelDialogOpen}
+          onClose={() => {
+            setIsCancelDialogOpen(false);
+            setAppointmentToCancel(null);
+            setCancelReason("");
+          }}
+          reason={cancelReason}
+          onReasonChange={setCancelReason}
+          onConfirm={handleCancel}
+          isLoading={isLoading}
+          appointmentId={appointmentToCancel}
+        />
+      )}
       
       {/* Reschedule Dialog */}
-      <AppointmentRescheduleDialog
-        appointment={selectedAppointment}
-        isOpen={isRescheduleDialogOpen}
-        onClose={() => setIsRescheduleDialogOpen(false)}
-        onReschedule={handleRescheduleWrapper}
-        isLoading={isReschedulingLoading}
-      />
+      {showDetailsDialog && isRescheduleDialogOpen && (
+        <AppointmentRescheduleDialog
+          appointment={selectedAppointment}
+          isOpen={isRescheduleDialogOpen}
+          onClose={() => setIsRescheduleDialogOpen(false)}
+          onReschedule={handleRescheduleWrapper}
+          isLoading={isReschedulingLoading}
+        />
+      )}
     </>
   );
 }
