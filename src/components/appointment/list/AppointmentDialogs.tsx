@@ -43,6 +43,12 @@ export function AppointmentDialogs({
     handleReschedule
   } = useAppointmentDialogsState(onAppointmentUpdated);
 
+  // Function to wrap handleReschedule to ensure it returns a Promise<boolean>
+  const handleRescheduleWrapper = async (date: Date, time: string): Promise<boolean> => {
+    if (!selectedAppointment) return false;
+    return handleReschedule(selectedAppointment, date, time);
+  };
+
   // Validate IDs before rendering to prevent issues
   const isAppointmentToUpdateValid = appointmentToUpdate && validateAppointmentId(appointmentToUpdate.id);
   const isAppointmentToCancelValid = validateAppointmentId(appointmentToCancel);
@@ -88,7 +94,7 @@ export function AppointmentDialogs({
         appointment={selectedAppointment}
         isOpen={isRescheduleDialogOpen}
         onClose={() => setIsRescheduleDialogOpen(false)}
-        onReschedule={handleReschedule}
+        onReschedule={handleRescheduleWrapper}
         isLoading={isReschedulingLoading}
       />
     </>

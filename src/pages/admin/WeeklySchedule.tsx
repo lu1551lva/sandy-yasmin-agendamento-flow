@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,8 +27,8 @@ const WeeklySchedule = () => {
 
   const { rescheduleAppointment, isLoading: isRescheduling } = useRescheduleAppointment();
 
-  const handleReschedule = async (date: Date, time: string) => {
-    if (!appointmentToReschedule) return;
+  const handleReschedule = async (date: Date, time: string): Promise<boolean> => {
+    if (!appointmentToReschedule) return false;
     
     const success = await rescheduleAppointment(
       appointmentToReschedule.id,
@@ -39,6 +40,8 @@ const WeeklySchedule = () => {
     if (success) {
       setAppointmentToReschedule(null);
     }
+    
+    return success;
   };
 
   const dateRangeText = `${format(weekStart, "d 'de' MMMM", { locale: ptBR })} - ${format(weekEnd, "d 'de' MMMM", { locale: ptBR })}`;

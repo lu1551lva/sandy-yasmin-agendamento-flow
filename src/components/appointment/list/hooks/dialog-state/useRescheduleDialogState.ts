@@ -22,7 +22,7 @@ export function useRescheduleDialogState(onAppointmentUpdated: () => void) {
   /**
    * Handles rescheduling an appointment
    */
-  const handleReschedule = async (appointment: AppointmentWithDetails | null, date: Date, time: string) => {
+  const handleReschedule = async (appointment: AppointmentWithDetails | null, date: Date, time: string): Promise<boolean> => {
     logStackTrace("handleReschedule chamado");
 
     if (!appointment || !appointment.id) {
@@ -32,7 +32,7 @@ export function useRescheduleDialogState(onAppointmentUpdated: () => void) {
         description: "Agendamento inválido. Por favor, tente novamente.",
         variant: "destructive",
       });
-      return Promise.reject("Nenhum agendamento selecionado");
+      return false;
     }
 
     try {
@@ -61,7 +61,7 @@ export function useRescheduleDialogState(onAppointmentUpdated: () => void) {
           title: "Agendamento reagendado",
           description: "O horário foi atualizado com sucesso!",
         });
-        return Promise.resolve();
+        return true;
       } else {
         throw new Error("Falha ao reagendar agendamento");
       }
@@ -72,7 +72,7 @@ export function useRescheduleDialogState(onAppointmentUpdated: () => void) {
         description: "Não foi possível reagendar o agendamento. Tente novamente.",
         variant: "destructive",
       });
-      return Promise.reject(error);
+      return false;
     }
   };
 
