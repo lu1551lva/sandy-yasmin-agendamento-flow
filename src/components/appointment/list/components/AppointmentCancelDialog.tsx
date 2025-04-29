@@ -7,7 +7,7 @@ interface AppointmentCancelDialogProps {
   onClose: () => void;
   reason: string;
   onReasonChange: (reason: string) => void;
-  onConfirm: (reason: string) => void; // <- Ajustar aqui também: confirmar que recebe o reason
+  onConfirm: (reason: string) => void;
   isLoading: boolean;
   appointmentId?: string | null;
 }
@@ -29,7 +29,7 @@ export function AppointmentCancelDialog({
     
     logAppointmentAction('Confirmando cancelamento', appointmentId!, { motivo: cancelReason });
     
-    // Agora corretamente passando o motivo
+    // Passing the reason to onConfirm
     onConfirm(cancelReason);
   };
 
