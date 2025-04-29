@@ -30,7 +30,7 @@ export function AppointmentCancelDialog({
     validateAppointmentExists
   } = useAppointmentDialog();
 
-  // Don't render the dialog if there is no appointment ID
+  // Don't render the dialog if there is no appointment ID or ID is invalid
   if (!appointmentToCancel || !validateAppointmentExists(appointmentToCancel)) {
     return null;
   }
@@ -38,7 +38,12 @@ export function AppointmentCancelDialog({
   return (
     <Dialog 
       open={isOpen} 
-      onOpenChange={onOpenChange}
+      onOpenChange={(open) => {
+        // Only allow closing if not loading
+        if (!isLoading || !open) {
+          onOpenChange(open);
+        }
+      }}
     >
       <DialogContent>
         <DialogHeader>
@@ -69,7 +74,12 @@ export function AppointmentCancelDialog({
 
           <Button 
             variant="destructive"
-            onClick={handleCancel}
+            onClick={async () => {
+              const success = await handleCancel();
+              if (success) {
+                onOpenChange(false);
+              }
+            }}
             disabled={isLoading}
           >
             {isLoading ? (

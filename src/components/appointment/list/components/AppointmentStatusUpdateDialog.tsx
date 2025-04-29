@@ -24,9 +24,19 @@ export function AppointmentStatusUpdateDialog({
   return (
     <StatusUpdateDialog
       isOpen={isOpen}
-      onOpenChange={onOpenChange}
+      onOpenChange={(open) => {
+        // Only allow closing if not loading
+        if (!isLoading || !open) {
+          onOpenChange(open);
+        }
+      }}
       status={status}
-      onConfirm={handleStatusUpdate}
+      onConfirm={async () => {
+        const success = await handleStatusUpdate();
+        if (success) {
+          onOpenChange(false);
+        }
+      }}
       isLoading={isLoading}
     />
   );

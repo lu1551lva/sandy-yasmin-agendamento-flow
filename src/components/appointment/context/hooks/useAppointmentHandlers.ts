@@ -5,6 +5,8 @@ import { useUpdateAppointmentStatus } from "@/hooks/useUpdateAppointmentStatus";
 import { useRescheduleAppointment } from "@/hooks/useRescheduleAppointment";
 import { useToast } from "@/hooks/use-toast";
 import { logAppointmentAction, logAppointmentError, logUIEvent } from "@/utils/debugUtils";
+import { useAppointmentCache } from "@/hooks/appointment/useAppointmentCache";
+import { useAppointmentNotifications } from "@/hooks/appointment/useAppointmentNotifications";
 
 interface UseAppointmentHandlersProps {
   selectedAppointment: AppointmentWithDetails | null;
@@ -32,12 +34,16 @@ export function useAppointmentHandlers({
   const { toast } = useToast();
   const { updateStatus, isLoading } = useUpdateAppointmentStatus();
   const { rescheduleAppointment, isLoading: isReschedulingLoading } = useRescheduleAppointment();
+  const { invalidateAppointmentQueries } = useAppointmentCache();
+  const { showStatusUpdateSuccess, showStatusUpdateError } = useAppointmentNotifications();
 
   // Helper function to handle when an appointment is updated
   const handleAppointmentUpdated = useCallback(() => {
     logUIEvent('Appointment updated, refreshing data...');
-    onAppointmentUpdated();
-  }, [onAppointmentUpdated]);
+    invalidateAppointmentQueries().then(() => {
+      onAppointmentUpdated();
+    });
+  }, [onAppointmentUpdated, invalidateAppointmentQueries]);
 
   // Action handlers
   const handleStatusUpdate = useCallback(async (): Promise<boolean> => {
@@ -60,22 +66,12 @@ export function useAppointmentHandlers({
       const success = await updateStatus(appointmentToUpdate.id, appointmentToUpdate.status);
       
       if (success) {
-        toast({
-          title: appointmentToUpdate.status === 'concluido' ? 'Agendamento concluído' : 'Status atualizado',
-          description: appointmentToUpdate.status === 'concluido'
-            ? 'O agendamento foi marcado como concluído com sucesso.'
-            : 'O status do agendamento foi atualizado com sucesso.',
-        });
-        
+        showStatusUpdateSuccess(appointmentToUpdate.status);
         closeStatusUpdateDialog();
-        onAppointmentUpdated();
+        handleAppointmentUpdated();
         return true;
       } else {
-        toast({
-          title: 'Erro na operação',
-          description: 'Não foi possível atualizar o status. Tente novamente.',
-          variant: 'destructive',
-        });
+        showStatusUpdateError('Não foi possível atualizar o status. Tente novamente.');
         return false;
       }
     } catch (error) {
@@ -87,7 +83,7 @@ export function useAppointmentHandlers({
       });
       return false;
     }
-  }, [appointmentToUpdate, validateAppointmentExists, updateStatus, toast, closeStatusUpdateDialog, onAppointmentUpdated]);
+  }, [appointmentToUpdate, validateAppointmentExists, updateStatus, showStatusUpdateSuccess, showStatusUpdateError, toast, closeStatusUpdateDialog, handleAppointmentUpdated]);
 
   const handleCancel = useCallback(async (): Promise<boolean> => {
     if (!appointmentToCancel || !validateAppointmentExists(appointmentToCancel)) {
@@ -115,7 +111,7 @@ export function useAppointmentHandlers({
         });
         
         closeCancelDialog();
-        onAppointmentUpdated();
+        handleAppointmentUpdated();
         return true;
       } else {
         toast({
@@ -134,7 +130,7 @@ export function useAppointmentHandlers({
       });
       return false;
     }
-  }, [appointmentToCancel, cancelReason, validateAppointmentExists, updateStatus, toast, closeCancelDialog, onAppointmentUpdated]);
+  }, [appointmentToCancel, cancelReason, validateAppointmentExists, updateStatus, toast, closeCancelDialog, handleAppointmentUpdated]);
 
   const handleReschedule = useCallback(async (date: Date, time: string): Promise<boolean> => {
     if (!selectedAppointment || !validateAppointmentExists(selectedAppointment.id)) {
@@ -164,7 +160,7 @@ export function useAppointmentHandlers({
         });
         
         closeRescheduleDialog();
-        onAppointmentUpdated();
+        handleAppointmentUpdated();
         return true;
       } else {
         toast({
@@ -183,7 +179,7 @@ export function useAppointmentHandlers({
       });
       return false;
     }
-  }, [selectedAppointment, validateAppointmentExists, rescheduleAppointment, toast, closeRescheduleDialog, onAppointmentUpdated]);
+  }, [selectedAppointment, validateAppointmentExists, rescheduleAppointment, toast, closeRescheduleDialog, handleAppointmentUpdated]);
 
   return {
     isLoading,

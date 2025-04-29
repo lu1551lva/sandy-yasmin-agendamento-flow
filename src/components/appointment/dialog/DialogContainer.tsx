@@ -6,6 +6,7 @@ import { ConfirmationDialogs } from "./confirmations/ConfirmationDialogs";
 import { RescheduleDialog } from "./reschedule/RescheduleDialog";
 import { HistorySidebar } from "./history/HistorySidebar";
 import { useAppointmentDialog } from "../context/AppointmentDialogContext";
+import { createWhatsAppLink } from "@/lib/supabase";
 
 interface DialogContainerProps {
   appointment: AppointmentWithDetails;
@@ -32,7 +33,7 @@ export function DialogContainer({
   const { 
     handleReschedule,
     openStatusUpdateDialog,
-    handleStatusUpdate,
+    openCancelDialog,
     isLoading,
     isReschedulingLoading
   } = useAppointmentDialog();
@@ -44,7 +45,7 @@ export function DialogContainer({
 
   // Handle cancel for this specific appointment
   const handleCancel = () => {
-    setShowCancelConfirm(true);
+    openCancelDialog(appointment.id);
   };
 
   // Handle delete (to be implemented)
@@ -53,9 +54,10 @@ export function DialogContainer({
     onClose();
   };
 
-  // Handle WhatsApp (existing implementation)
+  // Handle WhatsApp message
   const handleSendWhatsApp = () => {
-    // Implement WhatsApp logic
+    const message = `Olá ${appointment.cliente.nome.split(' ')[0]}! Confirmamos seu agendamento para ${appointment.servico.nome} no dia ${appointment.data} às ${appointment.hora}.`;
+    window.open(createWhatsAppLink(appointment.cliente.telefone, message), "_blank");
   };
 
   return (
@@ -79,7 +81,7 @@ export function DialogContainer({
         setShowCancelConfirm={setShowCancelConfirm}
         showDeleteConfirm={showDeleteConfirm}
         setShowDeleteConfirm={setShowDeleteConfirm}
-        onCancel={() => openStatusUpdateDialog(appointment.id, 'cancelado')}
+        onCancel={handleCancel}
         onDelete={handleDelete}
         isLoading={isLoading}
       />

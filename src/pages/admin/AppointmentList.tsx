@@ -1,8 +1,8 @@
 
-import AppointmentListPage from "./appointments/AppointmentList";
+import NewAppointmentPage from "./appointments/NewAppointmentPage";
 
 const AppointmentList = () => {
-  return <AppointmentListPage />;
+  return <NewAppointmentPage />;
 };
 
 export default AppointmentList;

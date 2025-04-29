@@ -7,6 +7,8 @@ import { ClientDetailsSection } from "./sections/ClientDetailsSection";
 import { ServiceDetailsSection } from "./sections/ServiceDetailsSection";
 import { AppointmentDetailsSection } from "./sections/AppointmentDetailsSection";
 import { DialogActions } from "./actions/DialogActions";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface AppointmentDetailsDialogProps {
   appointment: AppointmentWithDetails;
@@ -41,6 +43,13 @@ export function AppointmentDetailsDialog({
     }
   };
 
+  // Format date for display if it's a valid date string
+  const formattedDate = appointment.data ? 
+    (appointment.data.includes("-") ? 
+      format(parseISO(appointment.data), "dd/MM/yyyy", { locale: ptBR }) : 
+      appointment.data) : 
+    "";
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md sm:max-w-lg">
@@ -60,9 +69,25 @@ export function AppointmentDetailsDialog({
         <div className="grid gap-4 py-4">
           <ClientDetailsSection cliente={appointment.cliente} />
           <Separator />
+          
           <ServiceDetailsSection servico={appointment.servico} />
           <Separator />
-          <AppointmentDetailsSection data={appointment.data} hora={appointment.hora} />
+          
+          <AppointmentDetailsSection 
+            data={formattedDate} 
+            hora={appointment.hora} 
+            profissional={appointment.profissional.nome}
+          />
+          
+          {appointment.status === "cancelado" && appointment.motivo_cancelamento && (
+            <>
+              <Separator />
+              <div>
+                <h4 className="font-medium mb-1">Motivo do Cancelamento:</h4>
+                <p className="text-sm text-muted-foreground">{appointment.motivo_cancelamento}</p>
+              </div>
+            </>
+          )}
         </div>
         
         <DialogActions 
