@@ -35,14 +35,18 @@ const queryClient = new QueryClient({
       staleTime: 1000 * 60 * 5, // 5 minutes
       retry: 2, // Retry failed requests twice
       retryDelay: attempt => Math.min(attempt > 1 ? 2000 : 1000, 30000), // Exponential backoff
-      onError: (error) => {
-        console.error("Query error:", error);
+      meta: {
+        onError: (error: any) => {
+          console.error("Query error:", error);
+        },
       },
     },
     mutations: {
       retry: 1,
-      onError: (error) => {
-        console.error("Mutation error:", error);
+      meta: {
+        onError: (error: any) => {
+          console.error("Mutation error:", error);
+        },
       },
     },
   },
