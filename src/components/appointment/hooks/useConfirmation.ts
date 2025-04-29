@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -7,6 +6,77 @@ import type { AppointmentData } from "../types/confirmation.types";
 export const useConfirmation = () => {
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
   const { toast } = useToast();
+
+  const findOrCreateClient = async (client: AppointmentData["client"]) => {
+    if (!client.telefone) {
+      throw new Error("Telefone do cliente é obrigatório.");
+    }
+
+    const { data: existingClient, error: checkError } = await supabase
+      .from("clientes")
+      .select("*")
+      .eq("telefone", client.telefone)
+      .maybeSingle();
+
+    if (checkError) {
+      throw checkError;
+    }
+
+    if (existingClient) {
+      return existingClient.id;
+    }
+
+    const { data: newClient, error: clientError } = await supabase
+      .from("clientes")
+      .insert({
+        nome: client.nome,
+        telefone: client.telefone,
+        email: client.email,
+      })
+      .select()
+      .single();
+
+    if (clientError) {
+      throw clientError;
+    }
+
+    if (!newClient?.id) {
+      throw new Error("Erro ao criar novo cliente.");
+    }
+
+    return newClient.id;
+  };
+
+  const createAppointment = async (appointmentData: AppointmentData, clientId: string) => {
+    const professionalId = appointmentData.professional_id || appointmentData.professionalId;
+    
+    if (!professionalId) {
+      throw new Error("Profissional não selecionado.");
+    }
+
+    const { data: appointment, error: appointmentError } = await supabase
+      .from("agendamentos")
+      .insert({
+        cliente_id: clientId,
+        servico_id: appointmentData.service.id,
+        profissional_id: professionalId,
+        data: appointmentData.date,
+        hora: appointmentData.time,
+        status: "agendado",
+      })
+      .select()
+      .single();
+
+    if (appointmentError) {
+      throw appointmentError;
+    }
+
+    if (!appointment?.id) {
+      throw new Error("Erro ao criar agendamento.");
+    }
+
+    return appointment.id;
+  };
 
   const handleConfirmation = async (
     appointmentData: AppointmentData,
@@ -22,78 +92,21 @@ export const useConfirmation = () => {
       return;
     }
 
-    // Use either the professional_id field or professionalId field
-    const professionalId = appointmentData.professional_id || appointmentData.professionalId;
-    
-    if (!professionalId) {
-      toast({
-        title: "Profissional não selecionado",
-        description: "Por favor, selecione um profissional para o agendamento.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
-      // First check if we need to create a new client or use an existing one
-      let clientId = appointmentData.client.id;
-      
-      if (!clientId) {
-        const { data: existingClient, error: checkError } = await supabase
-          .from("clientes")
-          .select("*")
-          .eq("telefone", appointmentData.client.telefone)
-          .maybeSingle();
-          
-        if (checkError) throw checkError;
-        
-        if (existingClient) {
-          clientId = existingClient.id;
-        } else {
-          const clientData = {
-            nome: appointmentData.client.nome,
-            telefone: appointmentData.client.telefone,
-            email: appointmentData.client.email,
-          };
-          
-          const { data: newClient, error: clientError } = await supabase
-            .from("clientes")
-            .insert(clientData)
-            .select()
-            .single();
+      const clientId = appointmentData.client.id || await findOrCreateClient(appointmentData.client);
+      const newAppointmentId = await createAppointment(appointmentData, clientId);
 
-          if (clientError) throw clientError;
-          clientId = newClient.id;
-        }
-      }
-
-      // Create appointment data with explicit professional_id
-      const appointmentRecord = {
-        cliente_id: clientId,
-        servico_id: appointmentData.service.id,
-        profissional_id: professionalId,
-        data: appointmentData.date,
-        hora: appointmentData.time,
-        status: "agendado",
-      };
-
-      const { data: appointment, error: appointmentError } = await supabase
-        .from("agendamentos")
-        .insert(appointmentRecord)
-        .select()
-        .single();
-
-      if (appointmentError) throw appointmentError;
-
-      setAppointmentId(appointment.id);
+      setAppointmentId(newAppointmentId);
       setIsComplete(true);
-    } catch (error: any) {
-      console.error("Erro ao criar agendamento:", error);
+    } catch (error: unknown) {
+      console.error("Erro ao confirmar agendamento:", error);
+
+      const errorMessage = error instanceof Error ? error.message : "Erro desconhecido.";
       toast({
         title: "Erro ao confirmar agendamento",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -103,6 +116,6 @@ export const useConfirmation = () => {
 
   return {
     appointmentId,
-    handleConfirmation
+    handleConfirmation,
   };
 };
