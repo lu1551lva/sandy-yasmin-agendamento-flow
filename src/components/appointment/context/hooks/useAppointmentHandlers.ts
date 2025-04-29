@@ -1,6 +1,6 @@
 
 import { useCallback } from "react";
-import { AppointmentWithDetails } from "@/types/appointment.types";
+import { AppointmentWithDetails, AppointmentStatus } from "@/types/appointment.types";
 import { useUpdateAppointmentStatus } from "@/hooks/useUpdateAppointmentStatus";
 import { useRescheduleAppointment } from "@/hooks/useRescheduleAppointment";
 import { useToast } from "@/hooks/use-toast";
@@ -8,7 +8,7 @@ import { logAppointmentAction, logAppointmentError, logUIEvent } from "@/utils/d
 
 interface UseAppointmentHandlersProps {
   selectedAppointment: AppointmentWithDetails | null;
-  appointmentToUpdate: { id: string; status: string } | null;
+  appointmentToUpdate: { id: string; status: AppointmentStatus } | null;
   appointmentToCancel: string | null;
   cancelReason: string;
   validateAppointmentExists: (id: string | null) => boolean;
@@ -56,6 +56,7 @@ export function useAppointmentHandlers({
     });
 
     try {
+      // Ensure we're passing the correctly typed status
       const success = await updateStatus(appointmentToUpdate.id, appointmentToUpdate.status);
       
       if (success) {
