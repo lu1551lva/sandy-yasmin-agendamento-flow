@@ -45,16 +45,15 @@ export function AppointmentDialogs({
 
   // Function to wrap handleReschedule to ensure it returns a Promise<boolean>
   const handleRescheduleWrapper = async (date: Date, time: string): Promise<boolean> => {
-    if (!selectedAppointment) return false;
-    // Fix: Only passing date and time to handleReschedule (it already gets selectedAppointment from the state)
+    if (!selectedAppointment?.id) return false;
     return handleReschedule(date, time);
   };
 
   // Check if we should render each dialog based on valid IDs
   const showDetailsDialog = !!selectedAppointment;
   const showStatusUpdateDialog = !!appointmentToUpdate && validateAppointmentId(appointmentToUpdate.id);
-  const showCancelDialog = isCancelDialogOpen && validateAppointmentId(appointmentToCancel);
-  const showRescheduleDialog = showDetailsDialog && isRescheduleDialogOpen && selectedAppointment?.id;
+  const showCancelDialog = isCancelDialogOpen && !!appointmentToCancel && validateAppointmentId(appointmentToCancel);
+  const showRescheduleDialog = isRescheduleDialogOpen && !!selectedAppointment?.id && validateAppointmentId(selectedAppointment.id);
 
   return (
     <>
@@ -85,8 +84,8 @@ export function AppointmentDialogs({
           isOpen={isCancelDialogOpen}
           onClose={() => {
             setIsCancelDialogOpen(false);
-            // Don't clear appointmentToCancel here, let the hook handle it
             setCancelReason("");
+            // Don't immediately clear appointmentToCancel, let the dialog handle it
           }}
           reason={cancelReason}
           onReasonChange={setCancelReason}
@@ -97,7 +96,7 @@ export function AppointmentDialogs({
       )}
       
       {/* Reschedule Dialog */}
-      {showRescheduleDialog && (
+      {showRescheduleDialog && selectedAppointment && (
         <AppointmentRescheduleDialog
           appointment={selectedAppointment}
           isOpen={isRescheduleDialogOpen}

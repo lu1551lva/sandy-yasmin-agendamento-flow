@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useUpdateAppointmentStatus } from "@/hooks/useUpdateAppointmentStatus";
 import { useToast } from "@/hooks/use-toast";
@@ -43,8 +42,12 @@ export function useCancelDialogState(onAppointmentUpdated: () => void) {
     logUIEvent("Closing cancel dialog");
     setIsCancelDialogOpen(false);
     setCancelReason("");
-    // Only clear appointmentToCancel after dialog is closed
-    setTimeout(() => setAppointmentToCancel(null), 100);
+    // Keep the appointment ID valid until dialog is fully closed
+    setTimeout(() => {
+      if (!isLoading) {
+        setAppointmentToCancel(null);
+      }
+    }, 300);
   };
 
   /**
@@ -53,10 +56,8 @@ export function useCancelDialogState(onAppointmentUpdated: () => void) {
   const handleCancel = async () => {
     logStackTrace("handleCancel chamado");
     
-    // Store the current ID to be used throughout this function
-    const currentAppointmentId = appointmentToCancel;
-    
-    if (!currentAppointmentId || !validateAppointmentId(currentAppointmentId)) {
+    // Immediately check if ID is valid to prevent errors
+    if (!appointmentToCancel || !validateAppointmentId(appointmentToCancel)) {
       logAppointmentError("Nenhum ID válido para cancelamento", "null", { appointmentToCancel });
       toast({
         title: "Erro na operação",
@@ -66,6 +67,9 @@ export function useCancelDialogState(onAppointmentUpdated: () => void) {
       closeCancelDialog();
       return false;
     }
+
+    // Store the current ID to use throughout this function
+    const currentAppointmentId = appointmentToCancel;
 
     // Log more details about the appointment to cancel
     logAppointmentAction("Detalhes do agendamento a cancelar", currentAppointmentId, { 
@@ -89,15 +93,23 @@ export function useCancelDialogState(onAppointmentUpdated: () => void) {
         logAppointmentAction("Cancelamento bem-sucedido", currentAppointmentId, { motivo: reasonToUse });
         setIsCancelDialogOpen(false);
         setCancelReason("");
-        // Only clear appointmentToCancel after cancellation is successful
-        setTimeout(() => setAppointmentToCancel(null), 100);
         
+        // Call the update callback before cleaning up state
         logUIEvent("Chamando onAppointmentUpdated após cancelamento bem-sucedido");
         onAppointmentUpdated();
+        
         toast({
           title: "Agendamento cancelado",
           description: "O agendamento foi cancelado com sucesso.",
         });
+        
+        // Delay clearing the ID to prevent UI issues
+        setTimeout(() => {
+          if (!isLoading) {
+            setAppointmentToCancel(null);
+          }
+        }, 300);
+        
         return true;
       } else {
         logAppointmentError("Falha no cancelamento", currentAppointmentId);
@@ -117,7 +129,7 @@ export function useCancelDialogState(onAppointmentUpdated: () => void) {
       });
       return false;
     } finally {
-      // Make sure to clean up only after everything is done
+      // Make sure not to clear state while still loading
       if (!isLoading) {
         closeCancelDialog();
       }

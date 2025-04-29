@@ -7,7 +7,8 @@ import {
   logAppointmentAction, 
   logAppointmentError,
   traceAppointmentFlow,
-  logUIEvent
+  logUIEvent,
+  validateAppointmentId
 } from "@/utils/debugUtils";
 
 /**
@@ -24,14 +25,24 @@ export function useStatusUpdateState(onAppointmentUpdated: () => void) {
   const handleUpdateStatus = async () => {
     logUIEvent("Status update initiated");
     
-    if (!appointmentToUpdate || !appointmentToUpdate.id) {
+    if (!appointmentToUpdate) {
       logAppointmentError("Nenhum agendamento selecionado para atualização", "undefined");
       toast({
         title: "Erro na operação",
         description: "ID de agendamento inválido. Por favor, tente novamente.",
         variant: "destructive",
       });
-      return;
+      return false;
+    }
+
+    if (!validateAppointmentId(appointmentToUpdate.id)) {
+      logAppointmentError("ID de agendamento inválido", appointmentToUpdate.id || "undefined");
+      toast({
+        title: "Erro na operação",
+        description: "ID de agendamento inválido. Por favor, tente novamente.",
+        variant: "destructive",
+      });
+      return false;
     }
 
     traceAppointmentFlow("Iniciando atualização", appointmentToUpdate.id, appointmentToUpdate.status);
@@ -55,6 +66,7 @@ export function useStatusUpdateState(onAppointmentUpdated: () => void) {
             ? 'O agendamento foi marcado como concluído com sucesso.'
             : 'O status do agendamento foi atualizado com sucesso.',
         });
+        return true;
       } else {
         logAppointmentError("Falha na atualização", appointmentToUpdate.id);
         toast({
@@ -62,6 +74,7 @@ export function useStatusUpdateState(onAppointmentUpdated: () => void) {
           description: "Não foi possível atualizar o status do agendamento. Tente novamente.",
           variant: "destructive",
         });
+        return false;
       }
     } catch (error) {
       logAppointmentError("Erro inesperado na atualização", appointmentToUpdate.id, error);
@@ -70,6 +83,7 @@ export function useStatusUpdateState(onAppointmentUpdated: () => void) {
         description: "Ocorreu um erro ao processar sua solicitação. Tente novamente.",
         variant: "destructive",
       });
+      return false;
     }
   };
 

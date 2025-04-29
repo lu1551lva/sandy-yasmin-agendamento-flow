@@ -4,7 +4,7 @@ import { useStatusUpdateState } from "./dialog-state/useStatusUpdateState";
 import { useCancelDialogState } from "./dialog-state/useCancelDialogState";
 import { useRescheduleDialogState } from "./dialog-state/useRescheduleDialogState";
 import { useDebugState } from "./dialog-state/useDebugState";
-import { logAppointmentAction, logUIEvent } from "@/utils/debugUtils";
+import { logAppointmentAction, logUIEvent, validateAppointmentId } from "@/utils/debugUtils";
 
 /**
  * Hook that combines all dialog state hooks to manage appointment dialogs
@@ -52,9 +52,9 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
   const handleReschedule = async (date: Date, time: string): Promise<boolean> => {
     logUIEvent("Rescheduling appointment", selectedAppointment?.id || "unknown");
     
-    if (!selectedAppointment || !selectedAppointment.id) {
-      logAppointmentAction("Tentativa de reagendamento com agendamento nulo", "unknown");
-      return Promise.resolve(false); // Changed from reject to resolve with false for consistent return type
+    if (!selectedAppointment?.id || !validateAppointmentId(selectedAppointment.id)) {
+      logAppointmentAction("Tentativa de reagendamento com agendamento inválido", selectedAppointment?.id || "unknown");
+      return Promise.resolve(false);
     }
     
     return baseHandleReschedule(selectedAppointment, date, time);

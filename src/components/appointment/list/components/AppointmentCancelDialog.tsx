@@ -36,20 +36,20 @@ export function AppointmentCancelDialog({
   appointmentId
 }: AppointmentCancelDialogProps) {
   // Don't render the dialog if there is no appointment ID
-  if (!appointmentId) {
+  if (!appointmentId || !validateAppointmentId(appointmentId)) {
     return null;
   }
 
   // Log action and validate before confirming
   const handleConfirm = () => {
-    // Validate appointmentId before proceeding
+    // Double-check appointmentId before proceeding
     if (!validateAppointmentId(appointmentId)) {
       logAppointmentError("Tentativa de cancelar agendamento com ID inválido", appointmentId || "null");
       onClose();
       return;
     }
     
-    logAppointmentAction("Confirmando cancelamento em AppointmentCancelDialog", appointmentId || '', {
+    logAppointmentAction("Confirmando cancelamento em AppointmentCancelDialog", appointmentId, {
       motivo: reason || 'Cancelamento sem motivo especificado'
     });
     
@@ -58,7 +58,12 @@ export function AppointmentCancelDialog({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog 
+      open={isOpen && !!appointmentId} 
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Cancelar agendamento</DialogTitle>
@@ -89,7 +94,7 @@ export function AppointmentCancelDialog({
           <Button 
             variant="destructive"
             onClick={handleConfirm}
-            disabled={isLoading || !validateAppointmentId(appointmentId)}
+            disabled={isLoading}
           >
             {isLoading ? (
               <>
