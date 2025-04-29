@@ -1,12 +1,12 @@
 
-import { RescheduleDialog } from "../../RescheduleDialog";
 import { AppointmentWithDetails } from "@/types/appointment.types";
+import { RescheduleDialog } from "../../RescheduleDialog";
 
 interface AppointmentRescheduleDialogProps {
   appointment: AppointmentWithDetails | null;
   isOpen: boolean;
   onClose: () => void;
-  onReschedule: (date: Date, time: string) => Promise<void>;
+  onReschedule: (date: Date, time: string) => Promise<boolean>;
   isLoading: boolean;
 }
 

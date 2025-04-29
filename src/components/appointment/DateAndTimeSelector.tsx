@@ -8,7 +8,7 @@ import { TimeSelector } from "@/components/shared/date-time/TimeSelector";
 import { useTimeSlots } from "@/components/shared/date-time/hooks/useTimeSlots";
 import { useAppointmentData } from "./hooks/useAppointmentData";
 import { useProfessionals } from "./hooks/useProfessionals";
-import { useDateValidation } from "./hooks/useDateValidation";
+import { useDateValidation } from "@/hooks/useDateValidation";
 import { useToast } from "@/hooks/use-toast";
 
 interface DateSelectionProps {
@@ -69,7 +69,7 @@ const DateAndTimeSelector = ({
         });
       }
       
-      if (dateValidation.validateDate(newDate)) {
+      if (dateValidation.isValidAppointmentDate(newDate)) {
         handleDateSelect(newDate);
       }
     }
@@ -98,7 +98,7 @@ const DateAndTimeSelector = ({
         <DateSelector 
           date={date} 
           onDateChange={onDateSelect}
-          disabledDates={dateValidation.getDisabledDates}
+          disabledDates={(date) => dateValidation.isDateDisabled(date)}
         />
         
         {dateValidation.error && (

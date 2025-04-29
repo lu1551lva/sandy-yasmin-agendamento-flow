@@ -63,10 +63,9 @@ export function useAppointmentDialog({
         }
         
         onClose();
-        return true;
-      } else {
-        return false;
       }
+      
+      return success;
     } catch (error) {
       logAppointmentError("Erro ao reagendar via diálogo", appointment.id, error);
       return false;
@@ -95,10 +94,9 @@ export function useAppointmentDialog({
         }
         
         onClose();
-        return true;
-      } else {
-        return false;
       }
+      
+      return success;
     } catch (error) {
       logAppointmentError("Erro ao atualizar status via diálogo", appointment.id, error);
       return false;
@@ -125,10 +123,9 @@ export function useAppointmentDialog({
         }
         
         onClose();
-        return true;
-      } else {
-        return false;
       }
+      
+      return success;
     } catch (error) {
       logAppointmentError("Erro ao excluir via diálogo", appointment.id, error);
       return false;

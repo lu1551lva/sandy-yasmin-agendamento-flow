@@ -1,6 +1,6 @@
 
-import { AppointmentDialog } from "../../AppointmentDialog";
 import { AppointmentWithDetails } from "@/types/appointment.types";
+import { DialogContainer } from "../../dialog/DialogContainer";
 
 interface AppointmentDetailsDialogProps {
   appointment: AppointmentWithDetails | null;
@@ -20,7 +20,7 @@ export function AppointmentDetailsDialog({
   }
 
   return (
-    <AppointmentDialog
+    <DialogContainer
       appointment={appointment}
       isOpen={isOpen}
       onClose={onClose}
