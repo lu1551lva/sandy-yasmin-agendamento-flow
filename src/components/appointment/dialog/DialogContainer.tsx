@@ -11,12 +11,14 @@ interface DialogContainerProps {
   appointment: AppointmentWithDetails;
   isOpen: boolean;
   onClose: () => void;
+  onAppointmentUpdated?: () => void;
 }
 
 export function DialogContainer({
   appointment,
   isOpen,
   onClose,
+  onAppointmentUpdated
 }: DialogContainerProps) {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);

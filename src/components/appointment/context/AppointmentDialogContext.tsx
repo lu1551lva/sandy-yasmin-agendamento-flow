@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 import { AppointmentWithDetails, AppointmentStatus } from '@/types/appointment.types';
 import { useUpdateAppointmentStatus } from '@/hooks/useUpdateAppointmentStatus';
@@ -31,6 +30,7 @@ interface AppointmentDialogContextType {
   handleCancel: () => Promise<boolean>;
   handleReschedule: (date: Date, time: string) => Promise<boolean>;
   validateAppointmentExists: (id: string | null) => boolean;
+  handleAppointmentUpdated: () => void;
   
   // Helpers
   setSelectedAppointment: (appointment: AppointmentWithDetails | null) => void;
@@ -167,6 +167,12 @@ export function AppointmentDialogProvider({
     logUIEvent('Closing reschedule dialog');
     setIsRescheduleDialogOpen(false);
   }, []);
+
+  // Helper function to handle when an appointment is updated
+  const handleAppointmentUpdated = useCallback(() => {
+    logUIEvent('Appointment updated, refreshing data...');
+    onAppointmentUpdated();
+  }, [onAppointmentUpdated]);
 
   // Action handlers
   const handleStatusUpdate = useCallback(async (): Promise<boolean> => {
@@ -338,6 +344,7 @@ export function AppointmentDialogProvider({
     handleCancel,
     handleReschedule,
     validateAppointmentExists,
+    handleAppointmentUpdated,
     
     // Helpers
     setSelectedAppointment,

@@ -14,6 +14,8 @@ export function AppointmentDetailsDialog({
   isOpen,
   onClose,
 }: AppointmentDetailsDialogProps) {
+  const { handleAppointmentUpdated } = useAppointmentDialog();
+
   if (!appointment) {
     return null;
   }
@@ -23,6 +25,7 @@ export function AppointmentDetailsDialog({
       appointment={appointment}
       isOpen={isOpen}
       onClose={onClose}
+      onAppointmentUpdated={handleAppointmentUpdated}
     />
   );
 }
