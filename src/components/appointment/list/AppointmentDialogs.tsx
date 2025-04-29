@@ -46,7 +46,8 @@ export function AppointmentDialogs({
   // Function to wrap handleReschedule to ensure it returns a Promise<boolean>
   const handleRescheduleWrapper = async (date: Date, time: string): Promise<boolean> => {
     if (!selectedAppointment) return false;
-    return handleReschedule(selectedAppointment, date, time);
+    // Fix: Only passing date and time to handleReschedule (it already gets selectedAppointment from the state)
+    return handleReschedule(date, time);
   };
 
   // Validate IDs before rendering to prevent issues

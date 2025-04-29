@@ -49,12 +49,12 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
   } = useRescheduleDialogState(onAppointmentUpdated);
 
   // Wrapper for handleReschedule to provide the selectedAppointment
-  const handleReschedule = (date: Date, time: string) => {
+  const handleReschedule = async (date: Date, time: string): Promise<boolean> => {
     logUIEvent("Rescheduling appointment", selectedAppointment?.id || "unknown");
     
     if (!selectedAppointment || !selectedAppointment.id) {
       logAppointmentAction("Tentativa de reagendamento com agendamento nulo", "unknown");
-      return Promise.reject("Nenhum agendamento selecionado");
+      return Promise.resolve(false); // Changed from reject to resolve with false for consistent return type
     }
     
     return baseHandleReschedule(selectedAppointment, date, time);
