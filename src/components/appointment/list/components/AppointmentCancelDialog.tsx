@@ -1,3 +1,4 @@
+
 import { CancelAppointmentDialog } from "@/components/appointment/CancelAppointmentDialog";
 import { logAppointmentAction, logAppointmentError, validateAppointmentId } from "@/utils/debugUtils";
 

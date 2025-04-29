@@ -1,9 +1,15 @@
+
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { AppointmentStatus } from '@/types/appointment.types';
-import { logAppointmentAction, logAppointmentError, traceAppointmentFlow } from '@/utils/debugUtils';
+import { 
+  logAppointmentAction, 
+  logAppointmentError, 
+  traceAppointmentFlow,
+  logDatabaseOperation
+} from '@/utils/debugUtils';
 
 export const useUpdateAppointmentStatus = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -70,10 +76,14 @@ export const useUpdateAppointmentStatus = () => {
 
       logAppointmentAction('Preparando update', appointmentId, { updateData });
 
-      const { error: updateError } = await supabase
+      const result = await supabase
         .from('agendamentos')
         .update(updateData)
         .eq('id', appointmentId);
+      
+      logDatabaseOperation('UPDATE', 'agendamentos', result);
+      
+      const { error: updateError } = result;
 
       if (updateError) {
         logAppointmentError("Erro do Supabase na atualização", appointmentId, updateError);
@@ -96,9 +106,13 @@ export const useUpdateAppointmentStatus = () => {
 
       logAppointmentAction("Inserindo histórico", appointmentId, historyEntry);
 
-      const { error: historyError } = await supabase
+      const historyResult = await supabase
         .from('agendamento_historico')
         .insert(historyEntry);
+      
+      logDatabaseOperation('INSERT', 'agendamento_historico', historyResult);
+
+      const { error: historyError } = historyResult;
 
       if (historyError) {
         logAppointmentError("Erro ao registrar histórico", appointmentId, historyError);
@@ -155,10 +169,14 @@ export const useUpdateAppointmentStatus = () => {
       setIsLoading(true);
       traceAppointmentFlow(`Iniciando exclusão`, appointmentId);
 
-      const { error: historyDeleteError } = await supabase
+      const historyResult = await supabase
         .from('agendamento_historico')
         .delete()
         .eq('agendamento_id', appointmentId);
+      
+      logDatabaseOperation('DELETE', 'agendamento_historico', historyResult);
+
+      const { error: historyDeleteError } = historyResult;
 
       if (historyDeleteError) {
         logAppointmentError("Erro ao excluir histórico", appointmentId, historyDeleteError);
@@ -169,10 +187,14 @@ export const useUpdateAppointmentStatus = () => {
         });
       }
 
-      const { error: appointmentDeleteError } = await supabase
+      const appointmentResult = await supabase
         .from('agendamentos')
         .delete()
         .eq('id', appointmentId);
+      
+      logDatabaseOperation('DELETE', 'agendamentos', appointmentResult);
+
+      const { error: appointmentDeleteError } = appointmentResult;
 
       if (appointmentDeleteError) {
         logAppointmentError("Erro ao excluir agendamento", appointmentId, appointmentDeleteError);

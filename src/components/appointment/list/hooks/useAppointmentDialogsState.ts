@@ -1,9 +1,17 @@
+
 import { useState } from "react";
 import { AppointmentStatus, AppointmentWithDetails } from "@/types/appointment.types";
 import { useUpdateAppointmentStatus } from "@/hooks/useUpdateAppointmentStatus";
 import { useRescheduleAppointment } from "@/hooks/useRescheduleAppointment";
 import { useToast } from "@/hooks/use-toast";
-import { logAppointmentAction, logAppointmentError, traceAppointmentFlow } from "@/utils/debugUtils";
+import { 
+  logAppointmentAction, 
+  logAppointmentError, 
+  traceAppointmentFlow, 
+  debugAppointmentState,
+  logStackTrace,
+  logUIEvent
+} from "@/utils/debugUtils";
 
 export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentWithDetails | null>(null);
@@ -17,7 +25,24 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
   const { updateStatus, isLoading } = useUpdateAppointmentStatus();
   const { rescheduleAppointment, isLoading: isReschedulingLoading } = useRescheduleAppointment();
 
+  // Debug log do estado atual
+  const debugCurrentState = () => {
+    debugAppointmentState("useAppointmentDialogsState", {
+      selectedAppointment: selectedAppointment?.id || null,
+      appointmentToUpdate,
+      appointmentToCancel,
+      isCancelDialogOpen,
+      isRescheduleDialogOpen,
+      cancelReason,
+      isLoading,
+      isReschedulingLoading
+    });
+  };
+
   const handleUpdateStatus = async () => {
+    debugCurrentState();
+    logStackTrace("handleUpdateStatus chamado");
+
     if (!appointmentToUpdate) {
       logAppointmentError("Nenhum agendamento selecionado para atualização", "undefined");
       toast({
@@ -31,11 +56,17 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
     traceAppointmentFlow("Iniciando atualização", appointmentToUpdate.id, appointmentToUpdate.status);
 
     try {
+      logAppointmentAction("Chamando updateStatus", appointmentToUpdate.id, { 
+        status: appointmentToUpdate.status,
+        params: [appointmentToUpdate.id, appointmentToUpdate.status]
+      });
+
       const success = await updateStatus(appointmentToUpdate.id, appointmentToUpdate.status);
       
       if (success) {
         logAppointmentAction("Atualização bem-sucedida", appointmentToUpdate.id, appointmentToUpdate.status);
         setAppointmentToUpdate(null);
+        logUIEvent("Chamando onAppointmentUpdated após atualização bem-sucedida");
         onAppointmentUpdated();
         toast({
           title: appointmentToUpdate.status === 'concluido' ? 'Agendamento concluído' : 'Status atualizado',
@@ -62,6 +93,9 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
   };
 
   const handleCancel = async () => {
+    debugCurrentState();
+    logStackTrace("handleCancel chamado");
+    
     if (!appointmentToCancel) {
       logAppointmentError("Nenhum ID para cancelamento", "null", { appointmentToCancel });
       toast({
@@ -76,6 +110,12 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
     traceAppointmentFlow("Iniciando cancelamento", appointmentToCancel, { motivo: reasonToUse });
 
     try {
+      logAppointmentAction("Chamando updateStatus para cancelamento", appointmentToCancel, { 
+        status: "cancelado",
+        motivo: reasonToUse,
+        params: [appointmentToCancel, "cancelado", reasonToUse]
+      });
+
       const success = await updateStatus(appointmentToCancel, "cancelado", reasonToUse);
       
       if (success) {
@@ -83,6 +123,7 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
         setIsCancelDialogOpen(false);
         setAppointmentToCancel(null);
         setCancelReason("");
+        logUIEvent("Chamando onAppointmentUpdated após cancelamento bem-sucedido");
         onAppointmentUpdated();
         toast({
           title: "Agendamento cancelado",
@@ -107,6 +148,9 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
   };
 
   const handleReschedule = async (date: Date, time: string) => {
+    debugCurrentState();
+    logStackTrace("handleReschedule chamado");
+
     if (!selectedAppointment) {
       logAppointmentError("Nenhum agendamento selecionado para reagendamento", "null");
       return Promise.reject("Nenhum agendamento selecionado");
@@ -114,6 +158,13 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
 
     try {
       traceAppointmentFlow("Iniciando reagendamento", selectedAppointment.id, { date, time });
+
+      logAppointmentAction("Chamando rescheduleAppointment", selectedAppointment.id, { 
+        date, 
+        time, 
+        profissionalId: selectedAppointment.profissional.id,
+        params: [selectedAppointment.id, date, time, selectedAppointment.profissional.id]
+      });
 
       const success = await rescheduleAppointment(
         selectedAppointment.id,
@@ -125,6 +176,7 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
       if (success) {
         logAppointmentAction("Reagendamento bem-sucedido", selectedAppointment.id, { date, time });
         setIsRescheduleDialogOpen(false);
+        logUIEvent("Chamando onAppointmentUpdated após reagendamento bem-sucedido");
         onAppointmentUpdated();
         toast({
           title: "Agendamento reagendado",
