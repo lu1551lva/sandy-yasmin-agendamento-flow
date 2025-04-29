@@ -4,6 +4,7 @@ import { AppointmentStatus, AppointmentWithDetails } from "@/types/appointment.t
 import { useUpdateAppointmentStatus } from "@/hooks/useUpdateAppointmentStatus";
 import { useRescheduleAppointment } from "@/hooks/useRescheduleAppointment";
 import { useToast } from "@/hooks/use-toast";
+import { logAppointmentAction, logAppointmentError, traceAppointmentFlow } from "@/utils/debugUtils";
 
 export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
   // Dialog states
@@ -22,7 +23,7 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
   // Handle updating appointment status
   const handleUpdateStatus = async () => {
     if (!appointmentToUpdate) {
-      console.error("Nenhum agendamento selecionado para atualização");
+      logAppointmentError("Nenhum agendamento selecionado para atualização", "undefined");
       toast({
         title: "Erro na operação",
         description: "ID de agendamento inválido. Por favor, tente novamente.",
@@ -31,7 +32,7 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
       return;
     }
     
-    console.log(`Tentando atualizar agendamento ${appointmentToUpdate.id} para status ${appointmentToUpdate.status}`);
+    traceAppointmentFlow("Iniciando atualização", appointmentToUpdate.id, appointmentToUpdate.status);
     
     try {
       const success = await updateStatus(
@@ -40,7 +41,7 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
       );
       
       if (success) {
-        console.log(`Agendamento ${appointmentToUpdate.id} atualizado com sucesso para ${appointmentToUpdate.status}`);
+        logAppointmentAction("Atualização bem-sucedida", appointmentToUpdate.id, appointmentToUpdate.status);
         setAppointmentToUpdate(null);
         
         // Call the callback to update the UI
@@ -53,7 +54,7 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
             : 'O status do agendamento foi atualizado com sucesso.',
         });
       } else {
-        console.error(`Falha ao atualizar agendamento ${appointmentToUpdate.id}`);
+        logAppointmentError("Falha na atualização", appointmentToUpdate.id);
         toast({
           title: "Falha na operação",
           description: "Não foi possível atualizar o status do agendamento. Tente novamente.",
@@ -61,7 +62,7 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
         });
       }
     } catch (error) {
-      console.error("Erro inesperado ao atualizar status:", error);
+      logAppointmentError("Erro inesperado na atualização", appointmentToUpdate.id, error);
       toast({
         title: "Erro inesperado",
         description: "Ocorreu um erro ao processar sua solicitação. Tente novamente.",
@@ -73,7 +74,7 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
   // Handle cancelling appointment
   const handleCancel = async () => {
     if (!appointmentToCancel) {
-      console.error("Nenhum agendamento selecionado para cancelamento", { appointmentToCancel });
+      logAppointmentError("Nenhum ID para cancelamento", "null", { appointmentToCancel });
       toast({
         title: "Erro na operação",
         description: "ID de agendamento inválido. Por favor, tente novamente.",
@@ -83,7 +84,7 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
     }
     
     const reasonToUse = cancelReason || "Cancelamento sem motivo especificado";
-    console.log(`Tentando cancelar agendamento ${appointmentToCancel} com motivo: ${reasonToUse}`);
+    traceAppointmentFlow("Iniciando cancelamento", appointmentToCancel, { motivo: reasonToUse });
     
     try {
       const success = await updateStatus(
@@ -93,7 +94,7 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
       );
       
       if (success) {
-        console.log(`Agendamento ${appointmentToCancel} cancelado com sucesso`);
+        logAppointmentAction("Cancelamento bem-sucedido", appointmentToCancel, { motivo: reasonToUse });
         setIsCancelDialogOpen(false);
         setAppointmentToCancel(null);
         setCancelReason("");
@@ -106,7 +107,7 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
           description: "O agendamento foi cancelado com sucesso.",
         });
       } else {
-        console.error(`Falha ao cancelar agendamento ${appointmentToCancel}`);
+        logAppointmentError("Falha no cancelamento", appointmentToCancel || "unknown");
         toast({
           title: "Falha na operação",
           description: "Não foi possível cancelar o agendamento. Tente novamente.",
@@ -114,7 +115,7 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
         });
       }
     } catch (error) {
-      console.error("Erro inesperado ao cancelar agendamento:", error);
+      logAppointmentError("Erro inesperado no cancelamento", appointmentToCancel || "unknown", error);
       toast({
         title: "Erro inesperado",
         description: "Ocorreu um erro ao processar sua solicitação. Tente novamente.",
@@ -126,12 +127,12 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
   // Handle appointment reschedule
   const handleReschedule = async (date: Date, time: string) => {
     if (!selectedAppointment) {
-      console.error("Nenhum agendamento selecionado para reagendamento");
+      logAppointmentError("Nenhum agendamento selecionado para reagendamento", "null");
       return Promise.reject("Nenhum agendamento selecionado");
     }
     
     try {
-      console.log(`Tentando reagendar agendamento ${selectedAppointment.id} para ${date} às ${time}`);
+      traceAppointmentFlow("Iniciando reagendamento", selectedAppointment.id, { date, time });
       
       const success = await rescheduleAppointment(
         selectedAppointment.id, 
@@ -141,12 +142,11 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
       );
       
       if (success) {
+        logAppointmentAction("Reagendamento bem-sucedido", selectedAppointment.id, { date, time });
         setIsRescheduleDialogOpen(false);
         
         // Call the callback to update the UI
         onAppointmentUpdated();
-        
-        console.log(`Agendamento ${selectedAppointment.id} reagendado com sucesso`);
         
         toast({
           title: "Agendamento reagendado",
@@ -158,7 +158,7 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
         throw new Error("Falha ao reagendar agendamento");
       }
     } catch (error) {
-      console.error("Erro ao reagendar:", error);
+      logAppointmentError("Erro ao reagendar", selectedAppointment.id, error);
       
       toast({
         title: "Erro ao reagendar",

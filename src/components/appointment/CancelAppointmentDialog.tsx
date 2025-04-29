@@ -10,6 +10,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Loader2, XCircle } from "lucide-react";
+import { logAppointmentAction } from "@/utils/debugUtils";
 
 interface CancelAppointmentDialogProps {
   isOpen: boolean;
@@ -29,7 +30,8 @@ export function CancelAppointmentDialog({
   isLoading
 }: CancelAppointmentDialogProps) {
   const handleConfirm = () => {
-    console.log("Confirmando cancelamento com motivo:", reason);
+    logAppointmentAction('Executando cancelamento com motivo', 'dialog', reason);
+    // Aqui garantimos que o motivo é passado para a função de confirmação
     onConfirm(reason);
   };
 

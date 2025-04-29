@@ -4,14 +4,18 @@ import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { AppointmentStatus } from '@/types/appointment.types';
+import { logAppointmentAction, logAppointmentError, traceAppointmentFlow } from '@/utils/debugUtils';
 
 export const useUpdateAppointmentStatus = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  /**
+   * Invalida e recarrega todas as queries relacionadas a agendamentos
+   */
   const invalidateAppointmentQueries = async () => {
-    console.log('Invalidando caches de agendamentos...');
+    logAppointmentAction('Invalidando caches', 'all-queries');
     try {
       // Invalidate all appointment-related queries
       const queries = [
@@ -26,13 +30,13 @@ export const useUpdateAppointmentStatus = () => {
         queries.map(query => queryClient.invalidateQueries({ queryKey: [query] }))
       );
       
-      // Force immediate refetch of the main appointments query
+      // Force immediate refetch of the main appointments query to garantir a atualização da interface
       await queryClient.refetchQueries({ queryKey: ['appointments'] });
       
-      console.log('Cache invalidado e dados recarregados com sucesso.');
+      logAppointmentAction('Cache invalidado', 'all-queries', 'Dados recarregados com sucesso');
       return true;
     } catch (error) {
-      console.error('Erro ao invalidar cache:', error);
+      logAppointmentError('Erro ao invalidar cache', 'query-invalidation', error);
       toast({
         title: "Erro ao atualizar dados",
         description: "Não foi possível atualizar os dados na tela. Tente recarregar a página.",
@@ -42,11 +46,18 @@ export const useUpdateAppointmentStatus = () => {
     }
   };
 
+  /**
+   * Atualiza o status de um agendamento no banco de dados
+   * @param appointmentId ID do agendamento
+   * @param status Novo status
+   * @param reason Motivo (opcional, para cancelamentos)
+   */
   const updateStatus = async (appointmentId: string, status: AppointmentStatus, reason?: string) => {
     try {
-      if (!appointmentId) {
+      // Validar o ID do agendamento primeiro
+      if (!appointmentId || appointmentId.trim() === '') {
         const errorMsg = 'ID de agendamento inválido para atualização de status';
-        console.error(errorMsg, {appointmentId});
+        logAppointmentError(errorMsg, appointmentId || 'null');
         toast({
           title: "Erro ao atualizar status",
           description: "ID de agendamento inválido. Por favor, tente novamente.",
@@ -55,31 +66,30 @@ export const useUpdateAppointmentStatus = () => {
         return false;
       }
       
-      console.log(`Iniciando atualização do agendamento ${appointmentId} para status ${status}`);
+      traceAppointmentFlow(`Iniciando atualização`, appointmentId, { status });
       setIsLoading(true);
 
-      // STEP 1: Update appointment status in the database
+      // STEP 1: Montar os dados para atualização
       const updateData: Record<string, any> = { status };
       
-      // Add cancellation reason if provided
+      // Adicionar motivo de cancelamento se fornecido e for um cancelamento
       if (reason && status === 'cancelado') {
         updateData['motivo_cancelamento'] = reason;
-        console.log(`Adicionando motivo de cancelamento: "${reason}"`);
+        logAppointmentAction(`Adicionando motivo`, appointmentId, { motivo: reason });
       }
 
-      console.log('Dados para atualização:', updateData);
-      console.log('ID do agendamento:', appointmentId);
+      logAppointmentAction('Preparando update', appointmentId, { updateData });
       
-      // Perform the update operation with detailed logging
+      // STEP 2: Executar a atualização no Supabase com logs detalhados
       const { data: appointmentData, error: updateError } = await supabase
         .from('agendamentos')
         .update(updateData)
         .eq('id', appointmentId)
         .select();
 
-      // Log the result of the update operation
+      // Log do resultado da operação de atualização
       if (updateError) {
-        console.error("Erro ao atualizar status do agendamento:", updateError);
+        logAppointmentError("Erro do Supabase na atualização", appointmentId, updateError);
         toast({
           title: "Erro ao atualizar status",
           description: `Não foi possível atualizar o status do agendamento: ${updateError.message}`,
@@ -88,8 +98,9 @@ export const useUpdateAppointmentStatus = () => {
         return false;
       }
       
+      // Verificar se o update realmente fez alterações
       if (!appointmentData || appointmentData.length === 0) {
-        console.error("Agendamento não encontrado ou não atualizado", {appointmentId, status});
+        logAppointmentError("Nenhum dado retornado do update", appointmentId, { status });
         toast({
           title: "Erro ao atualizar status",
           description: "O agendamento não foi encontrado ou não pôde ser atualizado.",
@@ -98,10 +109,12 @@ export const useUpdateAppointmentStatus = () => {
         return false;
       }
       
-      console.log("Agendamento atualizado com sucesso:", appointmentData);
-      console.log(`Status alterado para: ${status}`);
+      logAppointmentAction("Update realizado com sucesso", appointmentId, { 
+        novoDados: appointmentData,
+        novoStatus: status
+      });
 
-      // STEP 2: Create history entry after successful update
+      // STEP 3: Criar entrada no histórico após atualização bem-sucedida
       const historyEntry = {
         agendamento_id: appointmentId,
         tipo: status,
@@ -109,14 +122,14 @@ export const useUpdateAppointmentStatus = () => {
         novo_valor: status,
       };
       
-      console.log("Inserindo entrada no histórico:", historyEntry);
+      logAppointmentAction("Inserindo histórico", appointmentId, historyEntry);
       
       const { error: historyError } = await supabase
         .from('agendamento_historico')
         .insert(historyEntry);
 
       if (historyError) {
-        console.error("Erro ao registrar histórico:", historyError);
+        logAppointmentError("Erro ao registrar histórico", appointmentId, historyError);
         // Still show success toast since the main update succeeded
         toast({
           title: "Aviso",
@@ -124,7 +137,7 @@ export const useUpdateAppointmentStatus = () => {
           variant: "default",
         });
       } else {
-        console.log("Histórico registrado com sucesso");
+        logAppointmentAction("Histórico registrado", appointmentId);
       }
 
       // Show success toast
@@ -135,8 +148,8 @@ export const useUpdateAppointmentStatus = () => {
           : 'O agendamento foi cancelado com sucesso.',
       });
 
-      // STEP 3: Invalidate and reload relevant queries
-      console.log("Atualizando interface...");
+      // STEP 4: Atualizar a interface invalidando e recarregando os dados
+      logAppointmentAction("Atualizando interface", appointmentId);
       await invalidateAppointmentQueries();
       
       // Additionally invalidate the specific appointment history query
@@ -144,7 +157,7 @@ export const useUpdateAppointmentStatus = () => {
 
       return true;
     } catch (error) {
-      console.error("Erro geral na atualização de status:", error);
+      logAppointmentError("Erro geral na atualização", appointmentId || 'unknown', error);
       toast({
         title: "Erro ao atualizar status",
         description: "Não foi possível atualizar o status do agendamento. Tente novamente.",
@@ -156,10 +169,14 @@ export const useUpdateAppointmentStatus = () => {
     }
   };
 
+  /**
+   * Exclui um agendamento e seu histórico
+   * @param appointmentId ID do agendamento a ser excluído
+   */
   const deleteAppointment = async (appointmentId: string) => {
     try {
       if (!appointmentId) {
-        console.error("ID de agendamento inválido para exclusão");
+        logAppointmentError("ID inválido para exclusão", "null");
         toast({
           title: "Erro ao excluir",
           description: "ID de agendamento inválido. Por favor, tente novamente.",
@@ -169,7 +186,7 @@ export const useUpdateAppointmentStatus = () => {
       }
       
       setIsLoading(true);
-      console.log(`Iniciando exclusão do agendamento ${appointmentId}`);
+      traceAppointmentFlow(`Iniciando exclusão`, appointmentId);
 
       // Delete appointment history first
       const { error: historyDeleteError } = await supabase
@@ -178,7 +195,7 @@ export const useUpdateAppointmentStatus = () => {
         .eq('agendamento_id', appointmentId);
 
       if (historyDeleteError) {
-        console.error("Erro ao excluir histórico do agendamento:", historyDeleteError);
+        logAppointmentError("Erro ao excluir histórico", appointmentId, historyDeleteError);
         toast({
           title: "Erro ao excluir histórico",
           description: `Erro ao excluir histórico: ${historyDeleteError.message}`,
@@ -194,7 +211,7 @@ export const useUpdateAppointmentStatus = () => {
         .eq('id', appointmentId);
 
       if (appointmentDeleteError) {
-        console.error("Erro ao excluir agendamento:", appointmentDeleteError);
+        logAppointmentError("Erro ao excluir agendamento", appointmentId, appointmentDeleteError);
         toast({
           title: "Erro ao excluir",
           description: `Não foi possível excluir o agendamento: ${appointmentDeleteError.message}`,
@@ -203,18 +220,19 @@ export const useUpdateAppointmentStatus = () => {
         return false;
       }
 
+      logAppointmentAction("Exclusão bem-sucedida", appointmentId);
       toast({
         title: "Agendamento excluído",
         description: "O agendamento foi excluído permanentemente.",
       });
 
       // Invalidate and reload relevant queries
-      console.log("Atualizando interface após exclusão...");
+      logAppointmentAction("Atualizando interface após exclusão", appointmentId);
       await invalidateAppointmentQueries();
 
       return true;
     } catch (error) {
-      console.error("Erro geral na exclusão do agendamento:", error);
+      logAppointmentError("Erro geral na exclusão", appointmentId || 'unknown', error);
       toast({
         title: "Erro ao excluir",
         description: "Não foi possível excluir o agendamento. Tente novamente.",

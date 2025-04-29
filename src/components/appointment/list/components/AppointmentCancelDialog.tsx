@@ -1,5 +1,6 @@
 
 import { CancelAppointmentDialog } from "@/components/appointment/CancelAppointmentDialog";
+import { logAppointmentAction, logAppointmentError, validateAppointmentId } from "@/utils/debugUtils";
 
 interface AppointmentCancelDialogProps {
   isOpen: boolean;
@@ -22,12 +23,14 @@ export function AppointmentCancelDialog({
 }: AppointmentCancelDialogProps) {
   // Validar que temos um appointmentId válido antes de prosseguir
   const handleConfirm = (cancelReason: string) => {
-    if (!appointmentId) {
-      console.error('Nenhum agendamento selecionado para cancelamento', {appointmentId});
+    if (!validateAppointmentId(appointmentId)) {
+      logAppointmentError('Nenhum agendamento selecionado para cancelamento', appointmentId || 'null');
       return;
     }
     
-    console.log(`Confirmando cancelamento para agendamento ${appointmentId} com motivo: ${cancelReason}`);
+    logAppointmentAction('Confirmando cancelamento', appointmentId!, { motivo: cancelReason });
+    
+    // Chamar onConfirm diretamente, pois o motivo já está sendo gerenciado pelo componente pai
     onConfirm();
   };
 
