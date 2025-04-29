@@ -8,6 +8,7 @@ interface AppointmentCancelDialogProps {
   onReasonChange: (reason: string) => void;
   onConfirm: () => void;
   isLoading: boolean;
+  appointmentId?: string | null; // Add optional appointmentId prop
 }
 
 export function AppointmentCancelDialog({
@@ -16,15 +17,25 @@ export function AppointmentCancelDialog({
   reason,
   onReasonChange,
   onConfirm,
-  isLoading
+  isLoading,
+  appointmentId // Add appointmentId as a prop
 }: AppointmentCancelDialogProps) {
+  // Validate that we have a valid appointmentId before confirming
+  const handleConfirm = () => {
+    if (!appointmentId) {
+      console.error('Nenhum agendamento selecionado para cancelamento');
+      return;
+    }
+    onConfirm();
+  };
+
   return (
     <CancelAppointmentDialog
       isOpen={isOpen}
       onClose={onClose}
       reason={reason}
       onReasonChange={onReasonChange}
-      onConfirm={onConfirm}
+      onConfirm={handleConfirm}
       isLoading={isLoading}
     />
   );

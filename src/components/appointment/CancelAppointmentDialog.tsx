@@ -51,7 +51,7 @@ export function CancelAppointmentDialog({
           />
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={isLoading}>
             Voltar
           </Button>
           <Button 

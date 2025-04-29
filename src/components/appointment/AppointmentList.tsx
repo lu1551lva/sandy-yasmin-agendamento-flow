@@ -30,6 +30,7 @@ export function AppointmentList({
 
   // Handle appointment actions
   const openCancelDialog = (appointmentId: string) => {
+    console.log(`Opening cancel dialog for appointment ID: ${appointmentId}`);
     setAppointmentToCancel(appointmentId);
     setIsCancelDialogOpen(true);
   };
@@ -68,26 +69,30 @@ export function AppointmentList({
         />
         
         {/* Completed Appointments */}
-        <AppointmentStatusSection
-          title="Agendamentos Concluídos"
-          titleClassName="text-green-800"
-          appointments={groupedAppointments.concluido}
-          onShowDetails={setSelectedAppointment}
-          onComplete={(id) => setAppointmentToUpdate({ id, status: "concluido" })}
-          onCancel={openCancelDialog}
-          isLoading={false}
-        />
+        {showAll && groupedAppointments.concluido.length > 0 && (
+          <AppointmentStatusSection
+            title="Agendamentos Concluídos"
+            titleClassName="text-green-800"
+            appointments={groupedAppointments.concluido}
+            onShowDetails={setSelectedAppointment}
+            onComplete={(id) => setAppointmentToUpdate({ id, status: "concluido" })}
+            onCancel={openCancelDialog}
+            isLoading={false}
+          />
+        )}
         
         {/* Canceled Appointments */}
-        <AppointmentStatusSection
-          title="Agendamentos Cancelados"
-          titleClassName="text-red-800"
-          appointments={groupedAppointments.cancelado}
-          onShowDetails={setSelectedAppointment}
-          onComplete={(id) => setAppointmentToUpdate({ id, status: "concluido" })}
-          onCancel={openCancelDialog}
-          isLoading={false}
-        />
+        {showAll && groupedAppointments.cancelado.length > 0 && (
+          <AppointmentStatusSection
+            title="Agendamentos Cancelados"
+            titleClassName="text-red-800"
+            appointments={groupedAppointments.cancelado}
+            onShowDetails={setSelectedAppointment}
+            onComplete={(id) => setAppointmentToUpdate({ id, status: "concluido" })}
+            onCancel={openCancelDialog}
+            isLoading={false}
+          />
+        )}
       </div>
       
       {/* Dialogs for appointments */}
