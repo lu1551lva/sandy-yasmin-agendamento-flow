@@ -9,13 +9,19 @@ export function AppointmentDialogManager() {
   const { 
     selectedAppointment,
     appointmentToUpdate,
+    appointmentToCancel,
+    cancelReason,
     isStatusDialogOpen, 
     closeStatusUpdateDialog,
     isCancelDialogOpen,
     closeCancelDialog,
     isRescheduleDialogOpen,
     closeRescheduleDialog,
-    closeAppointmentDetails
+    closeAppointmentDetails,
+    handleStatusUpdate,
+    handleCancel,
+    setCancelReason,
+    handleAppointmentUpdated
   } = useAppointmentDialog();
 
   return (
@@ -34,15 +40,29 @@ export function AppointmentDialogManager() {
         <AppointmentStatusUpdateDialog
           isOpen={isStatusDialogOpen}
           onOpenChange={(open) => !open && closeStatusUpdateDialog()}
-          status={appointmentToUpdate.status || null}
+          status={appointmentToUpdate.status}
+          appointmentId={appointmentToUpdate.id}
+          onStatusUpdated={() => {
+            closeStatusUpdateDialog();
+            handleAppointmentUpdated();
+          }}
         />
       )}
       
       {/* Cancel Dialog */}
-      <AppointmentCancelDialog
-        isOpen={isCancelDialogOpen}
-        onOpenChange={(open) => !open && closeCancelDialog()}
-      />
+      {appointmentToCancel && (
+        <AppointmentCancelDialog
+          isOpen={isCancelDialogOpen}
+          onOpenChange={(open) => !open && closeCancelDialog()}
+          appointmentId={appointmentToCancel}
+          reason={cancelReason}
+          onReasonChange={(reason) => setCancelReason(reason)}
+          onCanceled={() => {
+            closeCancelDialog();
+            handleAppointmentUpdated();
+          }}
+        />
+      )}
       
       {/* Reschedule Dialog */}
       <AppointmentRescheduleDialog
