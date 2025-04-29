@@ -71,6 +71,10 @@ export function useAppointmentsData() {
         throw err;
       }
     },
+    // Disable stale time to always get fresh data
+    staleTime: 0,
+    // Ensure refetching when the component gains focus
+    refetchOnWindowFocus: true,
   });
 
   // Fetch professionals for filter
@@ -93,9 +97,9 @@ export function useAppointmentsData() {
   });
 
   // Handle appointment update
-  const handleAppointmentUpdated = () => {
+  const handleAppointmentUpdated = async () => {
     console.log("Appointment updated, refreshing data...");
-    refetch();
+    await refetch();
   };
 
   return {
