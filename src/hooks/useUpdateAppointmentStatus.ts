@@ -64,6 +64,7 @@ export const useUpdateAppointmentStatus = () => {
       // Add cancellation reason if provided
       if (reason && status === 'cancelado') {
         updateData['motivo_cancelamento'] = reason;
+        console.log(`Adicionando motivo de cancelamento: "${reason}"`);
       }
 
       console.log('Dados para atualização:', updateData);
@@ -98,6 +99,7 @@ export const useUpdateAppointmentStatus = () => {
       }
       
       console.log("Agendamento atualizado com sucesso:", appointmentData);
+      console.log(`Status alterado para: ${status}`);
 
       // STEP 2: Create history entry after successful update
       const historyEntry = {

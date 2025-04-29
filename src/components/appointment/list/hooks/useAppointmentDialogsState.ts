@@ -82,13 +82,14 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
       return;
     }
     
-    console.log(`Tentando cancelar agendamento ${appointmentToCancel} com motivo: ${cancelReason || "Não especificado"}`);
+    const reasonToUse = cancelReason || "Cancelamento sem motivo especificado";
+    console.log(`Tentando cancelar agendamento ${appointmentToCancel} com motivo: ${reasonToUse}`);
     
     try {
       const success = await updateStatus(
         appointmentToCancel, 
         "cancelado", 
-        cancelReason || "Cancelamento sem motivo especificado"
+        reasonToUse
       );
       
       if (success) {
