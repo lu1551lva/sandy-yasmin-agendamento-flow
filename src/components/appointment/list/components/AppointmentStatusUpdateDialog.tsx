@@ -1,6 +1,7 @@
 
 import { StatusUpdateDialog } from "../../StatusUpdateDialog";
 import { AppointmentStatus } from "@/types/appointment.types";
+import { validateAppointmentId } from "@/utils/debugUtils";
 
 interface AppointmentStatusUpdateDialogProps {
   isOpen: boolean;
@@ -17,6 +18,11 @@ export function AppointmentStatusUpdateDialog({
   onConfirm,
   isLoading
 }: AppointmentStatusUpdateDialogProps) {
+  // Only render the dialog if we have a valid status
+  if (!status) {
+    return null;
+  }
+  
   return (
     <StatusUpdateDialog
       isOpen={isOpen}

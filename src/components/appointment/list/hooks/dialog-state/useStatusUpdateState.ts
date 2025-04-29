@@ -29,7 +29,7 @@ export function useStatusUpdateState(onAppointmentUpdated: () => void) {
       logAppointmentError("Nenhum agendamento selecionado para atualização", "undefined");
       toast({
         title: "Erro na operação",
-        description: "ID de agendamento inválido. Por favor, tente novamente.",
+        description: "Nenhum agendamento selecionado para atualização. Por favor, tente novamente.",
         variant: "destructive",
       });
       return false;
@@ -57,6 +57,7 @@ export function useStatusUpdateState(onAppointmentUpdated: () => void) {
       
       if (success) {
         logAppointmentAction("Atualização bem-sucedida", appointmentToUpdate.id, appointmentToUpdate.status);
+        // Only clear the appointment after a successful update
         setAppointmentToUpdate(null);
         logUIEvent("Chamando onAppointmentUpdated após atualização bem-sucedida");
         onAppointmentUpdated();

@@ -5,6 +5,7 @@ import { useCancelDialogState } from "./dialog-state/useCancelDialogState";
 import { useRescheduleDialogState } from "./dialog-state/useRescheduleDialogState";
 import { useDebugState } from "./dialog-state/useDebugState";
 import { logAppointmentAction, logUIEvent, validateAppointmentId } from "@/utils/debugUtils";
+import { AppointmentStatus } from "@/types/appointment.types";
 
 /**
  * Hook that combines all dialog state hooks to manage appointment dialogs
@@ -23,8 +24,22 @@ export function useAppointmentDialogsState(onAppointmentUpdated: () => void) {
     appointmentToUpdate,
     setAppointmentToUpdate,
     isLoading: isStatusUpdateLoading,
-    handleUpdateStatus
+    handleUpdateStatus: baseHandleUpdateStatus
   } = useStatusUpdateState(onAppointmentUpdated);
+
+  // Wrapper for handleUpdateStatus to ensure we have a valid appointment before updating
+  const handleUpdateStatus = async (status: AppointmentStatus): Promise<boolean> => {
+    if (!selectedAppointment?.id) {
+      logUIEvent("Tentativa de atualizar status sem agendamento selecionado");
+      return Promise.resolve(false);
+    }
+    
+    // Set the appointment to update with the selected appointment ID
+    setAppointmentToUpdate({ id: selectedAppointment.id, status });
+    
+    // After setting the appointmentToUpdate, execute the update
+    return baseHandleUpdateStatus();
+  };
 
   // Cancel dialog state
   const {
