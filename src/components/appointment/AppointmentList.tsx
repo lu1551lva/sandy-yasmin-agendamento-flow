@@ -3,10 +3,10 @@ import { useState } from "react";
 import { AppointmentWithDetails } from "@/types/appointment.types";
 import { AppointmentStatusSection } from "./list/AppointmentStatusSection";
 import { AppointmentDialog } from "./AppointmentDialog";
-import { AppointmentStatusUpdateDialog } from "./list/components/AppointmentStatusUpdateDialog";
-import { AppointmentCancelDialog } from "./list/components/AppointmentCancelDialog";
+import { StatusUpdateDialog } from "./StatusUpdateDialog";
 import { useAppointmentGrouper } from "./list/AppointmentGrouper";
 import { useUpdateAppointmentStatus } from "@/hooks/useUpdateAppointmentStatus";
+import { useToast } from "@/hooks/use-toast";
 
 interface AppointmentListProps {
   appointments: AppointmentWithDetails[];
@@ -21,17 +21,17 @@ export function AppointmentList({
 }: AppointmentListProps) {
   // Local state for dialogs
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentWithDetails | null>(null);
-  const [appointmentToUpdate, setAppointmentToUpdate] = useState<{ id: string; status: "concluido" | "cancelado" } | null>(null);
-  const [appointmentToCancel, setAppointmentToCancel] = useState<string | null>(null);
+  const [statusAction, setStatusAction] = useState<{ 
+    id: string; 
+    action: "complete" | "cancel" | "delete" | null;
+  } | null>(null);
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   
-  // Dialog visibility state
-  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
-  const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
-  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
-  
   // Status update hook
-  const { isLoading } = useUpdateAppointmentStatus();
+  const { updateStatus, isLoading } = useUpdateAppointmentStatus();
+  const { toast } = useToast();
 
   // Group appointments by status
   const { groupedAppointments, isEmpty } = useAppointmentGrouper({ 
@@ -46,16 +46,47 @@ export function AppointmentList({
     setIsDetailsDialogOpen(true);
   };
 
-  const handleComplete = (appointmentId: string) => {
-    console.log("Marking as complete:", appointmentId);
-    setAppointmentToUpdate({ id: appointmentId, status: "concluido" });
-    setIsStatusDialogOpen(true);
+  const handleActionClick = (appointmentId: string, action: "complete" | "cancel" | "delete") => {
+    setStatusAction({ id: appointmentId, action });
+    setIsConfirmDialogOpen(true);
   };
 
-  const handleCancel = (appointmentId: string) => {
-    console.log("Opening cancel dialog for:", appointmentId);
-    setAppointmentToCancel(appointmentId);
-    setIsCancelDialogOpen(true);
+  // Handle confirmation of status update
+  const handleConfirmAction = async () => {
+    if (!statusAction) return;
+    
+    const { id, action } = statusAction;
+    
+    try {
+      let success = false;
+      
+      switch (action) {
+        case "complete":
+          success = await updateStatus(id, "concluido");
+          break;
+        case "cancel":
+          success = await updateStatus(id, "cancelado", cancelReason);
+          break;
+        case "delete":
+          // Handle delete logic if needed
+          toast({
+            title: "Funcionalidade não implementada",
+            description: "A exclusão de agendamentos será implementada em breve.",
+            variant: "destructive",
+          });
+          break;
+      }
+      
+      if (success) {
+        // Close dialog and refresh data
+        setIsConfirmDialogOpen(false);
+        setStatusAction(null);
+        setCancelReason('');
+        onAppointmentUpdated();
+      }
+    } catch (error) {
+      console.error("Error handling action:", error);
+    }
   };
 
   // When any dialog closes and needs to refresh data
@@ -83,8 +114,7 @@ export function AppointmentList({
         titleClassName="text-blue-800"
         appointments={groupedAppointments.agendado}
         onShowDetails={handleShowDetails}
-        onComplete={handleComplete}
-        onCancel={handleCancel}
+        onActionClick={handleActionClick}
         isLoading={isLoading}
       />
       
@@ -95,9 +125,9 @@ export function AppointmentList({
           titleClassName="text-green-800"
           appointments={groupedAppointments.concluido}
           onShowDetails={handleShowDetails}
-          onComplete={handleComplete}
-          onCancel={handleCancel}
+          onActionClick={handleActionClick}
           isLoading={isLoading}
+          hideActions={true}
         />
       )}
       
@@ -108,9 +138,9 @@ export function AppointmentList({
           titleClassName="text-red-800"
           appointments={groupedAppointments.cancelado}
           onShowDetails={handleShowDetails}
-          onComplete={handleComplete}
-          onCancel={handleCancel}
+          onActionClick={handleActionClick}
           isLoading={isLoading}
+          hideActions={true}
         />
       )}
 
@@ -128,45 +158,15 @@ export function AppointmentList({
       )}
       
       {/* Status Update Dialog */}
-      {appointmentToUpdate && (
-        <AppointmentStatusUpdateDialog
-          isOpen={isStatusDialogOpen}
-          onOpenChange={(open) => {
-            setIsStatusDialogOpen(open);
-            if (!open) setAppointmentToUpdate(null);
-          }}
-          status={appointmentToUpdate.status}
-          appointmentId={appointmentToUpdate.id}
-          onStatusUpdated={() => {
-            setIsStatusDialogOpen(false);
-            setAppointmentToUpdate(null);
-            handleDialogClosed(true);
-          }}
-        />
-      )}
-      
-      {/* Cancel Dialog */}
-      {appointmentToCancel && (
-        <AppointmentCancelDialog
-          isOpen={isCancelDialogOpen}
-          onOpenChange={(open) => {
-            setIsCancelDialogOpen(open);
-            if (!open) {
-              setAppointmentToCancel(null);
-              setCancelReason('');
-            }
-          }}
-          appointmentId={appointmentToCancel}
-          reason={cancelReason}
-          onReasonChange={setCancelReason}
-          onCanceled={() => {
-            setIsCancelDialogOpen(false);
-            setAppointmentToCancel(null);
-            setCancelReason('');
-            handleDialogClosed(true);
-          }}
-        />
-      )}
+      <StatusUpdateDialog
+        isOpen={isConfirmDialogOpen}
+        onOpenChange={setIsConfirmDialogOpen}
+        action={statusAction?.action || null}
+        reason={cancelReason}
+        onReasonChange={setCancelReason}
+        onConfirm={handleConfirmAction}
+        isLoading={isLoading}
+      />
     </div>
   );
 }

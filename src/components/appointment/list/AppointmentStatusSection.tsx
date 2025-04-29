@@ -7,9 +7,9 @@ interface AppointmentStatusSectionProps {
   titleClassName: string;
   appointments: AppointmentWithDetails[];
   onShowDetails: (appointment: AppointmentWithDetails) => void;
-  onComplete: (appointmentId: string) => void;
-  onCancel: (appointmentId: string) => void;
+  onActionClick: (appointmentId: string, action: "complete" | "cancel" | "delete") => void;
   isLoading: boolean;
+  hideActions?: boolean;
 }
 
 export function AppointmentStatusSection({
@@ -17,11 +17,11 @@ export function AppointmentStatusSection({
   titleClassName,
   appointments,
   onShowDetails,
-  onComplete,
-  onCancel,
-  isLoading
+  onActionClick,
+  isLoading,
+  hideActions = false
 }: AppointmentStatusSectionProps) {
-  // If no appointments, don't render the section
+  // Se não houver agendamentos, não renderizar a seção
   if (!appointments || appointments.length === 0) {
     return null;
   }
@@ -35,9 +35,9 @@ export function AppointmentStatusSection({
             key={appointment.id}
             appointment={appointment}
             onShowDetails={onShowDetails}
-            onComplete={onComplete}
-            onCancel={onCancel}
+            onActionClick={onActionClick}
             isLoading={isLoading}
+            hideActions={hideActions}
           />
         ))}
       </div>

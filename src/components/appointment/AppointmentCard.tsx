@@ -7,7 +7,8 @@ import {
   XCircle, 
   PhoneCall, 
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,17 +18,17 @@ import { formatCurrency } from "@/lib/supabase";
 interface AppointmentCardProps {
   appointment: AppointmentWithDetails;
   onShowDetails: (appointment: AppointmentWithDetails) => void;
-  onComplete: (appointmentId: string) => void;
-  onCancel: (appointmentId: string) => void;
+  onActionClick: (appointmentId: string, action: "complete" | "cancel" | "delete") => void;
   isLoading: boolean;
+  hideActions?: boolean;
 }
 
 export function AppointmentCard({ 
   appointment, 
   onShowDetails, 
-  onComplete, 
-  onCancel, 
-  isLoading 
+  onActionClick, 
+  isLoading,
+  hideActions = false
 }: AppointmentCardProps) {
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -96,13 +97,13 @@ export function AppointmentCard({
           </div>
           
           <div className="mt-3 flex justify-end gap-2">
-            {appointment.status === "agendado" && !isLoading && (
+            {!hideActions && appointment.status === "agendado" && !isLoading && (
               <>
                 <Button
                   size="sm"
                   variant="outline"
                   className="text-green-600 border-green-600 hover:bg-green-50"
-                  onClick={() => onComplete(appointment.id)}
+                  onClick={() => onActionClick(appointment.id, "complete")}
                 >
                   <CheckCircle className="h-4 w-4 mr-1" />
                   Concluir
@@ -112,7 +113,7 @@ export function AppointmentCard({
                   size="sm"
                   variant="outline"
                   className="text-red-600 border-red-600 hover:bg-red-50"
-                  onClick={() => onCancel(appointment.id)}
+                  onClick={() => onActionClick(appointment.id, "cancel")}
                 >
                   <XCircle className="h-4 w-4 mr-1" />
                   Cancelar

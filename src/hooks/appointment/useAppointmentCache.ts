@@ -30,11 +30,12 @@ export const useAppointmentCache = () => {
         predicate: (query) => {
           // Check if the query key is an array
           if (Array.isArray(query.queryKey) && query.queryKey.length > 0) {
-            // Check if the first element of the query key is in our list
-            const queryBase = query.queryKey[0];
-            return typeof queryBase === 'string' && 
-                  (queryBase.includes('appointment') || 
-                   queryBase.includes('agendamento'));
+            // Check if any part of the query key contains our keywords
+            return query.queryKey.some(key => 
+              typeof key === 'string' && 
+              (key.includes('appointment') || 
+               key.includes('agendamento'))
+            );
           }
           return false;
         }
@@ -47,12 +48,25 @@ export const useAppointmentCache = () => {
         )
       );
 
-      // Force immediate refetch of the main appointments query
-      await queryClient.refetchQueries({ 
-        queryKey: ['appointments'],
-        type: 'active', 
-        exact: false
-      });
+      // Force immediate refetch of all active appointment queries
+      await Promise.all([
+        queryClient.refetchQueries({ 
+          predicate: query => 
+            Array.isArray(query.queryKey) && 
+            query.queryKey[0] === 'appointments',
+          type: 'active'
+        }),
+        // Also refetch weekly view
+        queryClient.refetchQueries({
+          queryKey: ['week-appointments'],
+          type: 'active'
+        }),
+        // Also refetch dashboard appointments
+        queryClient.refetchQueries({
+          queryKey: ['dashboard-appointments'],
+          type: 'active'
+        })
+      ]);
 
       logAppointmentAction('Cache invalidado', 'all-queries', 'Dados recarregados com sucesso');
       return true;

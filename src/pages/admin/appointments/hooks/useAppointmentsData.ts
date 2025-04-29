@@ -22,6 +22,13 @@ export function useAppointmentsData() {
     queryKey: ["appointments", selectedDate, statusFilter, professionalFilter, searchQuery],
     queryFn: async () => {
       try {
+        console.log("🔍 Fetching appointments with filters:", { 
+          date: selectedDate ? format(selectedDate, "yyyy-MM-dd") : null,
+          status: statusFilter, 
+          professional: professionalFilter,
+          search: searchQuery
+        });
+        
         let query = supabase
           .from("agendamentos")
           .select(`
@@ -46,28 +53,29 @@ export function useAppointmentsData() {
           query = query.eq("profissional_id", professionalFilter);
         }
         
-        console.log("Executing appointments query...");
         const { data, error } = await query.order("hora");
         
         if (error) {
-          console.error("Error fetching appointments:", error);
+          console.error("❌ Error fetching appointments:", error);
           throw error;
         }
+        
+        console.log(`✅ Retrieved ${data?.length || 0} appointments`);
         
         // Apply search filter on client side
         if (searchQuery && data) {
           const lowerQuery = searchQuery.toLowerCase();
           return data.filter((appt: any) => 
-            appt.cliente.nome.toLowerCase().includes(lowerQuery) ||
-            appt.cliente.telefone.includes(searchQuery) ||
+            appt.cliente.nome?.toLowerCase().includes(lowerQuery) ||
+            appt.cliente.telefone?.includes(searchQuery) ||
             appt.cliente.email?.toLowerCase().includes(lowerQuery) ||
-            appt.servico.nome.toLowerCase().includes(lowerQuery)
+            appt.servico.nome?.toLowerCase().includes(lowerQuery)
           );
         }
         
         return data || [];
       } catch (err) {
-        console.error("Failed to fetch appointments:", err);
+        console.error("❌ Failed to fetch appointments:", err);
         throw err;
       }
     },
@@ -90,7 +98,7 @@ export function useAppointmentsData() {
         if (error) throw error;
         return data || [];
       } catch (err) {
-        console.error("Failed to fetch professionals:", err);
+        console.error("❌ Failed to fetch professionals:", err);
         return [];
       }
     },
@@ -98,7 +106,7 @@ export function useAppointmentsData() {
 
   // Handle appointment update
   const handleAppointmentUpdated = async () => {
-    console.log("Appointment updated, refreshing data...");
+    console.log("🔄 Appointment updated, refreshing data...");
     await refetch();
   };
 
