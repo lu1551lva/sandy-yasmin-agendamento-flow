@@ -73,10 +73,6 @@ export function StatusUpdateDialog({
     }
   };
 
-  const handleConfirm = () => {
-    onConfirm();
-  };
-
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
       <AlertDialogContent>
@@ -101,7 +97,7 @@ export function StatusUpdateDialog({
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isLoading}>Voltar</AlertDialogCancel>
           <AlertDialogAction
-            onClick={handleConfirm}
+            onClick={onConfirm}
             disabled={isLoading}
             className={getButtonColor()}
           >

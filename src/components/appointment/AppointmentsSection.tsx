@@ -9,6 +9,7 @@ interface AppointmentsSectionProps {
   onShowDetails: (appointment: AppointmentWithDetails) => void;
   onActionClick: (appointmentId: string, action: "complete" | "cancel" | "delete") => void;
   isLoading: boolean;
+  hideActions?: boolean;
 }
 
 export function AppointmentsSection({
@@ -17,7 +18,8 @@ export function AppointmentsSection({
   appointments,
   onShowDetails,
   onActionClick,
-  isLoading
+  isLoading,
+  hideActions = false
 }: AppointmentsSectionProps) {
   // Se não houver agendamentos, não renderizar a seção
   if (!appointments || appointments.length === 0) {
@@ -35,6 +37,7 @@ export function AppointmentsSection({
             onShowDetails={onShowDetails}
             onActionClick={onActionClick}
             isLoading={isLoading}
+            hideActions={hideActions}
           />
         ))}
       </div>

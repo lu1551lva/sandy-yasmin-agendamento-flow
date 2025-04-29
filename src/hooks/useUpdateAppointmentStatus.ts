@@ -16,7 +16,29 @@ export const useUpdateAppointmentStatus = () => {
   // Direct invalidation of all appointment queries to ensure UI updates
   const forceRefreshAppointments = async () => {
     try {
+      console.log("🔄 Forcing refresh of all appointment data...");
+      
+      // First invalidate all queries that might contain appointment data
+      await queryClient.invalidateQueries({ 
+        predicate: query => 
+          Array.isArray(query.queryKey) && 
+          query.queryKey.some(key => 
+            typeof key === 'string' && 
+            (key.includes('appointment') || key.includes('agendamento'))
+          )
+      });
+
+      // Then specifically invalidate the ones we know about
       await invalidateAppointmentQueries();
+      
+      // Force immediate refetch of critical queries
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ['appointments'] }),
+        queryClient.refetchQueries({ queryKey: ['dashboard-appointments'] }),
+        queryClient.refetchQueries({ queryKey: ['weekly-appointments'] })
+      ]);
+      
+      console.log("✅ All appointment data refreshed successfully");
       return true;
     } catch (error) {
       console.error("❌ Erro ao forçar atualização do cache", error);

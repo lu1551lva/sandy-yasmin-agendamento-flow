@@ -25,6 +25,8 @@ export const useAppointmentCache = () => {
   const invalidateAppointmentQueries = async (): Promise<boolean> => {
     logAppointmentAction('Invalidando caches', 'all-queries');
     try {
+      console.log("🔄 Iniciando invalidação completa de caches de agendamentos");
+      
       // First invalidate using the predicate approach to catch all variants
       await queryClient.invalidateQueries({
         predicate: (query) => {
@@ -49,6 +51,7 @@ export const useAppointmentCache = () => {
       );
 
       // Force immediate refetch of all active appointment queries
+      console.log("🔄 Forçando atualização de queries ativas");
       await Promise.all([
         queryClient.refetchQueries({ 
           predicate: query => 
@@ -68,9 +71,11 @@ export const useAppointmentCache = () => {
         })
       ]);
 
+      console.log("✅ Cache invalidado e dados recarregados com sucesso");
       logAppointmentAction('Cache invalidado', 'all-queries', 'Dados recarregados com sucesso');
       return true;
     } catch (error) {
+      console.error("❌ Erro durante invalidação do cache:", error);
       logAppointmentError('Erro ao invalidar cache', 'query-invalidation', error);
       return false;
     }
@@ -96,10 +101,37 @@ export const useAppointmentCache = () => {
     logAppointmentAction('Detalhes do agendamento invalidados', appointmentId);
   };
 
+  /**
+   * Force refetch all appointment data
+   */
+  const forceRefetchAll = async (): Promise<boolean> => {
+    try {
+      console.log("🔄 Forçando recarga de todos os dados de agendamentos");
+      
+      // First invalidate everything
+      await invalidateAppointmentQueries();
+      
+      // Then explicitly refetch critical queries
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ['appointments'] }),
+        queryClient.refetchQueries({ queryKey: ['dashboard-appointments'] }),
+        queryClient.refetchQueries({ queryKey: ['weekly-appointments'] }),
+        queryClient.refetchQueries({ queryKey: ['week-appointments'] })
+      ]);
+      
+      console.log("✅ Todos os dados de agendamentos recarregados");
+      return true;
+    } catch (error) {
+      console.error("❌ Falha ao forçar recarga de dados:", error);
+      return false;
+    }
+  };
+
   return {
     invalidateAppointmentQueries,
     invalidateAppointmentHistory,
     invalidateAppointmentDetails,
+    forceRefetchAll,
     APPOINTMENT_QUERY_KEYS
   };
 };

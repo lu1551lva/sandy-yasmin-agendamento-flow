@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 import { AppointmentWithDetails } from "@/types/appointment.types";
+import { useAppointmentCache } from "@/hooks/appointment/useAppointmentCache";
 
 export function useAppointmentsData() {
   // State for filters
@@ -11,6 +12,7 @@ export function useAppointmentsData() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [professionalFilter, setProfessionalFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const { forceRefetchAll } = useAppointmentCache();
 
   // Fetch appointments
   const { 
@@ -107,7 +109,14 @@ export function useAppointmentsData() {
   // Handle appointment update
   const handleAppointmentUpdated = async () => {
     console.log("🔄 Appointment updated, refreshing data...");
+    
+    // Primeiro, forçar a atualização completa do cache
+    await forceRefetchAll();
+    
+    // Em seguida, refetch específico desta página
     await refetch();
+    
+    console.log("✅ Data refresh complete");
   };
 
   return {

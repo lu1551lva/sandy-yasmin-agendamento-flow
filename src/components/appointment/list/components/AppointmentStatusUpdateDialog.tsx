@@ -19,7 +19,7 @@ export function AppointmentStatusUpdateDialog({
   appointmentId,
   onStatusUpdated
 }: AppointmentStatusUpdateDialogProps) {
-  const { updateStatus, isLoading } = useUpdateAppointmentStatus();
+  const { updateStatus, deleteAppointment, isLoading } = useUpdateAppointmentStatus();
   const [isUpdating, setIsUpdating] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   
@@ -41,10 +41,18 @@ export function AppointmentStatusUpdateDialog({
     console.log(`Updating appointment ${appointmentId} status to: ${status}`);
     
     try {
-      const success = await updateStatus(appointmentId, status, status === "cancelado" ? cancelReason : undefined);
+      let success = false;
+      
+      if (status === "cancelado") {
+        success = await updateStatus(appointmentId, status, cancelReason);
+      } else if (status === "concluido") {
+        success = await updateStatus(appointmentId, status);
+      }
+      
       if (success) {
         console.log("Status updated successfully");
         onStatusUpdated();
+        onOpenChange(false);
       } else {
         console.error("Failed to update status");
       }

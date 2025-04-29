@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { AppointmentWithDetails } from "@/types/appointment.types";
 import { RecentReviews } from "@/components/admin/dashboard/RecentReviews";
+import { Badge } from "@/components/ui/badge";
 
 const Dashboard = () => {
   const { stats, isLoading } = useDashboardStats();
@@ -24,6 +25,7 @@ const Dashboard = () => {
         const today = new Date().toISOString().split('T')[0];
         const startIndex = (currentPage - 1) * limit;
         
+        // Modificado para mostrar todos os agendamentos, não apenas os "agendados"
         const { data, error, count } = await supabase
           .from("agendamentos")
           .select(`
@@ -33,7 +35,6 @@ const Dashboard = () => {
             profissional:profissionais(*)
           `, { count: "exact" })
           .gte("data", today)
-          .eq("status", "agendado")
           .order("data", { ascending: true })
           .order("hora", { ascending: true })
           .range(startIndex, startIndex + limit - 1);
@@ -54,6 +55,20 @@ const Dashboard = () => {
 
     fetchUpcomingAppointments();
   }, [currentPage]);
+
+  // Helper function to get status badge
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "agendado":
+        return <Badge variant="outline" className="bg-blue-100 text-blue-800">Agendado</Badge>;
+      case "concluido":
+        return <Badge variant="outline" className="bg-green-100 text-green-800">Concluído</Badge>;
+      case "cancelado":
+        return <Badge variant="outline" className="bg-red-100 text-red-800">Cancelado</Badge>;
+      default:
+        return <Badge variant="outline" className="bg-gray-100">{status}</Badge>;
+    }
+  };
 
   return (
     <div className="container mx-auto py-8">
@@ -88,7 +103,7 @@ const Dashboard = () => {
         <Card>
           <CardHeader>
             <CardTitle>Próximos Agendamentos</CardTitle>
-            <CardDescription>Agendamentos programados para os próximos dias</CardDescription>
+            <CardDescription>Todos os agendamentos programados para os próximos dias</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoadingAppointments ? (
@@ -99,7 +114,10 @@ const Dashboard = () => {
                   {upcomingAppointments.map((appointment) => (
                     <div key={appointment.id} className="flex justify-between border-b pb-2 last:border-0">
                       <div>
-                        <p className="font-medium">{appointment.cliente.nome}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{appointment.cliente.nome}</p>
+                          {getStatusBadge(appointment.status)}
+                        </div>
                         <p className="text-sm text-muted-foreground">{appointment.servico.nome}</p>
                       </div>
                       <div className="text-right">
