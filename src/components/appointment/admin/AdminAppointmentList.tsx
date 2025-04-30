@@ -32,6 +32,7 @@ export function AdminAppointmentList() {
     
     // Actions
     refetch,
+    handleAppointmentUpdated
   } = useAppointmentsData();
 
   // Dialog state
@@ -43,6 +44,9 @@ export function AdminAppointmentList() {
 
   // Selected tab state
   const [currentTab, setCurrentTab] = useState("all");
+  
+  // Manual refresh indicator
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // When statusFilter changes, update the tab
   useEffect(() => {
@@ -55,22 +59,22 @@ export function AdminAppointmentList() {
     setStatusFilter(value);
   };
 
-  // Group appointments by status for easier rendering
-  const groupedAppointments = {
-    agendado: appointments.filter(app => app.status === "agendado"),
-    concluido: appointments.filter(app => app.status === "concluido"),
-    cancelado: appointments.filter(app => app.status === "cancelado"),
-  };
-
   // Function to handle appointment selection
   const handleSelectAppointment = (appointment: AppointmentWithDetails) => {
+    console.log("👆 Selected appointment:", appointment.id, appointment.status);
     setSelectedAppointment(appointment);
     setShowDetailsDialog(true);
   };
 
   // Function to refresh the data
   const handleRefresh = async () => {
-    await refetch();
+    setIsRefreshing(true);
+    console.log("🔄 Manual refresh requested by user");
+    try {
+      await refetch();
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   // Render appointment card for a given list
@@ -92,6 +96,20 @@ export function AdminAppointmentList() {
     ));
   };
 
+  // Group appointments by status for easier rendering
+  const groupedAppointments = {
+    agendado: appointments.filter(app => app.status === "agendado"),
+    concluido: appointments.filter(app => app.status === "concluido"),
+    cancelado: appointments.filter(app => app.status === "cancelado"),
+  };
+
+  console.log("📋 Appointments count by status:", {
+    all: appointments.length,
+    agendado: groupedAppointments.agendado.length,
+    concluido: groupedAppointments.concluido.length,
+    cancelado: groupedAppointments.cancelado.length,
+  });
+
   const formattedDate = selectedDate 
     ? format(selectedDate, "EEEE, d 'de' MMMM", { locale: ptBR })
     : "Selecione uma data";
@@ -112,9 +130,13 @@ export function AdminAppointmentList() {
             variant="outline" 
             className="h-9" 
             onClick={handleRefresh} 
-            disabled={isLoading}
+            disabled={isLoading || isRefreshing}
           >
-            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CalendarIcon className="h-4 w-4 mr-2" />}
+            {isRefreshing || isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <CalendarIcon className="h-4 w-4 mr-2" />
+            )}
             Atualizar
           </Button>
         </div>
@@ -151,7 +173,7 @@ export function AdminAppointmentList() {
               <div className="text-center py-8 text-red-500 px-6">
                 Erro ao carregar agendamentos. Por favor, tente novamente.
               </div>
-            ) : isLoading ? (
+            ) : isLoading || isRefreshing ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
@@ -220,7 +242,7 @@ export function AdminAppointmentList() {
         setShowRescheduleDialog={setShowRescheduleDialog}
         showDeleteDialog={showDeleteDialog}
         setShowDeleteDialog={setShowDeleteDialog}
-        onAppointmentUpdated={handleRefresh}
+        onAppointmentUpdated={handleAppointmentUpdated}
       />
     </div>
   );

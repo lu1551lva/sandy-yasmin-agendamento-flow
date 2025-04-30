@@ -17,7 +17,8 @@ export const useAppointmentCache = () => {
     'week-appointments',
     'appointment-details',
     'upcoming-appointments',
-    'dashboard-data'
+    'dashboard-data',
+    'new-clients'
   ];
 
   /**
@@ -35,7 +36,8 @@ export const useAppointmentCache = () => {
             return query.queryKey.some(key => 
               typeof key === 'string' && 
               (key.includes('appointment') || 
-               key.includes('agendamento'))
+               key.includes('agendamento') ||
+               key.includes('dashboard'))
             );
           }
           return false;
@@ -55,7 +57,8 @@ export const useAppointmentCache = () => {
         queryClient.refetchQueries({ 
           predicate: query => 
             Array.isArray(query.queryKey) && 
-            query.queryKey[0] === 'appointments',
+            (query.queryKey[0] === 'appointments' || 
+             query.queryKey[0] === 'dashboard-data'),
           type: 'active'
         }),
         // Also refetch weekly view
@@ -76,6 +79,11 @@ export const useAppointmentCache = () => {
         // Also refetch upcoming appointments
         queryClient.refetchQueries({
           queryKey: ['upcoming-appointments'],
+          type: 'active'
+        }),
+        // Also refetch new clients count
+        queryClient.refetchQueries({
+          queryKey: ['new-clients'],
           type: 'active'
         })
       ]);
@@ -123,7 +131,8 @@ export const useAppointmentCache = () => {
         queryClient.refetchQueries({ queryKey: ['weekly-appointments'] }),
         queryClient.refetchQueries({ queryKey: ['week-appointments'] }),
         queryClient.refetchQueries({ queryKey: ['dashboard-data'] }),
-        queryClient.refetchQueries({ queryKey: ['upcoming-appointments'] })
+        queryClient.refetchQueries({ queryKey: ['upcoming-appointments'] }),
+        queryClient.refetchQueries({ queryKey: ['new-clients'] })
       ]);
       
       console.log("✅ All appointment data reloaded");

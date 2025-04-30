@@ -1,18 +1,32 @@
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 import { AppointmentWithDetails } from "@/types/appointment.types";
 import { useAppointmentCache } from "@/hooks/appointment/useAppointmentCache";
 
 export function useAppointmentsData() {
+  // Query client for manual cache operations
+  const queryClient = useQueryClient();
+  
   // State for filters
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [professionalFilter, setProfessionalFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // Cache helpers
   const { forceRefetchAll } = useAppointmentCache();
+
+  // Generate a stable query key that includes all filters
+  const appointmentsQueryKey = [
+    "appointments",
+    selectedDate ? format(selectedDate, "yyyy-MM-dd") : null,
+    statusFilter,
+    professionalFilter,
+    searchQuery
+  ];
 
   // Fetch appointments
   const { 
@@ -21,7 +35,7 @@ export function useAppointmentsData() {
     refetch,
     error
   } = useQuery({
-    queryKey: ["appointments", selectedDate, statusFilter, professionalFilter, searchQuery],
+    queryKey: appointmentsQueryKey,
     queryFn: async () => {
       try {
         console.log("🔍 Fetching appointments with filters:", { 
@@ -113,8 +127,12 @@ export function useAppointmentsData() {
     // First, force a complete cache refresh
     await forceRefetchAll();
     
-    // Then, specific refetch for this page
+    // Then, specific refetch for this page with current filters
     await refetch();
+    
+    // Also refresh dashboard data
+    await queryClient.refetchQueries({ queryKey: ['dashboard-data'] });
+    await queryClient.refetchQueries({ queryKey: ['upcoming-appointments'] });
     
     console.log("✅ Data refresh complete");
   };

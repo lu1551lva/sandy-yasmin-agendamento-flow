@@ -10,18 +10,18 @@ export const useAppointmentActions = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Function to invalidate all appointment-related queries
+  // Function to invalidate all appointment-related queries and force refetch
   const invalidateQueries = async () => {
     try {
-      console.log("🔄 Invalidating all appointment-related queries...");
+      console.log("🔄 Invalidating and refreshing all appointment-related queries...");
       
-      // First, invalidate using the predicate approach to catch all variants
+      // First, invalidate using the predicate approach to catch all variants with filters
       await queryClient.invalidateQueries({ 
         predicate: (query) => {
           if (Array.isArray(query.queryKey)) {
             return query.queryKey.some(key => 
               typeof key === 'string' && 
-              (key.includes('appointment') || key.includes('agendamento'))
+              (key.includes('appointment') || key.includes('agendamento') || key.includes('dashboard'))
             );
           }
           return false;
@@ -35,6 +35,7 @@ export const useAppointmentActions = () => {
         'weekly-appointments',
         'week-appointments',
         'dashboard-data',
+        'upcoming-appointments'
       ];
       
       await Promise.all(
@@ -49,6 +50,7 @@ export const useAppointmentActions = () => {
         queryClient.refetchQueries({ queryKey: ['dashboard-appointments'] }),
         queryClient.refetchQueries({ queryKey: ['weekly-appointments'] }),
         queryClient.refetchQueries({ queryKey: ['dashboard-data'] }),
+        queryClient.refetchQueries({ queryKey: ['upcoming-appointments'] })
       ]);
       
       console.log("✅ All appointment data refreshed successfully");
@@ -84,6 +86,8 @@ export const useAppointmentActions = () => {
 
       if (updateError) throw updateError;
       if (!data || data.length === 0) throw new Error("Nenhum agendamento foi atualizado");
+      
+      console.log("✓ Status update result:", data);
 
       // Create history entry
       const { error: historyError } = await supabase
@@ -136,10 +140,8 @@ export const useAppointmentActions = () => {
     setIsLoading(true);
     
     try {
-      console.log(`❌ Canceling appointment: ${appointmentId}, reason: ${reason || "not specified"}`);
-      
-      // Prepare reason text
       const reasonText = reason || "Não especificado";
+      console.log(`❌ Canceling appointment: ${appointmentId}, reason: ${reasonText}`);
       
       // Update appointment status
       const { data, error: updateError } = await supabase
@@ -153,6 +155,8 @@ export const useAppointmentActions = () => {
 
       if (updateError) throw updateError;
       if (!data || data.length === 0) throw new Error("Nenhum agendamento foi atualizado");
+      
+      console.log("✓ Status update result:", data);
 
       // Create history entry
       const { error: historyError } = await supabase
@@ -219,6 +223,8 @@ export const useAppointmentActions = () => {
 
       if (updateError) throw updateError;
       if (!data || data.length === 0) throw new Error("Nenhum agendamento foi atualizado");
+      
+      console.log("✓ Reschedule update result:", data);
 
       // Create history entry
       const { error: historyError } = await supabase
@@ -292,6 +298,8 @@ export const useAppointmentActions = () => {
         .select();
 
       if (deleteError) throw deleteError;
+      
+      console.log("✓ Delete result:", data);
       
       // Invalidate and refetch queries
       await invalidateQueries();
