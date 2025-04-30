@@ -10,10 +10,24 @@ interface AppointmentDetailsSectionProps {
 }
 
 export function AppointmentDetailsSection({ data, hora, profissional }: AppointmentDetailsSectionProps) {
-  // Format date for Brazilian date format
-  const formattedDate = data.includes('-') 
-    ? format(parseISO(data), "dd/MM/yyyy", { locale: ptBR })
-    : data;
+  // Format date for Brazilian date format (DD/MM/YYYY)
+  const formatDateBrazilian = (dateString: string) => {
+    if (!dateString) return '';
+    
+    if (dateString.includes('-')) {
+      try {
+        // Convert from YYYY-MM-DD to DD/MM/YYYY
+        const date = parseISO(dateString);
+        return format(date, "dd/MM/yyyy", { locale: ptBR });
+      } catch (error) {
+        return dateString;
+      }
+    }
+    
+    return dateString;
+  };
+  
+  const formattedDate = formatDateBrazilian(data);
     
   return (
     <div className="space-y-2">

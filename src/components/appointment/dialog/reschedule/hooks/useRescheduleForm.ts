@@ -41,10 +41,10 @@ export function useRescheduleForm({ appointment, isOpen }: UseRescheduleFormProp
       
       const formattedDate = format(selectedDate, "yyyy-MM-dd");
       
-      // Fetch appointments that might conflict
+      // Buscar agendamentos que possam conflitar (apenas os agendados)
       const { data: existingAppointments, error } = await supabase
         .from('agendamentos')
-        .select('hora')
+        .select('hora, id')
         .eq('data', formattedDate)
         .eq('profissional_id', appointment.profissional.id)
         .eq('status', 'agendado');
@@ -53,6 +53,13 @@ export function useRescheduleForm({ appointment, isOpen }: UseRescheduleFormProp
         console.error("Erro ao buscar agendamentos existentes:", error);
         return [];
       }
+
+      // Permitir reagendar para o mesmo horário do próprio agendamento
+      const filteredAppointments = existingAppointments.filter(
+        appt => appt.id !== appointment.id
+      );
+      
+      console.log(`Encontrados ${filteredAppointments.length} agendamentos existentes para o dia ${formattedDate}`);
 
       // Generate available time slots
       const { horario_inicio, horario_fim } = appointment.profissional;
@@ -74,7 +81,7 @@ export function useRescheduleForm({ appointment, isOpen }: UseRescheduleFormProp
         const timeSlot = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
         
         // Check if this time slot is already booked
-        const isSlotBooked = existingAppointments.some(
+        const isSlotBooked = filteredAppointments.some(
           appointment => appointment.hora === timeSlot
         );
 

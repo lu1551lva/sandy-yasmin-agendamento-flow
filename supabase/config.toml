@@ -26,3 +26,4 @@ enabled = false
 
 [functions.auto-complete-appointments]
 verify_jwt = false
+

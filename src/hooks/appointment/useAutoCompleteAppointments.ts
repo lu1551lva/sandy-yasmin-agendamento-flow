@@ -1,67 +1,62 @@
 
 import { useEffect, useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
+import { useToast } from '@/hooks/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
 
 export function useAutoCompleteAppointments() {
-  const [isCompleting, setIsCompleting] = useState(false);
-  const [lastCompleted, setLastCompleted] = useState<Date | null>(null);
+  const [isRunning, setIsRunning] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
-  // Function to check and complete past appointments
   const runAutoComplete = async () => {
-    if (isCompleting) return;
+    if (isRunning) return;
     
-    setIsCompleting(true);
+    setIsRunning(true);
     try {
-      console.log("🔄 Running auto-completion for past appointments...");
+      const { data, error } = await supabase.functions.invoke('auto-complete-appointments');
       
-      // Call the auto-complete function
-      const response = await fetch('https://bqzlexfnozmaqtvpbpay.supabase.co/functions/v1/auto-complete-appointments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxemxleGZub3ptYXF0dnBicGF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUzNTk2ODUsImV4cCI6MjA2MDkzNTY4NX0.C8r5NK4dsQ_deXshLIQZmTvtd8ZgsZEWzF0WBxB7A4w`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${await response.text()}`);
+      if (error) {
+        console.error('Erro ao executar auto-complete:', error);
+        return;
       }
       
-      const result = await response.json();
-      console.log("✓ Auto-complete result:", result);
-      
-      if (result.updated > 0) {
+      // Se algum agendamento foi atualizado, invalidar os caches e mostrar notificação
+      if (data?.updated > 0) {
+        console.log(`✅ ${data.updated} agendamentos antigos foram automaticamente concluídos.`);
+        
+        // Invalidar todos os caches relacionados a agendamentos
+        await queryClient.invalidateQueries({ 
+          predicate: query => 
+            Array.isArray(query.queryKey) && 
+            query.queryKey.some(key => 
+              typeof key === 'string' && 
+              (key.includes('appointment') || key.includes('agendamento'))
+            )
+        });
+        
+        // Mostrar notificação apenas se tiver atualizado algum
         toast({
-          title: "Atualização automática",
-          description: `${result.updated} agendamentos passados foram marcados como concluídos.`,
+          title: "Agendamentos atualizados",
+          description: `${data.updated} agendamentos antigos foram automaticamente concluídos.`
         });
       }
-      
-      setLastCompleted(new Date());
-    } catch (error) {
-      console.error("❌ Auto-complete error:", error);
-      // Don't show error toast to avoid annoying users, just log it
+    } catch (err) {
+      console.error('Erro inesperado ao executar auto-complete:', err);
     } finally {
-      setIsCompleting(false);
+      setIsRunning(false);
     }
   };
-  
-  // Run on component mount and every 15 minutes
+
   useEffect(() => {
-    // Run once on component mount
+    // Executar uma vez ao montar o componente
     runAutoComplete();
     
-    // Then set up interval (every 15 minutes = 900000ms)
-    const interval = setInterval(runAutoComplete, 900000);
+    // Configurar intervalo para verificar a cada 5 minutos
+    const interval = setInterval(runAutoComplete, 5 * 60 * 1000);
     
     return () => clearInterval(interval);
   }, []);
   
-  return {
-    runAutoComplete,
-    isCompleting,
-    lastCompleted
-  };
+  return { runAutoComplete, isRunning };
 }

@@ -83,18 +83,30 @@ export const useTimeSlots = ({
       let currentHour = startHour;
       let currentMinute = startMinute;
 
+      // Filtrar apenas agendamentos do profissional selecionado e com status "agendado"
+      const professionalAppointments = appointments?.filter(
+        (appointment) => 
+          appointment.profissional_id === professional.id && 
+          appointment.status === "agendado"
+      ) || [];
+      
+      console.log(`Encontrados ${professionalAppointments.length} agendamentos para o profissional no dia selecionado`);
+
       while (
         currentHour < endHour ||
         (currentHour === endHour && currentMinute <= endMinute - serviceDuration)
       ) {
         const timeSlot = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
         
-        const isSlotBooked = appointments?.some(
+        // Verificar se este horário já está agendado (apenas agendamentos ativos)
+        const isSlotBooked = professionalAppointments.some(
           (appointment) => appointment.hora === timeSlot
         );
 
         if (!isSlotBooked) {
           slots.push(timeSlot);
+        } else {
+          console.log(`Horário ${timeSlot} já está ocupado`);
         }
 
         currentMinute += serviceDuration;

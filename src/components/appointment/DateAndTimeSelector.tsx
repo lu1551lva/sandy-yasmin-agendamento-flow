@@ -10,6 +10,9 @@ import { useAppointmentData } from "./hooks/useAppointmentData";
 import { useProfessionals } from "./hooks/useProfessionals";
 import { useDateValidation } from "@/hooks/useDateValidation";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 
 interface DateSelectionProps {
   selectedService: Service;
@@ -40,7 +43,6 @@ const DateAndTimeSelector = ({
   } = useAppointmentData(selectedService, selectedDate, selectedTime, updateAppointmentData);
 
   const { professionals, isLoading, error } = useProfessionals(date);
-  const [appointments, setAppointments] = useState<any[]>([]);
   const { toast } = useToast();
 
   // Find the selected professional
@@ -48,6 +50,32 @@ const DateAndTimeSelector = ({
   
   // Use the enhanced date validation hook
   const dateValidation = useDateValidation(selectedProfessional);
+  
+  // Fetch appointments for the selected date and professional
+  const { data: appointments = [], isLoading: isLoadingAppointments } = useQuery({
+    queryKey: ['appointments-for-date', date ? format(date, 'yyyy-MM-dd') : null, professionalId],
+    queryFn: async () => {
+      if (!date || !professionalId) return [];
+      
+      const formattedDate = format(date, 'yyyy-MM-dd');
+      
+      // Buscar apenas agendamentos para o profissional e data selecionados
+      const { data, error } = await supabase
+        .from('agendamentos')
+        .select('*')
+        .eq('data', formattedDate)
+        .eq('profissional_id', professionalId);
+      
+      if (error) {
+        console.error("Erro ao buscar agendamentos:", error);
+        return [];
+      }
+      
+      console.log(`Encontrados ${data?.length || 0} agendamentos para ${formattedDate} com o profissional ${professionalId}`);
+      return data || [];
+    },
+    enabled: !!date && !!professionalId
+  });
   
   // Generate available time slots
   const availableTimes = useTimeSlots({
