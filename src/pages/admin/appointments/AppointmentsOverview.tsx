@@ -4,9 +4,13 @@ import { CalendarView } from "@/components/appointment/admin/CalendarView";
 import { AppointmentAlerts } from "@/components/appointment/admin/AppointmentAlerts";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { AdminAppointmentList } from "@/components/appointment/admin/AdminAppointmentList";
+import { useAutoCompleteAppointments } from "@/hooks/appointment/useAutoCompleteAppointments";
 
 const AppointmentsOverview = () => {
   const [view, setView] = useState<string>("calendar");
+  
+  // Initialize auto-completion for past appointments
+  useAutoCompleteAppointments();
 
   return (
     <div className="space-y-6">

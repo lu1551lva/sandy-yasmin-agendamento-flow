@@ -5,7 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { AppointmentWithDetails } from "@/types/appointment.types";
 import { ClientDetailsSection } from "./sections/ClientDetailsSection";
 import { ServiceDetailsSection } from "./sections/ServiceDetailsSection";
-import { AppointmentDetailsSection } from "./sections/AppointmentDetailsSection";
+import { AppointmentDetailsSection } from "./AppointmentDetailsSection";
 import { DialogActions } from "./actions/DialogActions";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -43,7 +43,7 @@ export function AppointmentDetailsDialog({
     }
   };
 
-  // Format date for display if it's a valid date string
+  // Format date for display in Brazilian format (dd/MM/yyyy)
   const formattedDate = appointment.data ? 
     (appointment.data.includes("-") ? 
       format(parseISO(appointment.data), "dd/MM/yyyy", { locale: ptBR }) : 

@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AppointmentWithDetails } from "@/types/appointment.types";
 import { formatCurrency } from "@/lib/currencyUtils";
+import { isInPast } from "@/lib/dateUtils";
 
 interface AdminAppointmentCardProps {
   appointment: AppointmentWithDetails;
@@ -28,6 +29,10 @@ export function AdminAppointmentCard({ appointment, onClick }: AdminAppointmentC
 
   const statusColor = statusColors[appointment.status as keyof typeof statusColors] || statusColors.agendado;
   const statusLabel = statusLabels[appointment.status as keyof typeof statusLabels] || "Agendado";
+  
+  // Check if appointment is in the past and still marked as "agendado"
+  const isPastAndPending = appointment.status === "agendado" && 
+    isInPast(appointment.data, appointment.hora);
 
   return (
     <Card className="overflow-hidden hover:shadow transition-shadow duration-200 cursor-pointer" onClick={onClick}>
@@ -61,6 +66,12 @@ export function AdminAppointmentCard({ appointment, onClick }: AdminAppointmentC
                     {format(parseISO(appointment.data), "dd/MM/yyyy")} - {appointment.profissional.nome}
                   </span>
                 </div>
+                
+                {isPastAndPending && (
+                  <div className="text-amber-600 text-sm font-medium">
+                    ⚠️ Agendamento no passado - necessita atualização
+                  </div>
+                )}
               </div>
               
               <div className="flex flex-col md:items-end gap-2 mt-2 md:mt-0">

@@ -11,7 +11,7 @@ const DateTimeSummary = ({ date, time }: DateTimeSummaryProps) => {
     <div>
       <h3 className="font-medium">Data e Hora</h3>
       <p>
-        {formatLocalDate(date)} às {time}
+        {time} - {formatLocalDate(date)}
       </p>
     </div>
   );

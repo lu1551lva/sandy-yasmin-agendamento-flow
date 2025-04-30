@@ -1,1 +1,28 @@
+
 project_id = "bqzlexfnozmaqtvpbpay"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+
+[db]
+port = 54322
+
+[studio]
+port = 54323
+
+[inbucket]
+port = 54324
+
+[storage]
+enabled = true
+
+[auth]
+enabled = true
+
+[analytics]
+enabled = false
+
+[functions.auto-complete-appointments]
+verify_jwt = false

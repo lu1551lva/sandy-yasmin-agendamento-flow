@@ -91,3 +91,34 @@ export const getWeekDates = (date: Date = new Date()): Date[] => {
   
   return weekDates;
 };
+
+// Check if a date + time is in the past
+export const isInPast = (dateStr: string, timeStr: string): boolean => {
+  const now = new Date();
+  
+  if (!dateStr || !timeStr) return false;
+  
+  try {
+    // Parse date
+    const dateParts = dateStr.includes('-') 
+      ? dateStr.split('-')  // yyyy-MM-dd
+      : dateStr.split('/').reverse(); // dd/MM/yyyy -> reverse to yyyy,MM,dd
+      
+    // Parse time
+    const timeParts = timeStr.split(':');
+    
+    // Create date object with date and time
+    const appointmentDate = new Date(
+      parseInt(dateParts[0]), // year
+      parseInt(dateParts[1]) - 1, // month (0-based)
+      parseInt(dateParts[2]), // day
+      parseInt(timeParts[0]), // hour
+      parseInt(timeParts[1])  // minute
+    );
+    
+    return appointmentDate < now;
+  } catch (e) {
+    console.error('Error checking if date is in past:', e);
+    return false;
+  }
+};
