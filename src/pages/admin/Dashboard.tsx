@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { StatsCard } from "@/components/admin/dashboard/StatsCard";
-import { Calendar as CalendarIcon, DollarSign, Users, Check, X, TrendingUp, RefreshCw } from "lucide-react";
+import { Calendar as CalendarIcon, DollarSign, Users, Check, X, TrendingUp, RefreshCw, Clock, Percent } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useDashboardData } from "@/hooks/useDashboardData";
@@ -11,6 +11,9 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { AppointmentStatusChart } from "@/components/admin/dashboard/AppointmentStatusChart";
+import { WeeklyOccupancyChart } from "@/components/admin/dashboard/WeeklyOccupancyChart";
 
 const Dashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -19,7 +22,7 @@ const Dashboard = () => {
   const queryClient = useQueryClient();
   const limit = 5;
 
-  // Fetch dashboard data
+  // Fetch dashboard data from both hooks
   const { 
     // Appointment metrics
     totalAppointments,
@@ -43,9 +46,14 @@ const Dashboard = () => {
     clientsTrend,
     
     // Status
-    isLoading,
+    isLoading: isLoadingDashboard,
     error
   } = useDashboardData();
+  
+  // Get additional stats from our enhanced hook
+  const { stats, isLoading: isLoadingStats } = useDashboardStats();
+  
+  const isLoading = isLoadingDashboard || isLoadingStats;
 
   // Function to handle manual refresh
   const handleRefresh = async () => {
@@ -70,6 +78,24 @@ const Dashboard = () => {
       setIsRefreshing(false);
     }
   };
+
+  // Prepare chart data
+  const statusChartData = [
+    { name: "Agendados", value: stats.statusDistribution.agendado, color: "#3b82f6" },
+    { name: "Concluídos", value: stats.statusDistribution.concluido, color: "#22c55e" },
+    { name: "Cancelados", value: stats.statusDistribution.cancelado, color: "#ef4444" },
+  ];
+  
+  // Sample weekly occupancy data (in a real app, this would come from the API)
+  const weeklyOccupancyData = [
+    { name: "Segunda", ocupados: 12, disponiveis: 8 },
+    { name: "Terça", ocupados: 15, disponiveis: 5 },
+    { name: "Quarta", ocupados: 18, disponiveis: 2 },
+    { name: "Quinta", ocupados: 10, disponiveis: 10 },
+    { name: "Sexta", ocupados: 20, disponiveis: 0 },
+    { name: "Sábado", ocupados: 16, disponiveis: 4 },
+    { name: "Domingo", ocupados: 5, disponiveis: 15 },
+  ];
 
   // Helper function to get status badge
   const getStatusBadge = (status: string) => {
@@ -104,106 +130,53 @@ const Dashboard = () => {
         </Button>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatsCard 
           title="Agendamentos do Mês" 
-          value={totalAppointments}
-          description={`Agendados: ${scheduledAppointments}`}
-          trend={appointmentsTrend}
+          value={stats.appointmentsThisMonth}
+          description={`Esta semana: ${stats.appointmentsThisWeek}`}
+          trend={stats.appointmentsTrend}
           icon={<CalendarIcon className="h-6 w-6" />}
           loading={isLoading || isRefreshing}
         />
         <StatsCard 
           title="Faturamento" 
-          value={totalRevenue} 
+          value={stats.revenueThisMonth} 
           valuePrefix="R$ " 
-          description={`${completedAppointments} agendamentos concluídos`}
-          trend={revenueTrend}
+          description={`Esta semana: R$ ${stats.revenueThisWeek.toFixed(2)}`}
+          trend={stats.revenueTrend}
           icon={<DollarSign className="h-6 w-6" />}
           loading={isLoading || isRefreshing}
         />
         <StatsCard 
-          title="Novos Clientes" 
-          value={newClientsCount} 
-          description={`${canceledAppointments} agendamentos cancelados`}
-          trend={clientsTrend}
-          icon={<Users className="h-6 w-6" />}
+          title="Taxa de Ocupação" 
+          value={stats.occupationRate} 
+          valuePrefix="" 
+          valueFormatFn={(value) => `${value}%`}
+          description={`${stats.statusDistribution.agendado + stats.statusDistribution.concluido} slots ocupados`}
+          trend={5}
+          trendColor="green"
+          icon={<Clock className="h-6 w-6" />}
+          loading={isLoading || isRefreshing}
+        />
+        <StatsCard 
+          title="Taxa de Cancelamento" 
+          value={stats.cancelationRate} 
+          valuePrefix="" 
+          valueFormatFn={(value) => `${value}%`}
+          description={`${stats.statusDistribution.cancelado} agendamentos cancelados`}
+          trend={-2}
+          trendColor="red"
+          icon={<Percent className="h-6 w-6" />}
           loading={isLoading || isRefreshing}
         />
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Status de Agendamentos</CardTitle>
-              <CardDescription>Visão geral dos agendamentos para {currentMonthName}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="mr-4 bg-blue-100 p-2 rounded-full">
-                      <CalendarIcon className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium">Agendados</div>
-                      <div className="text-2xl font-bold">{scheduledAppointments}</div>
-                    </div>
-                  </div>
-                  <Badge className="bg-blue-100 text-blue-800">
-                    {totalAppointments > 0 ? 
-                      Math.round((scheduledAppointments / totalAppointments) * 100) : 
-                      0}%
-                  </Badge>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="mr-4 bg-green-100 p-2 rounded-full">
-                      <Check className="h-5 w-5 text-green-600" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium">Concluídos</div>
-                      <div className="text-2xl font-bold">{completedAppointments}</div>
-                    </div>
-                  </div>
-                  <Badge className="bg-green-100 text-green-800">
-                    {totalAppointments > 0 ? 
-                      Math.round((completedAppointments / totalAppointments) * 100) : 
-                      0}%
-                  </Badge>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="mr-4 bg-red-100 p-2 rounded-full">
-                      <X className="h-5 w-5 text-red-600" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium">Cancelados</div>
-                      <div className="text-2xl font-bold">{canceledAppointments}</div>
-                    </div>
-                  </div>
-                  <Badge className="bg-red-100 text-red-800">
-                    {totalAppointments > 0 ? 
-                      Math.round((canceledAppointments / totalAppointments) * 100) : 
-                      0}%
-                  </Badge>
-                </div>
-                
-                <div className="mt-6 pt-6 border-t">
-                  <div className="flex items-center">
-                    <TrendingUp className="h-5 w-5 text-primary mr-2" />
-                    <div className="text-sm text-muted-foreground">
-                      <span className="font-medium">{totalAppointments}</span> agendamentos totais em {currentMonthName}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
+        <AppointmentStatusChart data={statusChartData} loading={isLoading || isRefreshing} />
+        <WeeklyOccupancyChart data={weeklyOccupancyData} loading={isLoading || isRefreshing} />
+        
+        <div className="space-y-6 lg:col-span-2">
           <Card>
             <CardHeader>
               <CardTitle>Próximos Agendamentos</CardTitle>
@@ -251,41 +224,6 @@ const Dashboard = () => {
               )}
             </CardContent>
           </Card>
-        </div>
-        
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Resumo Financeiro</CardTitle>
-              <CardDescription>Faturamento do mês de {currentMonthName}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-6">
-                <div className="text-4xl font-bold mb-2">
-                  {formatCurrency(totalRevenue)}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Baseado em {completedAppointments} agendamentos concluídos
-                </div>
-                <div className="mt-6 py-6 border-t border-b grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-sm text-muted-foreground">Média por agendamento</div>
-                    <div className="text-xl font-medium">
-                      {formatCurrency(completedAppointments > 0 ? totalRevenue / completedAppointments : 0)}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-muted-foreground">Comparado ao mês anterior</div>
-                    <div className="text-xl font-medium text-green-600">
-                      +{revenueTrend}%
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <RecentReviews />
         </div>
       </div>
     </div>

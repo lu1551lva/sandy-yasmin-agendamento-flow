@@ -13,7 +13,8 @@ import Appointment from "./pages/public/Appointment";
 import ClientArea from "./pages/public/ClientArea"; 
 import AdminLogin from "./pages/admin/Login";
 import Dashboard from "./pages/admin/Dashboard";
-import AppointmentList from "./pages/admin/AppointmentList";
+import AppointmentList from "./pages/admin/appointments/AppointmentList";
+import AppointmentsOverview from "./pages/admin/appointments/AppointmentsOverview";
 import WeeklySchedule from "./pages/admin/WeeklySchedule";
 import Professionals from "./pages/admin/Professionals";
 import Services from "./pages/admin/Services";
@@ -90,7 +91,8 @@ const App = () => {
               {/* Protected admin routes */}
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<Dashboard />} />
-                <Route path="agendamentos" element={<AppointmentList />} />
+                <Route path="agendamentos" element={<AppointmentsOverview />} />
+                <Route path="agendamentos/lista" element={<AppointmentList />} />
                 <Route path="agenda-semanal" element={<WeeklySchedule />} />
                 <Route path="profissionais" element={<Professionals />} />
                 <Route path="servicos" element={<Services />} />
