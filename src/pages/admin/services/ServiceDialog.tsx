@@ -16,6 +16,7 @@ interface ServiceDialogProps {
   onSubmit: (data: any) => void;
   resetForm: () => void;
   categories: { id: string; nome: string }[];
+  isSubmitting?: boolean;
 }
 
 const ServiceDialog = ({
@@ -26,6 +27,7 @@ const ServiceDialog = ({
   onSubmit,
   resetForm,
   categories,
+  isSubmitting = false,
 }: ServiceDialogProps) => (
   <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent>
@@ -40,6 +42,7 @@ const ServiceDialog = ({
         onSubmit={onSubmit}
         resetForm={resetForm}
         categories={categories}
+        isSubmitting={isSubmitting}
       />
     </DialogContent>
   </Dialog>

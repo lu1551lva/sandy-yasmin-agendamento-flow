@@ -45,6 +45,7 @@ interface ServiceFormProps {
   onSubmit: (data: FormSchemaType) => void;
   resetForm: () => void;
   categories: { id: string; nome: string }[];
+  isSubmitting?: boolean;
 }
 
 const ServiceForm: React.FC<ServiceFormProps> = ({ 
@@ -52,7 +53,8 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
   currentService, 
   onSubmit, 
   resetForm,
-  categories 
+  categories,
+  isSubmitting = false
 }) => {
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(serviceSchema),
@@ -89,6 +91,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
   }, [isEditing, currentService, form]);
 
   const handleSubmit = (data: FormSchemaType) => {
+    console.log("Submitting service form data:", data);
     onSubmit(data);
   };
 
@@ -211,8 +214,15 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
               Cancelar
             </Button>
           </DialogClose>
-          <Button type="submit">
-            {isEditing ? "Atualizar" : "Cadastrar"}
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <span className="animate-spin mr-2">⏳</span>
+                {isEditing ? "Atualizando..." : "Cadastrando..."}
+              </>
+            ) : (
+              isEditing ? "Atualizar" : "Cadastrar"
+            )}
           </Button>
         </DialogFooter>
       </form>

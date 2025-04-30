@@ -11,6 +11,7 @@ interface StatsCardProps {
   icon?: ReactNode;
   trend?: number;
   loading?: boolean;
+  valueFormatFn?: (value: number) => string;
 }
 
 export const StatsCard = ({ 
@@ -20,12 +21,19 @@ export const StatsCard = ({
   description, 
   icon, 
   trend, 
-  loading = false 
+  loading = false,
+  valueFormatFn
 }: StatsCardProps) => {
   // Format the value - always display integers as integers, and decimals with 2 places
-  const formattedValue = typeof value === 'number' ? 
-    (value % 1 === 0 ? value.toString() : value.toFixed(2)) : 
-    '0';
+  let formattedValue;
+  
+  if (valueFormatFn) {
+    formattedValue = valueFormatFn(value);
+  } else {
+    formattedValue = typeof value === 'number' ? 
+      (value % 1 === 0 ? value.toString() : value.toFixed(2)) : 
+      '0';
+  }
     
   // For debugging
   console.log(`💳 Rendering StatsCard - ${title}: ${valuePrefix}${formattedValue}`);

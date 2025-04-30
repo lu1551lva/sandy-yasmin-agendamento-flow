@@ -10,10 +10,13 @@ import ServiceTable from "./services/ServiceTable";
 import ServiceDialog from "./services/ServiceDialog";
 import DeleteServiceDialog from "./services/DeleteServiceDialog";
 import { formatCurrency } from "@/lib/utils";
+import { useAppointmentCache } from "@/hooks/appointment/useAppointmentCache";
 
 const Services = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { invalidateAppointmentQueries } = useAppointmentCache();
+  
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -23,6 +26,7 @@ const Services = () => {
     queryKey: ["services"],
     queryFn: async () => {
       try {
+        console.log("Fetching services...");
         const { data, error } = await supabase
           .from("servicos")
           .select(`
@@ -35,6 +39,7 @@ const Services = () => {
           .order('nome');
 
         if (error) {
+          console.error("Error fetching services:", error);
           toast({
             title: "Erro ao carregar serviços",
             description: error.message,
@@ -42,9 +47,11 @@ const Services = () => {
           });
           throw error;
         }
+        
+        console.log(`Successfully fetched ${data?.length || 0} services`);
         return data as Service[];
       } catch (error: any) {
-        console.error("Erro ao buscar serviços:", error);
+        console.error("Error in services query:", error);
         throw error;
       }
     },
@@ -77,6 +84,7 @@ const Services = () => {
 
   const createServiceMutation = useMutation({
     mutationFn: async (service: Omit<Service, "id" | "created_at">) => {
+      console.log("Creating new service with data:", service);
       try {
         const { data, error } = await supabase
           .from("servicos")
@@ -85,29 +93,32 @@ const Services = () => {
           .single();
 
         if (error) {
-          toast({
-            title: "Erro ao cadastrar serviço",
-            description: error.message,
-            variant: "destructive",
-          });
+          console.error("Error creating service:", error);
           throw error;
         }
+        
+        console.log("Service created successfully:", data);
         return data;
       } catch (error: any) {
-        console.error("Erro ao criar serviço:", error);
+        console.error("Error in create service mutation:", error);
         throw error;
       }
     },
     onSuccess: () => {
+      console.log("CreateService mutation succeeded, invalidating queries");
       queryClient.invalidateQueries({ queryKey: ["services"] });
+      invalidateAppointmentQueries();
+      
       toast({
         title: "Serviço cadastrado",
         description: "O serviço foi adicionado com sucesso.",
       });
+      
       setIsDialogOpen(false);
       resetForm();
     },
     onError: (error) => {
+      console.error("CreateService mutation failed:", error);
       toast({
         title: "Erro ao cadastrar serviço",
         description: String(error),
@@ -118,6 +129,7 @@ const Services = () => {
 
   const updateServiceMutation = useMutation({
     mutationFn: async ({ id, service }: { id: string; service: Partial<Service> }) => {
+      console.log(`Updating service ${id} with data:`, service);
       try {
         const { data, error } = await supabase
           .from("servicos")
@@ -127,29 +139,32 @@ const Services = () => {
           .single();
 
         if (error) {
-          toast({
-            title: "Erro ao atualizar serviço",
-            description: error.message,
-            variant: "destructive",
-          });
+          console.error("Error updating service:", error);
           throw error;
         }
+        
+        console.log("Service updated successfully:", data);
         return data;
       } catch (error: any) {
-        console.error("Erro ao atualizar serviço:", error);
+        console.error("Error in update service mutation:", error);
         throw error;
       }
     },
     onSuccess: () => {
+      console.log("UpdateService mutation succeeded, invalidating queries");
       queryClient.invalidateQueries({ queryKey: ["services"] });
+      invalidateAppointmentQueries();
+      
       toast({
         title: "Serviço atualizado",
         description: "O serviço foi atualizado com sucesso.",
       });
+      
       setIsDialogOpen(false);
       resetForm();
     },
     onError: (error) => {
+      console.error("UpdateService mutation failed:", error);
       toast({
         title: "Erro ao atualizar serviço",
         description: String(error),
@@ -160,33 +175,37 @@ const Services = () => {
 
   const deleteServiceMutation = useMutation({
     mutationFn: async (id: string) => {
+      console.log(`Deleting service ${id}`);
       try {
         const { error } = await supabase.from("servicos").delete().eq("id", id);
 
         if (error) {
-          toast({
-            title: "Erro ao excluir serviço",
-            description: error.message,
-            variant: "destructive",
-          });
+          console.error("Error deleting service:", error);
           throw error;
         }
+        
+        console.log("Service deleted successfully");
         return id;
       } catch (error: any) {
-        console.error("Erro ao excluir serviço:", error);
+        console.error("Error in delete service mutation:", error);
         throw error;
       }
     },
     onSuccess: () => {
+      console.log("DeleteService mutation succeeded, invalidating queries");
       queryClient.invalidateQueries({ queryKey: ["services"] });
+      invalidateAppointmentQueries();
+      
       toast({
         title: "Serviço excluído",
         description: "O serviço foi excluído com sucesso.",
       });
+      
       setIsDeleteDialogOpen(false);
       setCurrentService(null);
     },
     onError: (error) => {
+      console.error("DeleteService mutation failed:", error);
       toast({
         title: "Erro ao excluir serviço",
         description: String(error),
@@ -196,9 +215,10 @@ const Services = () => {
   });
 
   const handleSubmit = (formData: any) => {
+    console.log("Processing service form submission:", formData);
     const serviceData = {
       nome: formData.nome,
-      descricao: formData.descricao,
+      descricao: formData.descricao || null,
       valor: Number(formData.valor.replace(",", ".")),
       duracao_em_minutos: Number(formData.duracao_em_minutos),
       categoria_id: formData.categoria_id || null,
@@ -207,32 +227,38 @@ const Services = () => {
     };
 
     if (isEditing && currentService) {
+      console.log("Updating existing service");
       updateServiceMutation.mutate({
         id: currentService.id,
         service: serviceData,
       });
     } else {
+      console.log("Creating new service");
       createServiceMutation.mutate(serviceData);
     }
   };
 
   const handleEdit = (service: Service) => {
+    console.log("Editing service:", service);
     setCurrentService(service);
     setIsEditing(true);
     setIsDialogOpen(true);
   };
 
   const handleDelete = (service: Service) => {
+    console.log("Preparing to delete service:", service);
     setCurrentService(service);
     setIsDeleteDialogOpen(true);
   };
 
   const resetForm = () => {
+    console.log("Resetting service form");
     setIsEditing(false);
     setCurrentService(null);
   };
 
   const openNewServiceDialog = () => {
+    console.log("Opening new service dialog");
     resetForm();
     setIsDialogOpen(true);
   };
@@ -275,6 +301,7 @@ const Services = () => {
         onSubmit={handleSubmit}
         resetForm={resetForm}
         categories={categories || []}
+        isSubmitting={createServiceMutation.isPending || updateServiceMutation.isPending}
       />
 
       <DeleteServiceDialog
