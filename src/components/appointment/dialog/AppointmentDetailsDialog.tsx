@@ -1,14 +1,21 @@
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { AppointmentWithDetails } from "@/types/appointment.types";
-import { ClientDetailsSection } from "./sections/ClientDetailsSection";
-import { ServiceDetailsSection } from "./sections/ServiceDetailsSection";
+import { Calendar, Check, Clock, History, MessageCircle, Pencil, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { formatCurrency } from "@/lib/supabase";
 import { AppointmentDetailsSection } from "./AppointmentDetailsSection";
-import { DialogActions } from "./actions/DialogActions";
-import { format, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { CustomerDetailsSection } from "./CustomerDetailsSection";
+import { ServiceDetailsSection } from "./ServiceDetailsSection";
+import { CancellationDetailsSection } from "./CancellationDetailsSection";
 
 interface AppointmentDetailsDialogProps {
   appointment: AppointmentWithDetails;
@@ -20,7 +27,7 @@ interface AppointmentDetailsDialogProps {
   onSendWhatsApp: () => void;
   onShowHistory: () => void;
   onShowDeleteConfirm: () => void;
-  isUpdatingStatus: boolean;
+  isUpdatingStatus?: boolean;
 }
 
 export function AppointmentDetailsDialog({
@@ -33,74 +40,147 @@ export function AppointmentDetailsDialog({
   onSendWhatsApp,
   onShowHistory,
   onShowDeleteConfirm,
-  isUpdatingStatus
+  isUpdatingStatus = false,
 }: AppointmentDetailsDialogProps) {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "agendado": return "bg-blue-500";
-      case "concluido": return "bg-green-500";
-      default: return "bg-red-500";
-    }
-  };
+  if (!appointment) return null;
 
-  // Format date for display in Brazilian format (dd/MM/yyyy)
-  const formattedDate = appointment.data ? 
-    (appointment.data.includes("-") ? 
-      format(parseISO(appointment.data), "dd/MM/yyyy", { locale: ptBR }) : 
-      appointment.data) : 
-    "";
+  const isActive = appointment.status === "agendado";
+  const isCompleted = appointment.status === "concluido";
+  const isCanceled = appointment.status === "cancelado";
+  
+  const getStatusBadge = () => {
+    if (isActive) {
+      return <Badge className="bg-blue-100 text-blue-800 border-blue-200">Agendado</Badge>;
+    } else if (isCompleted) {
+      return <Badge className="bg-green-100 text-green-800 border-green-200">Concluído</Badge>;
+    } else if (isCanceled) {
+      return <Badge className="bg-red-100 text-red-800 border-red-200">Cancelado</Badge>;
+    }
+    
+    return <Badge variant="outline">Desconhecido</Badge>;
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md sm:max-w-lg">
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <div className="flex justify-between items-center">
-            <DialogTitle>Detalhes do Agendamento</DialogTitle>
-            <Badge className={`${getStatusColor(appointment.status)} text-white`}>
-              {appointment.status === "agendado" ? "Agendado" : 
-               appointment.status === "concluido" ? "Concluído" : "Cancelado"}
-            </Badge>
+          <div className="flex flex-row justify-between items-center">
+            <DialogTitle>Detalhes do agendamento</DialogTitle>
+            {getStatusBadge()}
           </div>
-          <DialogDescription>
-            Informações completas sobre este agendamento.
-          </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
-          <ClientDetailsSection cliente={appointment.cliente} />
-          <Separator />
-          
-          <ServiceDetailsSection servico={appointment.servico} />
-          <Separator />
-          
+        <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+          {/* Appointment Details Section */}
           <AppointmentDetailsSection 
-            data={formattedDate} 
-            hora={appointment.hora} 
+            data={appointment.data}
+            hora={appointment.hora}
             profissional={appointment.profissional.nome}
           />
           
-          {appointment.status === "cancelado" && appointment.motivo_cancelamento && (
+          <Separator />
+          
+          {/* Customer Details Section */}
+          <CustomerDetailsSection cliente={appointment.cliente} />
+          
+          <Separator />
+          
+          {/* Service Details Section */}
+          <ServiceDetailsSection 
+            nome={appointment.servico.nome}
+            valor={appointment.servico.valor}
+            duracao={appointment.servico.duracao_em_minutos}
+          />
+          
+          {/* Show cancellation details if appointment is cancelled */}
+          {isCanceled && appointment.motivo_cancelamento && (
             <>
               <Separator />
-              <div>
-                <h4 className="font-medium mb-1">Motivo do Cancelamento:</h4>
-                <p className="text-sm text-muted-foreground">{appointment.motivo_cancelamento}</p>
-              </div>
+              <CancellationDetailsSection motivo={appointment.motivo_cancelamento} />
             </>
           )}
         </div>
-        
-        <DialogActions 
-          status={appointment.status}
-          isUpdatingStatus={isUpdatingStatus}
-          onComplete={onComplete}
-          onShowCancelConfirm={onShowCancelConfirm}
-          onShowReschedule={onShowReschedule}
-          onSendWhatsApp={onSendWhatsApp}
-          onShowHistory={onShowHistory}
-          onShowDeleteConfirm={onShowDeleteConfirm}
-          onClose={onClose}
-        />
+
+        <DialogFooter className="flex-col sm:flex-row gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 w-full">
+            {/* Show WhatsApp button for all statuses */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              onClick={onSendWhatsApp}
+              disabled={isUpdatingStatus}
+            >
+              <MessageCircle className="h-4 w-4 mr-2" />
+              WhatsApp
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              onClick={onShowHistory}
+              disabled={isUpdatingStatus}
+            >
+              <History className="h-4 w-4 mr-2" />
+              Histórico
+            </Button>
+          </div>
+
+          <Separator className="sm:hidden" />
+          
+          <div className="flex flex-col sm:flex-row gap-2 w-full">
+            {/* Show delete button for all statuses */}
+            <Button
+              variant="destructive"
+              size="sm"
+              className="flex-1"
+              onClick={onShowDeleteConfirm}
+              disabled={isUpdatingStatus}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Excluir
+            </Button>
+            
+            {/* Show Reschedule/Cancel/Complete buttons only for active appointments */}
+            {isActive && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={onShowReschedule}
+                  disabled={isUpdatingStatus}
+                >
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Reagendar
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={onShowCancelConfirm}
+                  disabled={isUpdatingStatus}
+                >
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Cancelar
+                </Button>
+                
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="flex-1"
+                  onClick={onComplete}
+                  disabled={isUpdatingStatus}
+                >
+                  <Check className="h-4 w-4 mr-2" />
+                  Concluir
+                </Button>
+              </>
+            )}
+          </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

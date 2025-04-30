@@ -30,7 +30,7 @@ export function DialogContainer({
   const [cancelReason, setCancelReason] = useState("");
   
   const { toast } = useToast();
-  const { updateStatus, isLoading: isUpdatingStatus } = useUpdateAppointmentStatus();
+  const { updateStatus, deleteAppointment, isLoading: isUpdatingStatus } = useUpdateAppointmentStatus();
   const { rescheduleAppointment, isLoading: isReschedulingLoading } = useRescheduleAppointment();
 
   if (!appointment) {
@@ -70,16 +70,27 @@ export function DialogContainer({
     setShowCancelConfirm(false);
   };
 
-  // Handle delete (to be implemented)
-  const handleDelete = () => {
+  // Handle delete - properly call deleteAppointment function
+  const handleDelete = async () => {
     console.log("Deleting appointment:", appointment.id);
-    // Implement delete logic
-    toast({
-      title: "Funcionalidade em desenvolvimento",
-      description: "A exclusão de agendamentos será implementada em breve."
-    });
-    setShowDeleteConfirm(false);
-    onClose();
+    const success = await deleteAppointment(appointment.id);
+    
+    if (success) {
+      toast({
+        title: "Agendamento excluído",
+        description: "O agendamento foi excluído com sucesso."
+      });
+      
+      if (onAppointmentUpdated) onAppointmentUpdated();
+      setShowDeleteConfirm(false);
+      onClose();
+    } else {
+      toast({
+        title: "Erro na exclusão",
+        description: "Não foi possível excluir o agendamento. Tente novamente.",
+        variant: "destructive"
+      });
+    }
   };
 
   // Handle WhatsApp message
