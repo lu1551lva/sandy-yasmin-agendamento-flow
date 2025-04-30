@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { DialogFooter } from "@/components/ui/dialog";
 import { DialogClose } from "@radix-ui/react-dialog";
 import { Service } from "@/lib/supabase";
@@ -18,6 +17,7 @@ import {
 } from "@/components/ui/form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
 
 // Schema for service validation
 const serviceSchema = z.object({
@@ -73,7 +73,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
       form.reset({
         nome: currentService.nome,
         descricao: currentService.descricao || "",
-        valor: String(currentService.valor),
+        valor: String(currentService.valor).replace(".", ","),
         duracao_em_minutos: String(currentService.duracao_em_minutos),
         categoria_id: currentService.categoria_id || "",
         imagem_url: currentService.imagem_url || ""
@@ -164,7 +164,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
               <FormLabel>Valor (R$)</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Ex: 40.00"
+                  placeholder="Ex: 40,00"
                   {...field}
                 />
               </FormControl>
@@ -217,7 +217,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
-                <span className="animate-spin mr-2">⏳</span>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 {isEditing ? "Atualizando..." : "Cadastrando..."}
               </>
             ) : (
