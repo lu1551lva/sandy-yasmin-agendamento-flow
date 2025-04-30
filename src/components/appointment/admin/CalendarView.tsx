@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Calendar } from "@/components/ui/calendar";
@@ -13,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
+import { DayProps } from "react-day-picker";
 
 export function CalendarView() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -83,8 +83,10 @@ export function CalendarView() {
 
   const statusCounts = getStatusCounts();
 
-  // Custom day render function for the calendar
-  const renderDay = (day: Date) => {
+  // Custom day render function for the calendar - Fixed to accept DayProps
+  const renderDay = (props: DayProps) => {
+    // Extract the date from props
+    const day = props.date;
     const appointmentCount = getAppointmentCountForDate(day);
     
     return (

@@ -80,17 +80,31 @@ export const useDashboardStats = () => {
         const startOfPrevMonth = format(new Date(now.getFullYear(), now.getMonth() - 1, 1), 'yyyy-MM-dd');
         const endOfPrevMonth = format(new Date(now.getFullYear(), now.getMonth(), 0), 'yyyy-MM-dd');
 
-        // Fetch salons counts
-        const { data: saloes, error: saloesError } = await supabase
-          .from('saloes')
-          .select('*');
-          
-        if (saloesError) throw saloesError;
-        
-        const activeSalons = saloes?.filter(s => s.plano === 'ativo') || [];
-        const trialSalons = saloes?.filter(s => s.plano === 'trial') || [];
-        const inactiveSalons = saloes?.filter(s => s.plano === 'inativo') || [];
+        // Fetch salons counts - using a try-catch since 'saloes' table might not exist
+        let totalSalons = 0;
+        let activeSalons = 0;
+        let trialSalons = 0;
+        let inactiveSalons = 0;
 
+        try {
+          const { data: saloes, error: saloesError } = await supabase
+            .from('saloes')
+            .select('*');
+            
+          if (saloesError) {
+            console.error('Error fetching saloes:', saloesError);
+            // Continue without the salon data
+          } else if (saloes) {
+            totalSalons = saloes.length;
+            activeSalons = saloes.filter(s => s.plano === 'ativo').length;
+            trialSalons = saloes.filter(s => s.plano === 'trial').length;
+            inactiveSalons = saloes.filter(s => s.plano === 'inativo').length;
+          }
+        } catch (error) {
+          console.error('Error fetching stats:', error);
+          // Continue without the salon data
+        }
+        
         // Count appointments
         const { count: appointmentsCount } = await supabase
           .from('agendamentos')
@@ -176,25 +190,27 @@ export const useDashboardStats = () => {
           .gte('created_at', startOfPrevMonth)
           .lte('created_at', endOfPrevMonth);
 
-        // Get appointment status distribution
-        const { data: statusCounts } = await supabase
-          .from('agendamentos')
-          .select('status, count', { count: 'exact' })
-          .gte('data', startOfMonth)
-          .lte('data', endOfMonth)
-          .group('status');
-
+        // Get appointment status distribution - Fixed by using select instead of group
+        // First we get counts for each status
         const statusDistribution = {
           agendado: 0,
           concluido: 0,
           cancelado: 0
         };
-
-        statusCounts?.forEach((item: any) => {
-          if (statusDistribution[item.status as keyof typeof statusDistribution] !== undefined) {
-            statusDistribution[item.status as keyof typeof statusDistribution] = item.count;
+        
+        // Get counts for each status individually since group is not available
+        for (const status of ['agendado', 'concluido', 'cancelado']) {
+          const { count } = await supabase
+            .from('agendamentos')
+            .select('*', { count: 'exact', head: true })
+            .gte('data', startOfMonth)
+            .lte('data', endOfMonth)
+            .eq('status', status);
+            
+          if (count !== null) {
+            statusDistribution[status as keyof typeof statusDistribution] = count;
           }
-        });
+        }
 
         // Calculate trends
         const calculateTrend = (current: number, previous: number) => {
@@ -214,10 +230,10 @@ export const useDashboardStats = () => {
         const cancelationRate = Math.round((statusDistribution.cancelado / totalAppointments) * 100);
 
         setStats({
-          totalSalons: saloes?.length || 0,
-          activeSalons: activeSalons.length,
-          trialSalons: trialSalons.length,
-          inactiveSalons: inactiveSalons.length,
+          totalSalons,
+          activeSalons,
+          trialSalons,
+          inactiveSalons,
           totalAppointments: appointmentsCount || 0,
           totalProfessionals: professionalsCount || 0,
           totalServices: servicesCount || 0,
