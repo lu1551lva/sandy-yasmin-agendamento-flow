@@ -4,13 +4,15 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 import { AppointmentWithDetails } from "@/types/appointment.types";
+import { useAppointmentCache } from "@/hooks/appointment/useAppointmentCache";
 
 export function useAppointmentsData() {
   // State for filters
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [professionalFilter, setProfessionalFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const { forceRefetchAll } = useAppointmentCache();
 
   // Fetch appointments
   const { 
@@ -22,8 +24,8 @@ export function useAppointmentsData() {
     queryKey: ["appointments", selectedDate, statusFilter, professionalFilter, searchQuery],
     queryFn: async () => {
       try {
-        console.log("Fetching appointments with filters:", { 
-          date: format(selectedDate, "yyyy-MM-dd"),
+        console.log("🔍 Fetching appointments with filters:", { 
+          date: selectedDate ? format(selectedDate, "yyyy-MM-dd") : null,
           status: statusFilter, 
           professional: professionalFilter,
           search: searchQuery
@@ -38,7 +40,7 @@ export function useAppointmentsData() {
             profissional:profissionais(*)
           `);
         
-        // Apply date filter if date is selected
+        // Apply date filter
         if (selectedDate) {
           query = query.eq("data", format(selectedDate, "yyyy-MM-dd"));
         }
@@ -56,11 +58,13 @@ export function useAppointmentsData() {
         const { data, error } = await query.order("hora");
         
         if (error) {
-          console.error("Error fetching appointments:", error);
+          console.error("❌ Error fetching appointments:", error);
           throw error;
         }
         
-        // Apply search filter on client side if needed
+        console.log(`✅ Retrieved ${data?.length || 0} appointments`);
+        
+        // Apply search filter on client side
         if (searchQuery && data) {
           const lowerQuery = searchQuery.toLowerCase();
           return data.filter((appt: any) => 
@@ -73,10 +77,13 @@ export function useAppointmentsData() {
         
         return data || [];
       } catch (err) {
-        console.error("Failed to fetch appointments:", err);
+        console.error("❌ Failed to fetch appointments:", err);
         throw err;
       }
     },
+    // Disable stale time to always get fresh data
+    staleTime: 0,
+    // Ensure refetching when the component gains focus
     refetchOnWindowFocus: true,
   });
 
@@ -93,11 +100,24 @@ export function useAppointmentsData() {
         if (error) throw error;
         return data || [];
       } catch (err) {
-        console.error("Failed to fetch professionals:", err);
+        console.error("❌ Failed to fetch professionals:", err);
         return [];
       }
     },
   });
+
+  // Handle appointment update
+  const handleAppointmentUpdated = async () => {
+    console.log("🔄 Appointment updated, refreshing data...");
+    
+    // First, force a complete cache refresh
+    await forceRefetchAll();
+    
+    // Then, specific refetch for this page
+    await refetch();
+    
+    console.log("✅ Data refresh complete");
+  };
 
   return {
     // Filter state
@@ -117,6 +137,11 @@ export function useAppointmentsData() {
     error,
     
     // Actions
+    handleAppointmentUpdated,
     refetch,
+    
+    // Always show all sections, regardless of filter
+    // This ensures all sections are visible but will be controlled by the AppointmentList component
+    showAll: true
   };
 }

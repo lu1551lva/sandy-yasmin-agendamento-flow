@@ -13,6 +13,9 @@ export const useAppointmentActions = () => {
   // Function to invalidate all appointment-related queries
   const invalidateQueries = async () => {
     try {
+      console.log("🔄 Invalidating all appointment-related queries...");
+      
+      // First, invalidate using the predicate approach to catch all variants
       await queryClient.invalidateQueries({ 
         predicate: (query) => {
           if (Array.isArray(query.queryKey)) {
@@ -25,16 +28,33 @@ export const useAppointmentActions = () => {
         }
       });
       
-      // Force refetch of critical queries
+      // Then specifically invalidate the ones we know about
+      const specificQueries = [
+        'appointments',
+        'dashboard-appointments',
+        'weekly-appointments',
+        'week-appointments',
+        'dashboard-data',
+      ];
+      
+      await Promise.all(
+        specificQueries.map(query => 
+          queryClient.invalidateQueries({ queryKey: [query] })
+        )
+      );
+      
+      // Force immediate refetch of critical queries
       await Promise.all([
         queryClient.refetchQueries({ queryKey: ['appointments'] }),
         queryClient.refetchQueries({ queryKey: ['dashboard-appointments'] }),
         queryClient.refetchQueries({ queryKey: ['weekly-appointments'] }),
+        queryClient.refetchQueries({ queryKey: ['dashboard-data'] }),
       ]);
       
+      console.log("✅ All appointment data refreshed successfully");
       return true;
     } catch (error) {
-      console.error("Error invalidating queries:", error);
+      console.error("❌ Error invalidating queries:", error);
       return false;
     }
   };
@@ -53,15 +73,17 @@ export const useAppointmentActions = () => {
     setIsLoading(true);
     
     try {
-      console.log(`Concluindo agendamento: ${appointmentId}`);
+      console.log(`✅ Completing appointment: ${appointmentId}`);
       
       // Update appointment status
-      const { error: updateError } = await supabase
+      const { data, error: updateError } = await supabase
         .from("agendamentos")
         .update({ status: "concluido" })
-        .eq("id", appointmentId);
+        .eq("id", appointmentId)
+        .select(); // Important to confirm the update
 
       if (updateError) throw updateError;
+      if (!data || data.length === 0) throw new Error("Nenhum agendamento foi atualizado");
 
       // Create history entry
       const { error: historyError } = await supabase
@@ -74,7 +96,7 @@ export const useAppointmentActions = () => {
         });
 
       if (historyError) {
-        console.warn("Erro ao registrar histórico:", historyError);
+        console.warn("⚠️ Failed to record history:", historyError);
         // Continue despite history error
       }
 
@@ -88,7 +110,7 @@ export const useAppointmentActions = () => {
       
       return true;
     } catch (error: any) {
-      console.error("Erro ao concluir agendamento:", error);
+      console.error("❌ Error completing appointment:", error);
       toast({
         title: "Erro ao concluir",
         description: error.message || "Ocorreu um erro inesperado",
@@ -114,21 +136,23 @@ export const useAppointmentActions = () => {
     setIsLoading(true);
     
     try {
-      console.log(`Cancelando agendamento: ${appointmentId}, motivo: ${reason || "não especificado"}`);
+      console.log(`❌ Canceling appointment: ${appointmentId}, reason: ${reason || "not specified"}`);
       
       // Prepare reason text
       const reasonText = reason || "Não especificado";
       
       // Update appointment status
-      const { error: updateError } = await supabase
+      const { data, error: updateError } = await supabase
         .from("agendamentos")
         .update({ 
           status: "cancelado", 
           motivo_cancelamento: reasonText 
         })
-        .eq("id", appointmentId);
+        .eq("id", appointmentId)
+        .select();
 
       if (updateError) throw updateError;
+      if (!data || data.length === 0) throw new Error("Nenhum agendamento foi atualizado");
 
       // Create history entry
       const { error: historyError } = await supabase
@@ -141,7 +165,7 @@ export const useAppointmentActions = () => {
         });
 
       if (historyError) {
-        console.warn("Erro ao registrar histórico:", historyError);
+        console.warn("⚠️ Failed to record history:", historyError);
         // Continue despite history error
       }
 
@@ -155,7 +179,7 @@ export const useAppointmentActions = () => {
       
       return true;
     } catch (error: any) {
-      console.error("Erro ao cancelar agendamento:", error);
+      console.error("❌ Error canceling appointment:", error);
       toast({
         title: "Erro ao cancelar",
         description: error.message || "Ocorreu um erro inesperado",
@@ -181,18 +205,20 @@ export const useAppointmentActions = () => {
     setIsLoading(true);
     
     try {
-      console.log(`Reagendando: ${appointmentId} para ${newDate} às ${newTime}`);
+      console.log(`🔄 Rescheduling: ${appointmentId} to ${newDate} at ${newTime}`);
       
       // Update appointment date and time
-      const { error: updateError } = await supabase
+      const { data, error: updateError } = await supabase
         .from("agendamentos")
         .update({ 
           data: newDate,
           hora: newTime
         })
-        .eq("id", appointmentId);
+        .eq("id", appointmentId)
+        .select();
 
       if (updateError) throw updateError;
+      if (!data || data.length === 0) throw new Error("Nenhum agendamento foi atualizado");
 
       // Create history entry
       const { error: historyError } = await supabase
@@ -205,7 +231,7 @@ export const useAppointmentActions = () => {
         });
 
       if (historyError) {
-        console.warn("Erro ao registrar histórico:", historyError);
+        console.warn("⚠️ Failed to record history:", historyError);
         // Continue despite history error
       }
 
@@ -219,7 +245,7 @@ export const useAppointmentActions = () => {
       
       return true;
     } catch (error: any) {
-      console.error("Erro ao reagendar agendamento:", error);
+      console.error("❌ Error rescheduling appointment:", error);
       toast({
         title: "Erro ao reagendar",
         description: error.message || "Ocorreu um erro inesperado",
@@ -245,7 +271,7 @@ export const useAppointmentActions = () => {
     setIsLoading(true);
     
     try {
-      console.log(`Excluindo agendamento: ${appointmentId}`);
+      console.log(`🗑️ Deleting appointment: ${appointmentId}`);
       
       // Delete history entries first
       const { error: historyError } = await supabase
@@ -254,18 +280,19 @@ export const useAppointmentActions = () => {
         .eq("agendamento_id", appointmentId);
 
       if (historyError) {
-        console.warn("Erro ao excluir histórico:", historyError);
+        console.warn("⚠️ Failed to delete history:", historyError);
         // Continue despite history error
       }
 
       // Delete the appointment
-      const { error: deleteError } = await supabase
+      const { data, error: deleteError } = await supabase
         .from("agendamentos")
         .delete()
-        .eq("id", appointmentId);
+        .eq("id", appointmentId)
+        .select();
 
       if (deleteError) throw deleteError;
-
+      
       // Invalidate and refetch queries
       await invalidateQueries();
       
@@ -276,7 +303,7 @@ export const useAppointmentActions = () => {
       
       return true;
     } catch (error: any) {
-      console.error("Erro ao excluir agendamento:", error);
+      console.error("❌ Error deleting appointment:", error);
       toast({
         title: "Erro ao excluir",
         description: error.message || "Ocorreu um erro inesperado",

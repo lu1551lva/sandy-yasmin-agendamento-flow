@@ -1,8 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LucideIcon } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { ReactNode } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface StatsCardProps {
   title: string;
@@ -37,7 +36,7 @@ export const StatsCard = ({
             <Skeleton className="h-8 w-24" />
           ) : (
             <div className="text-2xl font-bold">
-              {valuePrefix}{value}
+              {valuePrefix}{typeof value === 'number' && value % 1 === 0 ? value : value.toFixed(2)}
             </div>
           )}
           {description && (

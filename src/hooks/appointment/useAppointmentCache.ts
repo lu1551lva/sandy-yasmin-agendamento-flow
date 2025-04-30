@@ -1,6 +1,5 @@
 
 import { useQueryClient } from '@tanstack/react-query';
-import { logAppointmentAction, logAppointmentError } from '@/utils/debugUtils';
 
 /**
  * Hook for managing appointment-related cache invalidation
@@ -16,17 +15,17 @@ export const useAppointmentCache = () => {
     'dashboard-appointments',
     'weekly-appointments',
     'week-appointments',
-    'appointment-details'
+    'appointment-details',
+    'upcoming-appointments',
+    'dashboard-data'
   ];
 
   /**
    * Invalidates all appointment-related queries
    */
   const invalidateAppointmentQueries = async (): Promise<boolean> => {
-    logAppointmentAction('Invalidando caches', 'all-queries');
+    console.log("🔄 Invalidating all appointment caches");
     try {
-      console.log("🔄 Iniciando invalidação completa de caches de agendamentos");
-      
       // First invalidate using the predicate approach to catch all variants
       await queryClient.invalidateQueries({
         predicate: (query) => {
@@ -51,7 +50,7 @@ export const useAppointmentCache = () => {
       );
 
       // Force immediate refetch of all active appointment queries
-      console.log("🔄 Forçando atualização de queries ativas");
+      console.log("🔄 Forcing refresh of active queries");
       await Promise.all([
         queryClient.refetchQueries({ 
           predicate: query => 
@@ -68,15 +67,23 @@ export const useAppointmentCache = () => {
         queryClient.refetchQueries({
           queryKey: ['dashboard-appointments'],
           type: 'active'
+        }),
+        // Also refetch dashboard data
+        queryClient.refetchQueries({
+          queryKey: ['dashboard-data'],
+          type: 'active'
+        }),
+        // Also refetch upcoming appointments
+        queryClient.refetchQueries({
+          queryKey: ['upcoming-appointments'],
+          type: 'active'
         })
       ]);
 
-      console.log("✅ Cache invalidado e dados recarregados com sucesso");
-      logAppointmentAction('Cache invalidado', 'all-queries', 'Dados recarregados com sucesso');
+      console.log("✅ Cache invalidated and data reloaded successfully");
       return true;
     } catch (error) {
-      console.error("❌ Erro durante invalidação do cache:", error);
-      logAppointmentError('Erro ao invalidar cache', 'query-invalidation', error);
+      console.error("❌ Error during cache invalidation:", error);
       return false;
     }
   };
@@ -88,7 +95,6 @@ export const useAppointmentCache = () => {
     await queryClient.invalidateQueries({ 
       queryKey: ['appointment-history', appointmentId] 
     });
-    logAppointmentAction('Histórico invalidado', appointmentId);
   };
 
   /**
@@ -98,7 +104,6 @@ export const useAppointmentCache = () => {
     await queryClient.invalidateQueries({ 
       queryKey: ['appointment-details', appointmentId] 
     });
-    logAppointmentAction('Detalhes do agendamento invalidados', appointmentId);
   };
 
   /**
@@ -106,7 +111,7 @@ export const useAppointmentCache = () => {
    */
   const forceRefetchAll = async (): Promise<boolean> => {
     try {
-      console.log("🔄 Forçando recarga de todos os dados de agendamentos");
+      console.log("🔄 Forcing reload of all appointment data");
       
       // First invalidate everything
       await invalidateAppointmentQueries();
@@ -116,13 +121,15 @@ export const useAppointmentCache = () => {
         queryClient.refetchQueries({ queryKey: ['appointments'] }),
         queryClient.refetchQueries({ queryKey: ['dashboard-appointments'] }),
         queryClient.refetchQueries({ queryKey: ['weekly-appointments'] }),
-        queryClient.refetchQueries({ queryKey: ['week-appointments'] })
+        queryClient.refetchQueries({ queryKey: ['week-appointments'] }),
+        queryClient.refetchQueries({ queryKey: ['dashboard-data'] }),
+        queryClient.refetchQueries({ queryKey: ['upcoming-appointments'] })
       ]);
       
-      console.log("✅ Todos os dados de agendamentos recarregados");
+      console.log("✅ All appointment data reloaded");
       return true;
     } catch (error) {
-      console.error("❌ Falha ao forçar recarga de dados:", error);
+      console.error("❌ Failed to force reload data:", error);
       return false;
     }
   };
