@@ -140,7 +140,8 @@ export function useAppointmentsData() {
     handleAppointmentUpdated,
     refetch,
     
-    // Computed values
-    showAll: statusFilter === "all" || statusFilter === "cancelado"
+    // Always show all sections, regardless of filter
+    // This ensures all sections are visible but will be controlled by the AppointmentList component
+    showAll: true
   };
 }

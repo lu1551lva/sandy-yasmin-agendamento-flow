@@ -53,6 +53,7 @@ const AppointmentList = () => {
         appointments={appointments}
         onAppointmentUpdated={handleAppointmentUpdated}
         showAll={showAll}
+        statusFilter={statusFilter}
       />
     </div>
   );

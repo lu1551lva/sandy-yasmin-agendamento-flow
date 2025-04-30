@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { AppointmentWithDetails } from "@/types/appointment.types";
 import { AppointmentStatusSection } from "./list/AppointmentStatusSection";
@@ -12,12 +11,14 @@ interface AppointmentListProps {
   appointments: AppointmentWithDetails[];
   onAppointmentUpdated?: () => void;
   showAll?: boolean;
+  statusFilter?: string;
 }
 
 export function AppointmentList({
   appointments,
   onAppointmentUpdated = () => {},
-  showAll = false
+  showAll = false,
+  statusFilter = "all"
 }: AppointmentListProps) {
   // Local state for dialogs
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentWithDetails | null>(null);
@@ -38,6 +39,16 @@ export function AppointmentList({
     appointments, 
     showAll 
   });
+
+  // Helper function to determine if a section should be shown based on the status filter
+  const shouldShowSection = (sectionStatus: string): boolean => {
+    // If the status filter is set to "all", show all sections
+    if (statusFilter === "all") {
+      return true;
+    }
+    // Otherwise, only show the section if it matches the selected filter
+    return sectionStatus === statusFilter;
+  };
 
   // Handlers for opening dialogs
   const handleShowDetails = (appointment: AppointmentWithDetails) => {
@@ -103,18 +114,20 @@ export function AppointmentList({
 
   return (
     <div className="space-y-6">
-      {/* Active Appointments */}
-      <AppointmentStatusSection
-        title="Agendamentos Ativos"
-        titleClassName="text-blue-800"
-        appointments={groupedAppointments.agendado}
-        onShowDetails={handleShowDetails}
-        onActionClick={handleActionClick}
-        isLoading={isLoading}
-      />
+      {/* Active Appointments - only show if filter is "all" or "agendado" */}
+      {shouldShowSection("agendado") && (
+        <AppointmentStatusSection
+          title="Agendamentos Ativos"
+          titleClassName="text-blue-800"
+          appointments={groupedAppointments.agendado}
+          onShowDetails={handleShowDetails}
+          onActionClick={handleActionClick}
+          isLoading={isLoading}
+        />
+      )}
       
-      {/* Completed Appointments */}
-      {showAll && groupedAppointments.concluido.length > 0 && (
+      {/* Completed Appointments - only show if filter is "all" or "concluido" */}
+      {shouldShowSection("concluido") && (
         <AppointmentStatusSection
           title="Agendamentos Concluídos"
           titleClassName="text-green-800"
@@ -122,12 +135,12 @@ export function AppointmentList({
           onShowDetails={handleShowDetails}
           onActionClick={handleActionClick}
           isLoading={isLoading}
-          hideActions={true}
+          hideActions={statusFilter !== "concluido"}
         />
       )}
       
-      {/* Canceled Appointments */}
-      {showAll && groupedAppointments.cancelado.length > 0 && (
+      {/* Canceled Appointments - only show if filter is "all" or "cancelado" */}
+      {shouldShowSection("cancelado") && (
         <AppointmentStatusSection
           title="Agendamentos Cancelados"
           titleClassName="text-red-800"
@@ -135,7 +148,7 @@ export function AppointmentList({
           onShowDetails={handleShowDetails}
           onActionClick={handleActionClick}
           isLoading={isLoading}
-          hideActions={true}
+          hideActions={statusFilter !== "cancelado"}
         />
       )}
 

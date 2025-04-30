@@ -14,13 +14,15 @@ interface AppointmentResultsProps {
   appointments: AppointmentWithDetails[];
   onAppointmentUpdated: () => void;
   showAll: boolean;
+  statusFilter: string;
 }
 
 export function AppointmentResults({
   isLoading,
   appointments,
   onAppointmentUpdated,
-  showAll
+  showAll,
+  statusFilter
 }: AppointmentResultsProps) {
   return (
     <Card>
@@ -37,6 +39,7 @@ export function AppointmentResults({
             appointments={appointments}
             onAppointmentUpdated={onAppointmentUpdated}
             showAll={showAll}
+            statusFilter={statusFilter}
           />
         )}
       </CardContent>
