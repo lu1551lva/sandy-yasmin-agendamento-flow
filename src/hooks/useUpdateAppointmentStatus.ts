@@ -114,13 +114,17 @@ export const useUpdateAppointmentStatus = () => {
       }
 
       logAppointmentAction('Excluindo agendamento', appointmentId);
+      console.log(`🗑️ Iniciando processo de exclusão do agendamento: ${appointmentId}`);
 
       // Use our refactored hook to delete the appointment
       const { success, error } = await deleteAppointmentWithHistory(appointmentId);
 
       if (!success) {
+        console.error(`❌ Falha ao excluir agendamento: ${error?.message}`);
         throw new Error(error?.message || "Falha ao excluir agendamento");
       }
+
+      console.log(`✅ Agendamento ${appointmentId} excluído com sucesso`);
 
       // Mostrar notificação de sucesso
       toast({
