@@ -58,7 +58,7 @@ export const useRescheduleAppointment = () => {
     traceAppointmentFlow("Iniciando reagendamento", appointmentId, { date: format(date, 'yyyy-MM-dd'), time });
 
     try {
-      // Update the appointment in the database
+      // Update the appointment in the database using our refactored hook
       const result = await rescheduleAppointment(
         appointmentId,
         date,
@@ -76,7 +76,7 @@ export const useRescheduleAppointment = () => {
         time 
       });
 
-      // Create history entry for the rescheduling
+      // Create history entry for the rescheduling using our refactored hook
       const formattedDate = format(date, 'yyyy-MM-dd');
       const observacao = note ? `Observação: ${note}` : undefined;
       const historyResult = await createHistoryEntry(
