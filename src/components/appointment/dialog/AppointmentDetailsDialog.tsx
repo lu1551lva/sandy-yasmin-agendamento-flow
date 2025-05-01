@@ -11,10 +11,9 @@ import { Separator } from "@/components/ui/separator";
 import { AppointmentWithDetails } from "@/types/appointment.types";
 import { Calendar, Check, Clock, History, MessageCircle, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { formatCurrency } from "@/lib/supabase";
 import { AppointmentDetailsSection } from "./AppointmentDetailsSection";
 import { CustomerDetailsSection } from "./CustomerDetailsSection";
-import { ServiceDetailsSection } from "./ServiceDetailsSection";
+import { ServiceDetailsSection } from "./sections/ServiceDetailsSection";
 import { CancellationDetailsSection } from "./CancellationDetailsSection";
 
 interface AppointmentDetailsDialogProps {
@@ -86,11 +85,7 @@ export function AppointmentDetailsDialog({
           <Separator />
           
           {/* Service Details Section */}
-          <ServiceDetailsSection 
-            nome={appointment.servico.nome}
-            valor={appointment.servico.valor}
-            duracao={appointment.servico.duracao_em_minutos}
-          />
+          <ServiceDetailsSection servico={appointment.servico} />
           
           {/* Show cancellation details if appointment is cancelled */}
           {isCanceled && appointment.motivo_cancelamento && (
