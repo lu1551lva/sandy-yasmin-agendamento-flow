@@ -10,6 +10,7 @@ import {
   Calendar,
   Ban,
   Star,
+  Send,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -63,7 +64,12 @@ const AdminNavigation = ({ isMobile = false, closeMobileMenu }: AdminNavigationP
     {
       to: "/admin/mensagens",
       icon: <MessageSquare size={18} />,
-      label: "Mensagens",
+      label: "Modelos de Mensagem",
+    },
+    {
+      to: "/admin/enviar-mensagens",
+      icon: <Send size={18} />,
+      label: "Enviar Mensagens",
     },
     {
       to: "/admin/perfil",

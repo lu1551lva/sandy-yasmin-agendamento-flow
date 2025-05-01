@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -21,6 +20,7 @@ import Services from "./pages/admin/Services";
 import WhatsAppMessages from "./pages/admin/WhatsAppMessages";
 import Profile from "./pages/admin/Profile";
 import Reviews from "./pages/admin/Reviews";
+import WhatsAppSender from "./pages/admin/WhatsAppSender";
 import { AuthProvider } from "./context/auth-context";
 import Register from "./pages/auth/Register";
 import Login from "./pages/auth/Login";
