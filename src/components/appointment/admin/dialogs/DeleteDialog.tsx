@@ -1,6 +1,7 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface DeleteDialogProps {
   showDialog: boolean;
@@ -16,7 +17,12 @@ export function DeleteDialog({
   isLoading
 }: DeleteDialogProps) {
   return (
-    <Dialog open={showDialog} onOpenChange={setShowDialog}>
+    <Dialog open={showDialog} onOpenChange={(open) => {
+      // Only allow closing if not loading
+      if (!isLoading || !open) {
+        setShowDialog(open);
+      }
+    }}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle>Excluir Agendamento</DialogTitle>
@@ -35,7 +41,14 @@ export function DeleteDialog({
             disabled={isLoading} 
             className="flex-1"
           >
-            {isLoading ? "Excluindo..." : "Excluir Permanentemente"}
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Excluindo...
+              </>
+            ) : (
+              "Excluir Permanentemente"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

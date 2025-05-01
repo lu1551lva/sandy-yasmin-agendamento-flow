@@ -50,7 +50,8 @@ export function AppointmentDialogProvider({
     handleStatusUpdate,
     handleCancel,
     handleReschedule,
-    handleAppointmentUpdated
+    handleAppointmentUpdated,
+    handleDelete // Include the new handler
   } = useAppointmentHandlers({
     selectedAppointment,
     appointmentToUpdate,
@@ -87,6 +88,7 @@ export function AppointmentDialogProvider({
     handleStatusUpdate,
     handleCancel,
     handleReschedule,
+    handleDelete, // Expose the delete handler
     validateAppointmentExists,
     handleAppointmentUpdated,
     

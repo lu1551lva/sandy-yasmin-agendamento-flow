@@ -1,5 +1,11 @@
 
+import { ReactNode } from "react";
 import { AppointmentWithDetails, AppointmentStatus } from "@/types/appointment.types";
+
+export interface AppointmentDialogProviderProps {
+  children: ReactNode;
+  onAppointmentUpdated?: () => void;
+}
 
 export interface AppointmentDialogContextType {
   // State
@@ -25,15 +31,11 @@ export interface AppointmentDialogContextType {
   handleStatusUpdate: () => Promise<boolean>;
   handleCancel: () => Promise<boolean>;
   handleReschedule: (date: Date, time: string) => Promise<boolean>;
+  handleDelete: () => Promise<boolean>; // Add the new delete handler
   validateAppointmentExists: (id: string | null) => boolean;
   handleAppointmentUpdated: () => void;
   
   // Helpers
   setSelectedAppointment: (appointment: AppointmentWithDetails | null) => void;
   setCancelReason: (reason: string) => void;
-}
-
-export interface AppointmentDialogProviderProps {
-  children: React.ReactNode;
-  onAppointmentUpdated: () => void;
 }
