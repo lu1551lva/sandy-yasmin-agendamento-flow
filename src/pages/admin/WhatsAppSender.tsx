@@ -169,15 +169,24 @@ const WhatsAppSender = () => {
         </TabsList>
         
         <TabsContent value="today" className="space-y-4">
+          {/* Fix: Use effect instead of expression and wrap in a fragment */}
           <div className="hidden">
-            {handleDateChange(today)}
+            {/* This is now a self-executing function that returns null */}
+            {(() => {
+              handleDateChange(today);
+              return null;
+            })()}
           </div>
           {renderAppointmentList()}
         </TabsContent>
         
         <TabsContent value="tomorrow" className="space-y-4">
+          {/* Fix: Similar fix here */}
           <div className="hidden">
-            {handleDateChange(tomorrow)}
+            {(() => {
+              handleDateChange(tomorrow);
+              return null;
+            })()}
           </div>
           {renderAppointmentList()}
         </TabsContent>

@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -97,6 +98,7 @@ const App = () => {
                 <Route path="profissionais" element={<Professionals />} />
                 <Route path="servicos" element={<Services />} />
                 <Route path="mensagens" element={<WhatsAppMessages />} />
+                <Route path="enviar-mensagens" element={<WhatsAppSender />} />
                 <Route path="perfil" element={<Profile />} />
                 <Route path="bloqueios" element={<BlocksList />} />
                 <Route path="avaliacoes" element={<Reviews />} />
