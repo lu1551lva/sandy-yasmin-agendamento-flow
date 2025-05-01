@@ -15,6 +15,7 @@ import { AppointmentDetailsSection } from "./AppointmentDetailsSection";
 import { CustomerDetailsSection } from "./CustomerDetailsSection";
 import { ServiceDetailsSection } from "./sections/ServiceDetailsSection";
 import { CancellationDetailsSection } from "./CancellationDetailsSection";
+import { cn } from "@/lib/classnames";
 
 interface AppointmentDetailsDialogProps {
   appointment: AppointmentWithDetails;
@@ -49,27 +50,27 @@ export function AppointmentDetailsDialog({
   
   const getStatusBadge = () => {
     if (isActive) {
-      return <Badge className="bg-blue-100 text-blue-800 border-blue-200">Agendado</Badge>;
+      return <Badge className="bg-blue-100 text-blue-800 border-blue-200 font-medium text-xs px-3 py-1">Agendado</Badge>;
     } else if (isCompleted) {
-      return <Badge className="bg-green-100 text-green-800 border-green-200">Concluído</Badge>;
+      return <Badge className="bg-green-100 text-green-800 border-green-200 font-medium text-xs px-3 py-1">Concluído</Badge>;
     } else if (isCanceled) {
-      return <Badge className="bg-red-100 text-red-800 border-red-200">Cancelado</Badge>;
+      return <Badge className="bg-red-100 text-red-800 border-red-200 font-medium text-xs px-3 py-1">Cancelado</Badge>;
     }
     
-    return <Badge variant="outline">Desconhecido</Badge>;
+    return <Badge variant="outline" className="font-medium text-xs px-3 py-1">Desconhecido</Badge>;
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-xl">
-        <DialogHeader>
+        <DialogHeader className="pb-2 border-b">
           <div className="flex flex-row justify-between items-center">
-            <DialogTitle>Detalhes do agendamento</DialogTitle>
+            <DialogTitle className="text-xl font-playfair">Detalhes do agendamento</DialogTitle>
             {getStatusBadge()}
           </div>
         </DialogHeader>
 
-        <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+        <div className="space-y-5 max-h-[70vh] overflow-y-auto pr-2 py-2">
           {/* Appointment Details Section */}
           <AppointmentDetailsSection 
             data={appointment.data}
@@ -77,47 +78,40 @@ export function AppointmentDetailsDialog({
             profissional={appointment.profissional.nome}
           />
           
-          <Separator />
-          
           {/* Customer Details Section */}
           <CustomerDetailsSection cliente={appointment.cliente} />
-          
-          <Separator />
           
           {/* Service Details Section */}
           <ServiceDetailsSection servico={appointment.servico} />
           
           {/* Show cancellation details if appointment is cancelled */}
           {isCanceled && appointment.motivo_cancelamento && (
-            <>
-              <Separator />
-              <CancellationDetailsSection motivo={appointment.motivo_cancelamento} />
-            </>
+            <CancellationDetailsSection motivo={appointment.motivo_cancelamento} />
           )}
         </div>
 
-        <DialogFooter className="flex-col sm:flex-row gap-2">
+        <DialogFooter className="flex-col sm:flex-row gap-3 pt-4 border-t mt-2">
           <div className="flex flex-col sm:flex-row gap-2 w-full">
             {/* Show WhatsApp button for all statuses */}
             <Button
               variant="outline"
               size="sm"
-              className="flex-1"
+              className="flex-1 gap-2 transition-all hover:bg-green-50 hover:text-green-600 hover:border-green-200"
               onClick={onSendWhatsApp}
               disabled={isUpdatingStatus}
             >
-              <MessageCircle className="h-4 w-4 mr-2" />
+              <MessageCircle className="h-4 w-4" />
               WhatsApp
             </Button>
             
             <Button
               variant="outline"
               size="sm"
-              className="flex-1"
+              className="flex-1 gap-2 transition-all hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200"
               onClick={onShowHistory}
               disabled={isUpdatingStatus}
             >
-              <History className="h-4 w-4 mr-2" />
+              <History className="h-4 w-4" />
               Histórico
             </Button>
           </div>
@@ -129,11 +123,11 @@ export function AppointmentDetailsDialog({
             <Button
               variant="destructive"
               size="sm"
-              className="flex-1"
+              className={cn("flex-1 gap-2", isUpdatingStatus && "opacity-70")}
               onClick={onShowDeleteConfirm}
               disabled={isUpdatingStatus}
             >
-              <Trash2 className="h-4 w-4 mr-2" />
+              <Trash2 className="h-4 w-4" />
               Excluir
             </Button>
             
@@ -143,33 +137,33 @@ export function AppointmentDetailsDialog({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1"
+                  className="flex-1 gap-2 transition-all hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200"
                   onClick={onShowReschedule}
                   disabled={isUpdatingStatus}
                 >
-                  <Calendar className="h-4 w-4 mr-2" />
+                  <Calendar className="h-4 w-4" />
                   Reagendar
                 </Button>
                 
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1"
+                  className="flex-1 gap-2 transition-all hover:bg-red-50 hover:text-red-600 hover:border-red-200"
                   onClick={onShowCancelConfirm}
                   disabled={isUpdatingStatus}
                 >
-                  <Pencil className="h-4 w-4 mr-2" />
+                  <Pencil className="h-4 w-4" />
                   Cancelar
                 </Button>
                 
                 <Button
                   variant="default"
                   size="sm"
-                  className="flex-1"
+                  className={cn("flex-1 gap-2 bg-green-600 hover:bg-green-700", isUpdatingStatus && "opacity-70")}
                   onClick={onComplete}
                   disabled={isUpdatingStatus}
                 >
-                  <Check className="h-4 w-4 mr-2" />
+                  <Check className="h-4 w-4" />
                   Concluir
                 </Button>
               </>

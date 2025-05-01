@@ -7,12 +7,12 @@ interface CancellationDetailsSectionProps {
 
 export function CancellationDetailsSection({ motivo }: CancellationDetailsSectionProps) {
   return (
-    <div className="space-y-2">
-      <h3 className="text-lg font-medium">Motivo do Cancelamento</h3>
-      <div className="flex items-start gap-2">
-        <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5" />
-        <p className="text-muted-foreground">{motivo}</p>
-      </div>
+    <div className="space-y-2 p-3 bg-red-50 rounded-lg border border-red-100">
+      <h3 className="text-lg font-medium flex items-center gap-2 text-red-700">
+        <AlertTriangle className="h-5 w-5" />
+        Motivo do Cancelamento
+      </h3>
+      <p className="text-muted-foreground pl-1">{motivo}</p>
     </div>
   );
 }
