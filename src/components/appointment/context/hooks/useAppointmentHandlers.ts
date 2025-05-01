@@ -32,7 +32,7 @@ export function useAppointmentHandlers({
   onAppointmentUpdated
 }: UseAppointmentHandlersProps) {
   const { toast } = useToast();
-  const { updateStatus, isLoading } = useUpdateAppointmentStatus();
+  const { updateStatus, deleteAppointment, isLoading } = useUpdateAppointmentStatus();
   const { rescheduleAppointment, isLoading: isReschedulingLoading } = useRescheduleAppointment();
   const { invalidateAppointmentQueries } = useAppointmentCache();
   const { showStatusUpdateSuccess, showStatusUpdateError } = useAppointmentNotifications();
