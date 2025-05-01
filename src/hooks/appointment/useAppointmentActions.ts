@@ -1,14 +1,17 @@
-
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { AppointmentStatus } from "@/types/appointment.types";
+import { useAppointmentDatabase } from "./useAppointmentDatabase";
 
 export const useAppointmentActions = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Import the appointment database hooks to use the deleteAppointmentWithHistory function
+  const { deleteAppointmentWithHistory } = useAppointmentDatabase();
 
   // Function to invalidate all appointment-related queries and force refetch
   const invalidateQueries = async () => {
@@ -263,7 +266,7 @@ export const useAppointmentActions = () => {
     }
   };
 
-  // Delete an appointment
+  // Delete an appointment - MODIFIED to use the deleteAppointmentWithHistory function
   const deleteAppointment = async (appointmentId: string) => {
     if (!appointmentId) {
       toast({
@@ -279,27 +282,16 @@ export const useAppointmentActions = () => {
     try {
       console.log(`🗑️ Deleting appointment: ${appointmentId}`);
       
-      // Delete history entries first
-      const { error: historyError } = await supabase
-        .from("agendamento_historico")
-        .delete()
-        .eq("agendamento_id", appointmentId);
+      // Use the deleteAppointmentWithHistory function instead of direct DB operations
+      // This ensures correct handling of the foreign key constraint
+      const { success, error } = await deleteAppointmentWithHistory(appointmentId);
 
-      if (historyError) {
-        console.warn("⚠️ Failed to delete history:", historyError);
-        // Continue despite history error
+      if (!success) {
+        console.error("❌ Error deleting appointment:", error);
+        throw error || new Error("Failed to delete appointment");
       }
-
-      // Delete the appointment
-      const { data, error: deleteError } = await supabase
-        .from("agendamentos")
-        .delete()
-        .eq("id", appointmentId)
-        .select();
-
-      if (deleteError) throw deleteError;
       
-      console.log("✓ Delete result:", data);
+      console.log("✓ Delete result successful");
       
       // Invalidate and refetch queries
       await invalidateQueries();
