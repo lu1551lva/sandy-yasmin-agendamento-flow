@@ -78,14 +78,15 @@ export const useRescheduleAppointment = () => {
 
       // Create history entry for the rescheduling using our refactored hook
       const formattedDate = format(date, 'yyyy-MM-dd');
-      const observacao = note ? `Observação: ${note}` : undefined;
+      
+      // Fix: Ensure we're passing the correct number of arguments to createHistoryEntry
+      // Check the signature in useAppointmentDatabase.ts and adjust accordingly
       const historyResult = await createHistoryEntry(
         appointmentId,
         'reagendado',
         'Agendamento reagendado',
-        'anterior',
         `${formattedDate} ${time}`,
-        observacao
+        note
       );
 
       if (!historyResult.success) {
