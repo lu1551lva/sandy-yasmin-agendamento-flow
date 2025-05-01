@@ -1,17 +1,22 @@
 
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { AppointmentStatus } from '@/types/appointment.types';
 import { logAppointmentAction, logAppointmentError, traceAppointmentFlow } from '@/utils/debugUtils';
 import { useAppointmentCache } from './appointment/useAppointmentCache';
+import { useAppointmentDatabase } from './appointment/useAppointmentDatabase';
 
 export const useUpdateAppointmentStatus = () => {
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { invalidateAppointmentQueries } = useAppointmentCache();
+  const { 
+    updateAppointmentStatus,
+    createHistoryEntry,
+    deleteAppointmentWithHistory 
+  } = useAppointmentDatabase();
 
   // Direct invalidation of all appointment queries to ensure UI updates
   const forceRefreshAppointments = async () => {
@@ -55,32 +60,24 @@ export const useUpdateAppointmentStatus = () => {
 
       traceAppointmentFlow('Atualizando status do agendamento', appointmentId, { status, reason });
 
-      const updateData: any = { status };
-      if (reason && status === "cancelado") {
-        updateData["motivo_cancelamento"] = reason;
+      // Use our refactored hook to update the status
+      const { success, error } = await updateAppointmentStatus(appointmentId, status, reason);
+      
+      if (!success) {
+        throw new Error(error?.message || "Falha ao atualizar status");
       }
 
-      // Atualizar o agendamento
-      const { error: updateError } = await supabase
-        .from("agendamentos")
-        .update(updateData)
-        .eq("id", appointmentId);
+      // Create history entry using our refactored hook
+      const historyDescription = `Status alterado para ${status}${reason ? ` - Motivo: ${reason}` : ''}`;
+      const { success: historySuccess, error: historyError } = await createHistoryEntry(
+        appointmentId,
+        status,
+        historyDescription,
+        undefined,
+        status
+      );
 
-      if (updateError) {
-        throw new Error(updateError.message);
-      }
-
-      // Criar registro de histórico
-      const { error: historyError } = await supabase
-        .from("agendamento_historico")
-        .insert({
-          agendamento_id: appointmentId,
-          tipo: status,
-          descricao: `Status alterado para ${status}${reason ? ` - Motivo: ${reason}` : ''}`,
-          novo_valor: status,
-        });
-
-      if (historyError) {
+      if (!historySuccess) {
         console.warn("⚠️ Erro ao registrar histórico:", historyError);
       }
 
@@ -118,15 +115,11 @@ export const useUpdateAppointmentStatus = () => {
 
       logAppointmentAction('Excluindo agendamento', appointmentId);
 
-      // Usar a função SQL que criamos para excluir o agendamento e seu histórico
-      const { data, error } = await supabase
-        .rpc('delete_appointment_with_history', {
-          appointment_id: appointmentId
-        });
+      // Use our refactored hook to delete the appointment
+      const { success, error } = await deleteAppointmentWithHistory(appointmentId);
 
-      if (error) {
-        console.error("❌ Erro ao excluir agendamento:", error);
-        throw new Error(error.message);
+      if (!success) {
+        throw new Error(error?.message || "Falha ao excluir agendamento");
       }
 
       // Mostrar notificação de sucesso
