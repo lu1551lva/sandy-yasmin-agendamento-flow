@@ -1,5 +1,6 @@
 
 import { AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface CancellationDetailsSectionProps {
   motivo: string;
@@ -12,7 +13,11 @@ export function CancellationDetailsSection({ motivo }: CancellationDetailsSectio
         <AlertTriangle className="h-5 w-5" />
         Motivo do Cancelamento
       </h3>
-      <p className="text-muted-foreground pl-1">{motivo}</p>
+      <Alert variant="destructive" className="bg-red-50 text-red-800 border-red-200">
+        <AlertDescription className="text-muted-foreground">
+          {motivo}
+        </AlertDescription>
+      </Alert>
     </div>
   );
 }

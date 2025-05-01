@@ -170,30 +170,13 @@ export const useAppointmentDatabase = () => {
    */
   const deleteAppointmentWithHistory = async (appointmentId: string): Promise<DatabaseResult> => {
     try {
-      // Delete history first
-      const { error: historyError } = await supabase
-        .from('agendamento_historico')
-        .delete()
-        .eq('agendamento_id', appointmentId);
-      
-      logDatabaseOperation('DELETE', 'agendamento_historico', { error: historyError });
-
-      if (historyError) {
-        return {
-          data: null,
-          error: historyError,
-          success: false
-        };
-      }
-
-      // Then delete the appointment
+      // Usar a função SQL que criamos para excluir o agendamento e seu histórico
       const { data, error } = await supabase
-        .from('agendamentos')
-        .delete()
-        .eq('id', appointmentId)
-        .select();
+        .rpc('delete_appointment_with_history', {
+          appointment_id: appointmentId
+        });
       
-      logDatabaseOperation('DELETE', 'agendamentos', { data, error });
+      logDatabaseOperation('RPC', 'delete_appointment_with_history', { data, error });
 
       return {
         data,

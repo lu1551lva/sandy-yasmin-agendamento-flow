@@ -118,24 +118,15 @@ export const useUpdateAppointmentStatus = () => {
 
       logAppointmentAction('Excluindo agendamento', appointmentId);
 
-      // Primeiro, salvar o histórico
-      await supabase
-        .from("agendamento_historico")
-        .insert({
-          agendamento_id: appointmentId,
-          tipo: "excluido",
-          descricao: "Agendamento excluído permanentemente",
-          novo_valor: "excluido"
+      // Usar a função SQL que criamos para excluir o agendamento e seu histórico
+      const { data, error } = await supabase
+        .rpc('delete_appointment_with_history', {
+          appointment_id: appointmentId
         });
 
-      // Excluir o agendamento
-      const { error: deleteError } = await supabase
-        .from("agendamentos")
-        .delete()
-        .eq("id", appointmentId);
-
-      if (deleteError) {
-        throw new Error(deleteError.message);
+      if (error) {
+        console.error("❌ Erro ao excluir agendamento:", error);
+        throw new Error(error.message);
       }
 
       // Mostrar notificação de sucesso

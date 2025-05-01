@@ -358,7 +358,10 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      delete_appointment_with_history: {
+        Args: { appointment_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
