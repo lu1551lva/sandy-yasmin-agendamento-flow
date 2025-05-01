@@ -18,7 +18,7 @@ export const useAppointmentDeletion = () => {
       // Log the deletion attempt
       console.log(`🗑️ Attempting to delete appointment: ${appointmentId}`);
       
-      // Use the database function to delete the appointment and its history
+      // Use the improved database function to delete the appointment and its history
       const { data, error } = await supabase
         .rpc('delete_appointment_with_history', {
           appointment_id: appointmentId
