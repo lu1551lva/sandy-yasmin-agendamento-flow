@@ -37,7 +37,8 @@ export const useRescheduleAppointment = () => {
     appointmentId: string,
     date: Date,
     time: string,
-    professionalId: string
+    professionalId: string,
+    note?: string
   ): Promise<boolean> => {
     logStackTrace("rescheduleAppointment chamado");
     
@@ -77,12 +78,14 @@ export const useRescheduleAppointment = () => {
 
       // Create history entry for the rescheduling
       const formattedDate = format(date, 'yyyy-MM-dd');
+      const observacao = note ? `Observação: ${note}` : undefined;
       const historyResult = await createHistoryEntry(
         appointmentId,
         'reagendado',
         'Agendamento reagendado',
         'anterior',
-        `${formattedDate} ${time}`
+        `${formattedDate} ${time}`,
+        observacao
       );
 
       if (!historyResult.success) {

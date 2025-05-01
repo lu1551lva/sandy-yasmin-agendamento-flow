@@ -18,6 +18,7 @@ export function useRescheduleDialogState(onAppointmentUpdated: () => void) {
   const [isRescheduleDialogOpen, setIsRescheduleDialogOpen] = useState(false);
   const { toast } = useToast();
   const { rescheduleAppointment, isLoading: isReschedulingLoading } = useRescheduleAppointment();
+  const [currentNote, setCurrentNote] = useState<string>("");
 
   /**
    * Handles rescheduling an appointment
@@ -49,12 +50,14 @@ export function useRescheduleDialogState(onAppointmentUpdated: () => void) {
         appointment.id,
         date,
         time,
-        appointment.profissional.id
+        appointment.profissional.id,
+        currentNote
       );
 
       if (success) {
         logAppointmentAction("Reagendamento bem-sucedido", appointment.id, { date, time });
         setIsRescheduleDialogOpen(false);
+        setCurrentNote("");
         logUIEvent("Chamando onAppointmentUpdated após reagendamento bem-sucedido");
         onAppointmentUpdated();
         toast({
@@ -80,6 +83,8 @@ export function useRescheduleDialogState(onAppointmentUpdated: () => void) {
     isRescheduleDialogOpen,
     setIsRescheduleDialogOpen,
     isReschedulingLoading,
-    handleReschedule
+    handleReschedule,
+    currentNote,
+    setCurrentNote
   };
 }

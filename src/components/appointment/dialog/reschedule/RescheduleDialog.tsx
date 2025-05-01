@@ -13,7 +13,6 @@ import {
 import { AppointmentWithDetails } from "@/types/appointment.types";
 import { Loader2, CalendarClock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
 import { RescheduleForm } from "./RescheduleForm";
 import { useRescheduleForm } from "./hooks/useRescheduleForm";
 
@@ -54,23 +53,6 @@ export function RescheduleDialog({
       const success = await onReschedule(selectedDate!, selectedTime);
       
       if (success) {
-        // Create history entry
-        const originalDateTime = `${appointment.data} ${appointment.hora}`;
-        const newDateTime = `${format(selectedDate!, 'yyyy-MM-dd')} ${selectedTime}`;
-        
-        console.log("Criando registro no histórico...");
-        
-        await supabase
-          .from('agendamento_historico')
-          .insert({
-            agendamento_id: appointment.id,
-            tipo: "reagendado",
-            descricao: "Agendamento reagendado",
-            valor_anterior: originalDateTime,
-            novo_valor: newDateTime,
-            observacao: note || "Reagendamento sem observação"
-          });
-          
         console.log("Reagendamento concluído com sucesso");
         onClose();
       }

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useRescheduleAppointment } from '@/hooks/useRescheduleAppointment';
 import { useUpdateAppointmentStatus } from '@/hooks/useUpdateAppointmentStatus';
@@ -30,6 +29,7 @@ export function useAppointmentDialog({
     isLoading: isDeleting 
   } = useUpdateAppointmentStatus();
   const { toast } = useToast();
+  const [rescheduleNote, setRescheduleNote] = useState("");
 
   // Make sure we always have a valid appointment object
   if (!appointment || !appointment.id) {
@@ -48,11 +48,13 @@ export function useAppointmentDialog({
         appointment.id,
         date,
         time,
-        appointment.profissional.id
+        appointment.profissional.id,
+        rescheduleNote
       );
 
       if (success) {
         setShowReschedule(false);
+        setRescheduleNote("");
         toast({
           title: "Agendamento reagendado",
           description: "O agendamento foi reagendado com sucesso.",
@@ -72,10 +74,11 @@ export function useAppointmentDialog({
     }
   };
 
-  /**
-   * Handles updating an appointment status
-   */
   const handleStatusUpdate = async (status: AppointmentStatus) => {
+    if (!appointment?.id) {
+      return Promise.resolve(false);
+    }
+
     logAppointmentAction("Iniciando atualização de status via diálogo", appointment.id, { status });
     
     try {
@@ -103,9 +106,6 @@ export function useAppointmentDialog({
     }
   };
 
-  /**
-   * Handles deleting an appointment
-   */
   const handleDelete = async () => {
     logAppointmentAction("Iniciando exclusão via diálogo", appointment.id);
     
@@ -132,9 +132,6 @@ export function useAppointmentDialog({
     }
   };
 
-  /**
-   * Handles sending a WhatsApp message to the client
-   */
   const handleSendWhatsApp = () => {
     try {
       const message = `Olá ${appointment.cliente.nome.split(' ')[0]}! Confirmamos seu agendamento para ${appointment.servico.nome} no dia ${format(parseISO(appointment.data), "dd/MM", { locale: ptBR })} às ${appointment.hora}.`;
@@ -157,6 +154,8 @@ export function useAppointmentDialog({
     handleStatusUpdate,
     handleDelete,
     handleSendWhatsApp,
+    rescheduleNote,
+    setRescheduleNote,
     isRescheduling,
     isUpdatingStatus,
     isDeleting,
