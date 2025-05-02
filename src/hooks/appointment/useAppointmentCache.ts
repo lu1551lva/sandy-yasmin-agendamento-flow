@@ -1,5 +1,4 @@
 
-
 import { useQueryClient } from '@tanstack/react-query';
 
 /**
@@ -125,4 +124,3 @@ export const useAppointmentCache = () => {
     APPOINTMENT_QUERY_KEYS
   };
 };
-

@@ -14,6 +14,11 @@ export function useAutoCompleteAppointments() {
     
     setIsRunning(true);
     try {
+      // DESATIVADO TEMPORARIAMENTE - Problema de fuso horário sendo corrigido
+      console.log('⚠️ Função auto-complete temporariamente desativada');
+      
+      // Código original comentado para referência
+      /*
       const { data, error } = await supabase.functions.invoke('auto-complete-appointments');
       
       if (error) {
@@ -41,6 +46,7 @@ export function useAutoCompleteAppointments() {
           description: `${data.updated} agendamentos antigos foram automaticamente concluídos.`
         });
       }
+      */
     } catch (err) {
       console.error('Erro inesperado ao executar auto-complete:', err);
     } finally {
@@ -49,13 +55,15 @@ export function useAutoCompleteAppointments() {
   };
 
   useEffect(() => {
-    // Executar uma vez ao montar o componente
-    runAutoComplete();
+    // Comentado para evitar execução automática até que o problema seja resolvido
+    // runAutoComplete();
+    console.log('⚠️ Função auto-complete-appointments desativada temporariamente');
     
-    // Configurar intervalo para verificar a cada 5 minutos
-    const interval = setInterval(runAutoComplete, 5 * 60 * 1000);
+    // Intervalo também desativado
+    // const interval = setInterval(runAutoComplete, 5 * 60 * 1000);
+    // return () => clearInterval(interval);
     
-    return () => clearInterval(interval);
+    return () => {}; // Cleanup vazio
   }, []);
   
   return { runAutoComplete, isRunning };

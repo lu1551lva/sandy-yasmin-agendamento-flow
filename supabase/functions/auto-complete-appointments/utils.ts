@@ -1,31 +1,33 @@
 
 /**
- * Checks if a given date and time are in the past compared to current time
- * @param dateStr - Date string in yyyy-MM-dd format
- * @param timeStr - Time string in HH:mm format
- * @returns boolean - True if the date+time is in the past
+ * Verifica se uma data e hora já passaram, considerando o fuso horário do Brasil (UTC-3)
+ * @param dateStr Data no formato YYYY-MM-DD
+ * @param timeStr Hora no formato HH:MM
+ * @returns true se a data/hora já passou, false caso contrário
  */
-export const isInPast = (dateStr: string, timeStr: string): boolean => {
+export function isInPast(dateStr: string, timeStr: string): boolean {
+  // Obter a data atual considerando o fuso horário do Brasil (UTC-3)
   const now = new Date();
   
-  if (!dateStr || !timeStr) return false;
+  // O Brasil está em UTC-3, então adicionamos 3 horas para comparar com UTC
+  // Isso é necessário porque estamos comparando a data/hora do agendamento 
+  // (que está em UTC para o banco de dados) com a data/hora atual do servidor (também em UTC)
+  // Assim, se no Brasil são 13:00, no UTC são 16:00
+  const brazilOffsetHours = 3; // UTC-3
   
-  try {
-    // Parse date (expecting yyyy-MM-dd format)
-    const [year, month, day] = dateStr.split('-').map(num => parseInt(num, 10));
-    
-    // Parse time (expecting HH:mm format)
-    const [hour, minute] = timeStr.split(':').map(num => parseInt(num, 10));
-    
-    // Create appointment date object (months are 0-indexed in JavaScript)
-    const appointmentDate = new Date(year, month - 1, day, hour, minute);
-    
-    // Debug logging
-    console.log(`Comparing: Appointment time ${appointmentDate.toISOString()} with current time ${now.toISOString()}`);
-    
-    return appointmentDate < now;
-  } catch (e) {
-    console.error('Error in isInPast function:', e);
-    return false;
-  }
-};
+  // Obter a data e hora do agendamento
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  const appointmentDate = new Date(`${dateStr}T${timeStr}:00.000Z`);
+  
+  // Adicionar o offset do Brasil para comparação correta
+  const appointmentDateAdjusted = new Date(appointmentDate);
+  appointmentDateAdjusted.setHours(appointmentDate.getHours() + brazilOffsetHours);
+  
+  console.log(`Comparando:
+  - Data/hora agendamento (UTC): ${appointmentDate.toISOString()}
+  - Data/hora agendamento (ajustada): ${appointmentDateAdjusted.toISOString()}
+  - Data/hora atual (UTC): ${now.toISOString()}`);
+  
+  // Comparar as datas
+  return now > appointmentDateAdjusted;
+}
