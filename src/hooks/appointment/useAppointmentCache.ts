@@ -1,4 +1,5 @@
 
+
 import { useQueryClient } from '@tanstack/react-query';
 
 /**
@@ -33,6 +34,27 @@ export const useAppointmentCache = () => {
    */
   const refetchQuery = async (queryKey: string): Promise<void> => {
     await queryClient.refetchQueries({ queryKey: [queryKey] });
+  };
+
+  /**
+   * Invalidates all appointment-related queries
+   * Helper method to simplify cache invalidation across the app
+   */
+  const invalidateAppointmentQueries = async (): Promise<void> => {
+    try {
+      console.log("🔄 Invalidating all appointment-related queries");
+      
+      // Invalidate all our known keys
+      await Promise.all(
+        APPOINTMENT_QUERY_KEYS.map(queryKey => 
+          queryClient.invalidateQueries({ queryKey: [queryKey] })
+        )
+      );
+      
+      console.log("✅ All appointment queries invalidated");
+    } catch (error) {
+      console.error("❌ Error invalidating queries:", error);
+    }
   };
 
   /**
@@ -99,6 +121,8 @@ export const useAppointmentCache = () => {
     refetchQuery,
     forceRefetchAll,
     invalidateAppointmentHistory,
+    invalidateAppointmentQueries,
     APPOINTMENT_QUERY_KEYS
   };
 };
+

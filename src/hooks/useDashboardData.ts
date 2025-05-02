@@ -150,8 +150,8 @@ export const useDashboardData = (): DashboardData => {
     const totalRevenue = appointments
       .filter(app => app.status === 'concluido')
       .reduce((sum, app) => {
-        const valor = app.servico?.valor || 0;
-        return sum + valor;
+        const servicoValor = app.servico && typeof app.servico === 'object' ? (app.servico.valor || 0) : 0;
+        return sum + servicoValor;
       }, 0);
     
     console.log("💰 Calculated revenue:", totalRevenue, "from", completedAppointments, "completed appointments");
@@ -159,17 +159,21 @@ export const useDashboardData = (): DashboardData => {
     // Count services
     const serviceMap = new Map<string, { count: number; value: number; name: string }>();
     appointments.forEach(app => {
-      if (app.servico) {
-        const existing = serviceMap.get(app.servico.id) || { 
+      if (app.servico && typeof app.servico === 'object') {
+        const servicoId = app.servico.id || 'unknown';
+        const servicoNome = app.servico.nome || 'Unknown Service';
+        const servicoValor = app.servico.valor || 0;
+        
+        const existing = serviceMap.get(servicoId) || { 
           count: 0, 
           value: 0, 
-          name: app.servico.nome 
+          name: servicoNome
         };
         
-        serviceMap.set(app.servico.id, {
+        serviceMap.set(servicoId, {
           count: existing.count + 1,
-          value: existing.value + (app.servico.valor || 0),
-          name: app.servico.nome
+          value: existing.value + servicoValor,
+          name: servicoNome
         });
       }
     });
@@ -183,15 +187,18 @@ export const useDashboardData = (): DashboardData => {
     // Count professionals
     const professionalMap = new Map<string, { count: number; name: string }>();
     appointments.forEach(app => {
-      if (app.profissional) {
-        const existing = professionalMap.get(app.profissional.id) || { 
+      if (app.profissional && typeof app.profissional === 'object') {
+        const profId = app.profissional.id || 'unknown';
+        const profName = app.profissional.nome || 'Unknown Professional';
+        
+        const existing = professionalMap.get(profId) || { 
           count: 0, 
-          name: app.profissional.nome 
+          name: profName
         };
         
-        professionalMap.set(app.profissional.id, {
+        professionalMap.set(profId, {
           count: existing.count + 1,
-          name: app.profissional.nome
+          name: profName
         });
       }
     });

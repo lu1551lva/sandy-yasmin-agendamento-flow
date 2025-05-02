@@ -1,4 +1,5 @@
 
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { AppointmentStatus } from "@/types/appointment.types";
@@ -18,7 +19,7 @@ export const useAppointmentActions = () => {
   // Get database operations
   const {
     updateAppointmentStatus,
-    rescheduleAppointment,
+    rescheduleAppointment: dbRescheduleAppointment,
     createHistoryEntry,
     deleteAppointmentWithHistory,
     getAppointmentById
@@ -155,7 +156,7 @@ export const useAppointmentActions = () => {
   /**
    * Reschedule an appointment
    */
-  const rescheduleAppointment = async (
+  const reschedule = async (
     appointmentId: string, 
     date: string | Date, 
     time: string
@@ -176,7 +177,7 @@ export const useAppointmentActions = () => {
       logAppointmentAction('Reagendando agendamento', appointmentId, { date, time });
       
       // Update appointment date and time
-      const { success, error } = await rescheduleAppointment(
+      const { success, error } = await dbRescheduleAppointment(
         appointmentId, 
         date, 
         time
@@ -263,7 +264,8 @@ export const useAppointmentActions = () => {
     updateStatus,
     completeAppointment,
     cancelAppointment,
-    rescheduleAppointment,
+    rescheduleAppointment: reschedule,
     deleteAppointment
   };
 };
+

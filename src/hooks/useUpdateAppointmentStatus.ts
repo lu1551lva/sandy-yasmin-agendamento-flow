@@ -1,4 +1,5 @@
 
+
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
@@ -11,7 +12,7 @@ export const useUpdateAppointmentStatus = () => {
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { invalidateAppointmentQueries } = useAppointmentCache();
+  const { forceRefetchAll } = useAppointmentCache();
   const { 
     updateAppointmentStatus,
     createHistoryEntry,
@@ -34,7 +35,7 @@ export const useUpdateAppointmentStatus = () => {
       });
 
       // Then specifically invalidate the ones we know about
-      await invalidateAppointmentQueries();
+      await forceRefetchAll();
       
       // Force immediate refetch of critical queries
       await Promise.all([
@@ -155,3 +156,4 @@ export const useUpdateAppointmentStatus = () => {
     isLoading,
   };
 };
+

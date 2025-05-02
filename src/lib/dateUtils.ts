@@ -1,4 +1,5 @@
 
+
 /**
  * Utility to check if a given date and time are in the past
  * This is used to validate appointment completions
@@ -27,3 +28,22 @@ export const isInPast = (dateStr: string, timeStr: string): boolean => {
     return false;
   }
 };
+
+/**
+ * Format date to dd/MM/yyyy
+ */
+export const formatDate = (date: Date): string => {
+  if (!date) return '';
+  
+  try {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    
+    return `${day}/${month}/${year}`;
+  } catch (e) {
+    console.error('Error formatting date:', e);
+    return '';
+  }
+};
+

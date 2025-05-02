@@ -1,4 +1,5 @@
 
+
 import { useCallback } from "react";
 import { useAppointmentCache } from "@/hooks/appointment/useAppointmentCache";
 import { logUIEvent } from "@/utils/debugUtils";
@@ -10,17 +11,18 @@ interface UseCacheHandlerProps {
 export function useCacheHandler({
   onAppointmentUpdated
 }: UseCacheHandlerProps) {
-  const { invalidateAppointmentQueries } = useAppointmentCache();
+  const { forceRefetchAll } = useAppointmentCache();
 
   // Helper function to handle when an appointment is updated
   const handleAppointmentUpdated = useCallback(() => {
     logUIEvent('Appointment updated, refreshing data...');
-    invalidateAppointmentQueries().then(() => {
+    forceRefetchAll().then(() => {
       onAppointmentUpdated();
     });
-  }, [onAppointmentUpdated, invalidateAppointmentQueries]);
+  }, [onAppointmentUpdated, forceRefetchAll]);
 
   return {
     handleAppointmentUpdated
   };
 }
+

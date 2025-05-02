@@ -1,4 +1,5 @@
 
+
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { useAppointmentDatabase } from './appointment/useAppointmentDatabase';
@@ -21,7 +22,7 @@ export const useRescheduleAppointment = () => {
   } = useAppointmentDatabase();
 
   const { 
-    invalidateAppointmentQueries 
+    forceRefetchAll 
   } = useAppointmentCache();
 
   const { 
@@ -96,7 +97,7 @@ export const useRescheduleAppointment = () => {
 
       // Show success notification and update cache
       showRescheduleSuccess();
-      await invalidateAppointmentQueries();
+      await forceRefetchAll();
       
       return true;
     } catch (error) {
@@ -114,3 +115,4 @@ export const useRescheduleAppointment = () => {
     isLoading
   };
 };
+
