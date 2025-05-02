@@ -1,6 +1,6 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
-import { isInPast } from './utils.ts';
+import { isInPast } from '../auto-complete-appointments/utils.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -28,73 +28,66 @@ Deno.serve(async (req) => {
     // Create Supabase client
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
-    // Get current date and time
-    const now = new Date();
-    const currentDate = now.toISOString().split('T')[0];
-    const currentHour = now.getHours().toString().padStart(2, '0');
-    const currentMinute = now.getMinutes().toString().padStart(2, '0');
-    const currentTime = `${currentHour}:${currentMinute}`;
-    
-    console.log(`🕒 Running auto-complete check at ${currentDate} ${currentTime}`);
+    console.log(`🔍 Checking for incorrectly completed future appointments`);
 
-    // Find past appointments that are still in "agendado" status
-    const { data: pastAppointments, error } = await supabase
+    // Get appointments with status "concluido"
+    const { data: completedAppointments, error } = await supabase
       .from('agendamentos')
       .select('*')
-      .eq('status', 'agendado');
+      .eq('status', 'concluido');
 
     if (error) {
-      console.error('Error fetching appointments:', error);
+      console.error('Error fetching completed appointments:', error);
       return new Response(
-        JSON.stringify({ error: 'Failed to fetch appointments' }),
+        JSON.stringify({ error: 'Failed to fetch completed appointments' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    
-    // Filter appointments that are truly in the past
-    const trulyPastAppointments = pastAppointments.filter(appointment => 
-      isInPast(appointment.data, appointment.hora)
+
+    // Filter to find future appointments incorrectly marked as completed
+    const futureAppointments = completedAppointments.filter(appointment => 
+      !isInPast(appointment.data, appointment.hora)
     );
     
-    console.log(`📋 Found ${pastAppointments.length} scheduled appointments, ${trulyPastAppointments.length} are in the past`);
-
-    if (trulyPastAppointments.length === 0) {
+    console.log(`📋 Found ${futureAppointments.length} future appointments incorrectly marked as completed`);
+    
+    if (futureAppointments.length === 0) {
       return new Response(
-        JSON.stringify({ message: 'No past appointments to complete', updated: 0 }),
+        JSON.stringify({ message: 'No future appointments incorrectly marked as completed', reset: 0 }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Update all past appointments to "concluido" status
-    const appointmentIds = trulyPastAppointments.map(apt => apt.id);
+    // Reset incorrectly marked appointments back to "agendado"
+    const appointmentIds = futureAppointments.map(apt => apt.id);
     
-    console.log(`🔄 Updating status for ${appointmentIds.length} past appointments`);
-    for (const appointment of trulyPastAppointments) {
-      console.log(`   - Appointment ${appointment.id}: Date: ${appointment.data} Time: ${appointment.hora}`);
+    console.log(`🔄 Resetting status for ${appointmentIds.length} future appointments`);
+    for (const appointment of futureAppointments) {
+      console.log(`   - Resetting appointment ${appointment.id}: Date: ${appointment.data} Time: ${appointment.hora}`);
     }
     
     const { data: updatedAppointments, error: updateError } = await supabase
       .from('agendamentos')
       .update({
-        status: 'concluido'
+        status: 'agendado'
       })
       .in('id', appointmentIds)
       .select();
 
     if (updateError) {
-      console.error('Error updating past appointments:', updateError);
+      console.error('Error resetting appointments:', updateError);
       return new Response(
-        JSON.stringify({ error: 'Failed to update past appointments' }),
+        JSON.stringify({ error: 'Failed to reset appointments' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Create history entries for each updated appointment
+    // Create history entries for each reset appointment
     const historyEntries = appointmentIds.map(id => ({
       agendamento_id: id,
-      tipo: 'auto-completado',
-      descricao: 'Agendamento marcado como concluído automaticamente',
-      novo_valor: 'concluido'
+      tipo: 'status-corrigido',
+      descricao: 'Agendamento revertido de concluído para agendado (correção automática)',
+      novo_valor: 'agendado'
     }));
 
     const { error: historyError } = await supabase
@@ -105,12 +98,12 @@ Deno.serve(async (req) => {
       console.error('Error creating history entries:', historyError);
     }
     
-    console.log(`✅ Successfully auto-completed ${appointmentIds.length} appointments`);
+    console.log(`✅ Successfully reset ${appointmentIds.length} appointments`);
 
     return new Response(
       JSON.stringify({ 
-        message: 'Past appointments auto-completed successfully', 
-        updated: appointmentIds.length,
+        message: 'Future appointments have been reset from concluido to agendado', 
+        reset: appointmentIds.length,
         appointments: updatedAppointments
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
