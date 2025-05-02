@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
@@ -40,10 +39,14 @@ export const useDashboardData = () => {
       const completedAppointments = appointments?.filter(a => a.status === 'concluido')?.length || 0;
       const canceledAppointments = appointments?.filter(a => a.status === 'cancelado')?.length || 0;
       
-      // Calculate total revenue from completed appointments
+      // Calculate total revenue from completed appointments - fix the type issue
       const totalRevenue = appointments
         ?.filter(a => a.status === 'concluido')
-        ?.reduce((sum, a) => sum + (a.servico?.valor || 0), 0) || 0;
+        ?.reduce((sum, a) => {
+          // Handle the case where servico might be null or not have the expected structure
+          const servicoValor = a.servico && typeof a.servico === 'object' ? (a.servico as any).valor || 0 : 0;
+          return sum + servicoValor;
+        }, 0) || 0;
       
       console.log(`✅ Dashboard metrics calculated: ${totalAppointments} appointments, ${scheduledAppointments} scheduled, ${completedAppointments} completed, ${canceledAppointments} canceled`);
       
@@ -178,8 +181,16 @@ export const useDashboardData = () => {
 
       if (lastMonthError) throw lastMonthError;
 
-      const currentMonthRevenue = currentMonthData?.reduce((sum, item) => sum + (item.servico?.valor || 0), 0) || 0;
-      const lastMonthRevenue = lastMonthData?.reduce((sum, item) => sum + (item.servico?.valor || 0), 0) || 0;
+      // Fix the type issues with proper typecasting
+      const currentMonthRevenue = currentMonthData?.reduce((sum, item) => {
+        const servicoValor = item.servico && typeof item.servico === 'object' ? (item.servico as any).valor || 0 : 0;
+        return sum + servicoValor;
+      }, 0) || 0;
+      
+      const lastMonthRevenue = lastMonthData?.reduce((sum, item) => {
+        const servicoValor = item.servico && typeof item.servico === 'object' ? (item.servico as any).valor || 0 : 0;
+        return sum + servicoValor;
+      }, 0) || 0;
       
       // Calculate percentage change
       let trend = 0;

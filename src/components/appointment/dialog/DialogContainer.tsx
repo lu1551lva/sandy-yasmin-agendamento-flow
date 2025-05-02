@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { AppointmentWithDetails } from "@/types/appointment.types";
 import { AppointmentDetailsDialog } from "./AppointmentDetailsDialog";
-import { ConfirmationDialogs } from "./confirmations/ConfirmationDialogs";
+import { ConfirmationDialogs } from "./ConfirmationDialogs";
 import { RescheduleDialog } from "./reschedule/RescheduleDialog";
 import { HistorySidebar } from "./history/HistorySidebar";
 import { useAppointmentActions } from "@/hooks/appointment/useAppointmentActions";
