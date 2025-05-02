@@ -5,8 +5,7 @@ import { AppointmentDetailsDialog } from "./AppointmentDetailsDialog";
 import { ConfirmationDialogs } from "./confirmations/ConfirmationDialogs";
 import { RescheduleDialog } from "./reschedule/RescheduleDialog";
 import { HistorySidebar } from "./history/HistorySidebar";
-import { useUpdateAppointmentStatus } from "@/hooks/useUpdateAppointmentStatus";
-import { useRescheduleAppointment } from "@/hooks/useRescheduleAppointment";
+import { useAppointmentActions } from "@/hooks/appointment/useAppointmentActions";
 import { useToast } from "@/hooks/use-toast";
 import { createWhatsAppLink } from "@/lib/supabase";
 
@@ -30,93 +29,73 @@ export function DialogContainer({
   const [cancelReason, setCancelReason] = useState("");
   
   const { toast } = useToast();
-  const { updateStatus, deleteAppointment, isLoading: isUpdatingStatus } = useUpdateAppointmentStatus();
-  const { rescheduleAppointment, isLoading: isReschedulingLoading } = useRescheduleAppointment();
+  const { 
+    completeAppointment, 
+    cancelAppointment, 
+    rescheduleAppointment, 
+    deleteAppointment,
+    isLoading 
+  } = useAppointmentActions();
 
   if (!appointment) {
     return null;
   }
 
-  // Handle status update for this specific appointment
+  // Handler for completing an appointment
   const handleComplete = async () => {
     console.log("Completing appointment:", appointment.id);
-    const success = await updateStatus(appointment.id, 'concluido');
+    const success = await completeAppointment(appointment.id);
     
-    if (success) {
-      toast({
-        title: "Agendamento concluído",
-        description: "O agendamento foi marcado como concluído com sucesso."
-      });
-      if (onAppointmentUpdated) onAppointmentUpdated();
+    if (success && onAppointmentUpdated) {
+      onAppointmentUpdated();
       onClose();
     }
   };
 
-  // Handle cancel for this specific appointment
+  // Handler for canceling an appointment
   const handleCancel = async () => {
     console.log("Canceling appointment:", appointment.id);
     const reasonToUse = cancelReason || 'Cancelamento sem motivo especificado';
-    const success = await updateStatus(appointment.id, 'cancelado', reasonToUse);
+    const success = await cancelAppointment(appointment.id, reasonToUse);
     
-    if (success) {
-      toast({
-        title: "Agendamento cancelado",
-        description: "O agendamento foi cancelado com sucesso."
-      });
-      if (onAppointmentUpdated) onAppointmentUpdated();
+    if (success && onAppointmentUpdated) {
+      onAppointmentUpdated();
       onClose();
     }
     
     setShowCancelConfirm(false);
   };
 
-  // Handle delete - properly call deleteAppointment function
+  // Handler for deleting an appointment
   const handleDelete = async () => {
     console.log("Deleting appointment:", appointment.id);
     const success = await deleteAppointment(appointment.id);
     
-    if (success) {
-      toast({
-        title: "Agendamento excluído",
-        description: "O agendamento foi excluído com sucesso."
-      });
-      
-      if (onAppointmentUpdated) onAppointmentUpdated();
+    if (success && onAppointmentUpdated) {
+      onAppointmentUpdated();
       setShowDeleteConfirm(false);
       onClose();
-    } else {
-      toast({
-        title: "Erro na exclusão",
-        description: "Não foi possível excluir o agendamento. Tente novamente.",
-        variant: "destructive"
-      });
     }
   };
 
-  // Handle WhatsApp message
+  // Handler for sending WhatsApp message
   const handleSendWhatsApp = () => {
     const message = `Olá ${appointment.cliente.nome.split(' ')[0]}! Confirmamos seu agendamento para ${appointment.servico.nome} no dia ${appointment.data} às ${appointment.hora}.`;
     window.open(createWhatsAppLink(appointment.cliente.telefone, message), "_blank");
   };
   
-  // Handle rescheduling
+  // Handler for rescheduling
   const handleReschedule = async (date: Date, time: string) => {
     console.log("Rescheduling appointment:", appointment.id);
     const success = await rescheduleAppointment(
       appointment.id,
       date,
-      time,
-      appointment.profissional.id
+      time
     );
     
-    if (success) {
-      toast({
-        title: "Agendamento reagendado",
-        description: "O agendamento foi reagendado com sucesso."
-      });
-      
+    if (success && onAppointmentUpdated) {
+      onAppointmentUpdated();
       setShowReschedule(false);
-      if (onAppointmentUpdated) onAppointmentUpdated();
       onClose();
       return true;
     }
@@ -136,7 +115,7 @@ export function DialogContainer({
         onSendWhatsApp={handleSendWhatsApp}
         onShowHistory={() => setShowHistory(true)}
         onShowDeleteConfirm={() => setShowDeleteConfirm(true)}
-        isUpdatingStatus={isUpdatingStatus}
+        isUpdatingStatus={isLoading}
       />
 
       {/* Confirmation dialogs (Cancel and Delete) */}
@@ -147,7 +126,9 @@ export function DialogContainer({
         setShowDeleteConfirm={setShowDeleteConfirm}
         onCancel={handleCancel}
         onDelete={handleDelete}
-        isLoading={isUpdatingStatus}
+        cancelReason={cancelReason}
+        setCancelReason={setCancelReason}
+        isLoading={isLoading}
       />
 
       {/* Reschedule dialog */}
@@ -157,7 +138,7 @@ export function DialogContainer({
           isOpen={showReschedule}
           onClose={() => setShowReschedule(false)}
           onReschedule={handleReschedule}
-          isLoading={isReschedulingLoading}
+          isLoading={isLoading}
         />
       )}
 

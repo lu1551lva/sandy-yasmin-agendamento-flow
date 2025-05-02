@@ -32,6 +32,7 @@ export function AdminAppointmentDialogs({
   setShowDeleteDialog,
   onAppointmentUpdated,
 }: AdminAppointmentDialogsProps) {
+  const [cancelReason, setCancelReason] = useState("");
   const { isLoading, completeAppointment, cancelAppointment, rescheduleAppointment, deleteAppointment } = useAppointmentActions();
 
   const handleCompleteAppointment = async () => {
@@ -97,6 +98,8 @@ export function AdminAppointmentDialogs({
         showDialog={showCancelDialog}
         setShowDialog={setShowCancelDialog}
         onCancel={handleCancelAppointment}
+        cancelReason={cancelReason}
+        setCancelReason={setCancelReason}
         isLoading={isLoading}
       />
 

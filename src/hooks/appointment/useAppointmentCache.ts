@@ -2,13 +2,13 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 /**
- * Hook for managing appointment-related cache invalidation
+ * Unified hook for all appointment cache operations
  */
 export const useAppointmentCache = () => {
   const queryClient = useQueryClient();
 
   /**
-   * List of all appointment-related query keys to invalidate
+   * List of all appointment-related query keys
    */
   const APPOINTMENT_QUERY_KEYS = [
     'appointments',
@@ -22,76 +22,65 @@ export const useAppointmentCache = () => {
   ];
 
   /**
-   * Invalidates all appointment-related queries
+   * Invalidates a specific query key
    */
-  const invalidateAppointmentQueries = async (): Promise<boolean> => {
-    console.log("🔄 Invalidating all appointment caches");
+  const invalidateQuery = async (queryKey: string): Promise<void> => {
+    await queryClient.invalidateQueries({ queryKey: [queryKey] });
+  };
+
+  /**
+   * Forces a refetch of a specific query
+   */
+  const refetchQuery = async (queryKey: string): Promise<void> => {
+    await queryClient.refetchQueries({ queryKey: [queryKey] });
+  };
+
+  /**
+   * Invalidates and refetches all appointment-related data
+   * This is the primary method to ensure UI is updated
+   */
+  const forceRefetchAll = async (): Promise<boolean> => {
     try {
-      // First invalidate using the predicate approach to catch all variants
+      console.log("🔄 Forçando atualização completa dos dados de agendamentos");
+      
+      // First invalidate all queries using predicate
       await queryClient.invalidateQueries({
         predicate: (query) => {
-          // Check if the query key is an array
           if (Array.isArray(query.queryKey) && query.queryKey.length > 0) {
-            // Check if any part of the query key contains our keywords
             return query.queryKey.some(key => 
               typeof key === 'string' && 
               (key.includes('appointment') || 
                key.includes('agendamento') ||
-               key.includes('dashboard'))
+               key.includes('dashboard') ||
+               key.includes('clientes'))
             );
           }
           return false;
         }
       });
 
-      // Then also invalidate our known specific keys for redundancy
+      // Then specifically invalidate our known keys
       await Promise.all(
-        APPOINTMENT_QUERY_KEYS.map(query => 
-          queryClient.invalidateQueries({ queryKey: [query] })
+        APPOINTMENT_QUERY_KEYS.map(queryKey => 
+          queryClient.invalidateQueries({ queryKey: [queryKey] })
         )
       );
 
-      // Force immediate refetch of all active appointment queries
-      console.log("🔄 Forcing refresh of active queries");
+      // Force refetch of critical queries
       await Promise.all([
-        queryClient.refetchQueries({ 
-          predicate: query => 
-            Array.isArray(query.queryKey) && 
-            (query.queryKey[0] === 'appointments' || 
-             query.queryKey[0] === 'dashboard-data'),
-          type: 'active'
-        }),
-        // Also refetch weekly view
-        queryClient.refetchQueries({
-          queryKey: ['week-appointments'],
-          type: 'active'
-        }),
-        // Also refetch dashboard appointments
-        queryClient.refetchQueries({
-          queryKey: ['dashboard-appointments'],
-          type: 'active'
-        }),
-        // Also refetch dashboard data
-        queryClient.refetchQueries({
-          queryKey: ['dashboard-data'],
-          type: 'active'
-        }),
-        // Also refetch upcoming appointments
-        queryClient.refetchQueries({
-          queryKey: ['upcoming-appointments'],
-          type: 'active'
-        }),
-        // Also refetch new clients count
-        queryClient.refetchQueries({
-          queryKey: ['new-clients'],
-          type: 'active'
-        })
+        queryClient.refetchQueries({ queryKey: ['appointments'] }),
+        queryClient.refetchQueries({ queryKey: ['dashboard-appointments'] }),
+        queryClient.refetchQueries({ queryKey: ['weekly-appointments'] }),
+        queryClient.refetchQueries({ queryKey: ['week-appointments'] }),
+        queryClient.refetchQueries({ queryKey: ['dashboard-data'] }),
+        queryClient.refetchQueries({ queryKey: ['upcoming-appointments'] }),
+        queryClient.refetchQueries({ queryKey: ['new-clients'] })
       ]);
-
-      console.log("✅ Cache invalidated and data reloaded successfully");
+      
+      console.log("✅ Todos os dados de agendamentos foram atualizados");
       return true;
     } catch (error) {
-      console.error("❌ Error during cache invalidation:", error);
+      console.error("❌ Erro ao atualizar cache:", error);
       return false;
     }
   };
@@ -105,49 +94,11 @@ export const useAppointmentCache = () => {
     });
   };
 
-  /**
-   * Invalidates a specific appointment's details
-   */
-  const invalidateAppointmentDetails = async (appointmentId: string): Promise<void> => {
-    await queryClient.invalidateQueries({ 
-      queryKey: ['appointment-details', appointmentId] 
-    });
-  };
-
-  /**
-   * Force refetch all appointment data
-   */
-  const forceRefetchAll = async (): Promise<boolean> => {
-    try {
-      console.log("🔄 Forcing reload of all appointment data");
-      
-      // First invalidate everything
-      await invalidateAppointmentQueries();
-      
-      // Then explicitly refetch critical queries
-      await Promise.all([
-        queryClient.refetchQueries({ queryKey: ['appointments'] }),
-        queryClient.refetchQueries({ queryKey: ['dashboard-appointments'] }),
-        queryClient.refetchQueries({ queryKey: ['weekly-appointments'] }),
-        queryClient.refetchQueries({ queryKey: ['week-appointments'] }),
-        queryClient.refetchQueries({ queryKey: ['dashboard-data'] }),
-        queryClient.refetchQueries({ queryKey: ['upcoming-appointments'] }),
-        queryClient.refetchQueries({ queryKey: ['new-clients'] })
-      ]);
-      
-      console.log("✅ All appointment data reloaded");
-      return true;
-    } catch (error) {
-      console.error("❌ Failed to force reload data:", error);
-      return false;
-    }
-  };
-
   return {
-    invalidateAppointmentQueries,
-    invalidateAppointmentHistory,
-    invalidateAppointmentDetails,
+    invalidateQuery,
+    refetchQuery,
     forceRefetchAll,
+    invalidateAppointmentHistory,
     APPOINTMENT_QUERY_KEYS
   };
 };

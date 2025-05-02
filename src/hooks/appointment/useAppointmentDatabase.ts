@@ -1,133 +1,261 @@
-import { useAppointmentDeletion } from './database/useAppointmentDeletion';
-import { AppointmentStatus } from '@/types/appointment.types';
-import { formatISO } from 'date-fns';
+
 import { supabase } from "@/lib/supabase";
-import { logDatabaseOperation, logAppointmentError } from "@/utils/debugUtils";
+import { AppointmentStatus } from "@/types/appointment.types";
+import { 
+  logDatabaseOperation,
+  logAppointmentError,
+  logAppointmentAction
+} from "@/utils/debugUtils";
+
+// Generic database result type
+export type DatabaseResult<T = any> = {
+  data: T | null;
+  error: Error | null;
+  success: boolean;
+};
 
 /**
- * Hook for database operations related to appointments
+ * Core hook for all database operations related to appointments
+ * This centralizes all direct Supabase calls to ensure consistency
  */
 export const useAppointmentDatabase = () => {
-  const { deleteAppointmentWithHistory } = useAppointmentDeletion();
-  
   /**
-   * Updates the status of an appointment
+   * Updates an appointment's status in the database
    */
   const updateAppointmentStatus = async (
     appointmentId: string, 
-    status: AppointmentStatus,
+    status: AppointmentStatus, 
     reason?: string
-  ) => {
+  ): Promise<DatabaseResult> => {
     try {
-      console.log(`Updating appointment ${appointmentId} status to ${status}`);
-      
-      const updates: { status: AppointmentStatus; motivo_cancelamento?: string } = { status };
-      if (reason) {
-        updates.motivo_cancelamento = reason;
+      if (!appointmentId || appointmentId.trim() === '') {
+        return { 
+          data: null, 
+          error: new Error('ID de agendamento inválido'), 
+          success: false 
+        };
       }
+
+      const updateData: Record<string, any> = { status };
       
+      if (reason && status === 'cancelado') {
+        updateData['motivo_cancelamento'] = reason;
+        logAppointmentAction(`Adicionando motivo de cancelamento`, appointmentId, { motivo: reason });
+      }
+
+      logAppointmentAction('Executando update no banco', appointmentId, { updateData });
+
       const { data, error } = await supabase
         .from('agendamentos')
-        .update(updates)
+        .update(updateData)
         .eq('id', appointmentId)
         .select();
       
-      if (error) {
-        logAppointmentError('Erro ao atualizar status do agendamento', appointmentId, error);
-        return { success: false, error };
-      }
+      logDatabaseOperation('UPDATE', 'agendamentos', { data, error });
       
-      logDatabaseOperation('UPDATE', 'agendamentos', { success: true, appointmentId, status, reason });
-      console.log(`Appointment ${appointmentId} status updated successfully`);
-      
-      return { success: true, data };
-    } catch (error: any) {
-      logAppointmentError('Erro ao atualizar status do agendamento', appointmentId, error);
-      return { success: false, error };
+      return { 
+        data, 
+        error: error || null, 
+        success: !error && data !== null 
+      };
+    } catch (error) {
+      logAppointmentError('Erro inesperado ao atualizar status', appointmentId, error);
+      return { 
+        data: null, 
+        error: error instanceof Error ? error : new Error('Erro desconhecido'),
+        success: false 
+      };
     }
   };
-  
+
   /**
-   * Creates a history entry for an appointment
+   * Reschedules an appointment in the database
+   */
+  const rescheduleAppointment = async (
+    appointmentId: string,
+    date: Date | string,
+    time: string
+  ): Promise<DatabaseResult> => {
+    try {
+      if (!appointmentId || appointmentId.trim() === '') {
+        return { 
+          data: null, 
+          error: new Error('ID de agendamento inválido'), 
+          success: false 
+        };
+      }
+
+      const formattedDate = date instanceof Date 
+        ? date.toISOString().split('T')[0]
+        : date;
+
+      const updateData = { 
+        data: formattedDate, 
+        hora: time 
+      };
+
+      logAppointmentAction('Executando reagendamento no banco', appointmentId, updateData);
+
+      const { data, error } = await supabase
+        .from('agendamentos')
+        .update(updateData)
+        .eq('id', appointmentId)
+        .select();
+      
+      logDatabaseOperation('UPDATE', 'agendamentos', { data, error });
+      
+      return { 
+        data, 
+        error: error || null, 
+        success: !error && data !== null 
+      };
+    } catch (error) {
+      logAppointmentError('Erro inesperado ao reagendar', appointmentId, error);
+      return { 
+        data: null, 
+        error: error instanceof Error ? error : new Error('Erro desconhecido'),
+        success: false 
+      };
+    }
+  };
+
+  /**
+   * Creates a history entry for an appointment action
    */
   const createHistoryEntry = async (
     appointmentId: string,
     tipo: string,
     descricao: string,
     novoValor?: string,
-    status?: string
-  ) => {
+    detalhes?: any
+  ): Promise<DatabaseResult> => {
     try {
-      console.log(`Creating history entry for appointment ${appointmentId}`);
-      
+      if (!appointmentId) {
+        return { 
+          data: null, 
+          error: new Error('ID de agendamento inválido'), 
+          success: false 
+        };
+      }
+
+      const historyData = {
+        agendamento_id: appointmentId,
+        tipo,
+        descricao,
+        novo_valor: novoValor
+      };
+
+      logAppointmentAction('Criando entrada no histórico', appointmentId, historyData);
+
       const { data, error } = await supabase
         .from('agendamento_historico')
-        .insert([
-          { 
-            agendamento_id: appointmentId, 
-            tipo, 
-            descricao, 
-            novo_valor: novoValor,
-            status
-          }
-        ])
+        .insert(historyData)
         .select();
       
-      if (error) {
-        logAppointmentError('Erro ao criar histórico do agendamento', appointmentId, error);
-        return { success: false, error };
-      }
+      logDatabaseOperation('INSERT', 'agendamento_historico', { data, error });
       
-      logDatabaseOperation('INSERT', 'agendamento_historico', { success: true, appointmentId, tipo, descricao, novoValor });
-      console.log(`History entry created successfully for appointment ${appointmentId}`);
-      
-      return { success: true, data };
-    } catch (error: any) {
-      logAppointmentError('Erro ao criar histórico do agendamento', appointmentId, error);
-      return { success: false, error };
+      return { 
+        data, 
+        error: error || null, 
+        success: !error 
+      };
+    } catch (error) {
+      logAppointmentError('Erro ao criar histórico', appointmentId, error);
+      return { 
+        data: null, 
+        error: error instanceof Error ? error : new Error('Erro desconhecido'),
+        success: false 
+      };
     }
   };
   
   /**
-   * Reschedules an appointment
+   * Deletes an appointment and its history using a database function
+   * This ensures all operations occur in a single transaction
    */
-  const rescheduleAppointment = async (
-    appointmentId: string,
-    date: Date,
-    time: string,
-    professionalId?: string,
-    rescheduleNote?: string
-  ) => {
+  const deleteAppointmentWithHistory = async (appointmentId: string): Promise<DatabaseResult> => {
     try {
-      console.log(`Rescheduling appointment ${appointmentId} to ${date} at ${time}`);
-      
-      const formattedDate = formatISO(date, { representation: 'date' });
+      if (!appointmentId) {
+        return { 
+          data: null, 
+          error: new Error('ID de agendamento inválido'), 
+          success: false 
+        };
+      }
+
+      logAppointmentAction('Excluindo agendamento e histórico via função SQL', appointmentId);
       
       const { data, error } = await supabase
-        .from('agendamentos')
-        .update({ data: formattedDate, hora: time, profissional_id: professionalId })
-        .eq('id', appointmentId)
-        .select();
+        .rpc('delete_appointment_with_history', {
+          appointment_id: appointmentId
+        });
       
-      if (error) {
-        logAppointmentError('Erro ao reagendar agendamento', appointmentId, error);
-        return { success: false, error };
-      }
+      // The RPC returns a boolean success indicator
+      logDatabaseOperation('RPC', 'delete_appointment_with_history', { 
+        success: data, 
+        error,
+        appointmentId 
+      });
       
-      logDatabaseOperation('UPDATE', 'agendamentos', { success: true, appointmentId, date, time, professionalId });
-      console.log(`Appointment ${appointmentId} rescheduled successfully`);
-      
-      return { success: true, data };
-    } catch (error: any) {
-      logAppointmentError('Erro ao reagendar agendamento', appointmentId, error);
-      return { success: false, error };
+      return { 
+        data, 
+        error: error || null, 
+        success: data === true && !error 
+      };
+    } catch (error) {
+      logAppointmentError('Erro ao excluir agendamento e histórico', appointmentId, error);
+      return { 
+        data: null, 
+        error: error instanceof Error ? error : new Error('Erro desconhecido'),
+        success: false 
+      };
     }
   };
-  
+
+  /**
+   * Fetches an appointment by ID
+   */
+  const getAppointmentById = async (appointmentId: string): Promise<DatabaseResult> => {
+    try {
+      if (!appointmentId) {
+        return { 
+          data: null, 
+          error: new Error('ID de agendamento inválido'), 
+          success: false 
+        };
+      }
+
+      const { data, error } = await supabase
+        .from('agendamentos')
+        .select(`
+          *,
+          cliente:clientes(*),
+          servico:servicos(*),
+          profissional:profissionais(*)
+        `)
+        .eq('id', appointmentId)
+        .single();
+      
+      return { 
+        data, 
+        error: error || null, 
+        success: !error && data !== null 
+      };
+    } catch (error) {
+      logAppointmentError('Erro ao buscar agendamento', appointmentId, error);
+      return { 
+        data: null, 
+        error: error instanceof Error ? error : new Error('Erro desconhecido'),
+        success: false 
+      };
+    }
+  };
+
   return {
     updateAppointmentStatus,
-    createHistoryEntry,
     rescheduleAppointment,
-    deleteAppointmentWithHistory
+    createHistoryEntry,
+    deleteAppointmentWithHistory,
+    getAppointmentById
   };
 };
