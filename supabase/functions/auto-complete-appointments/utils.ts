@@ -6,28 +6,27 @@
  * @returns true se a data/hora já passou, false caso contrário
  */
 export function isInPast(dateStr: string, timeStr: string): boolean {
-  // Obter a data atual considerando o fuso horário do Brasil (UTC-3)
+  // Obter a data atual em UTC
   const now = new Date();
   
-  // O Brasil está em UTC-3, então adicionamos 3 horas para comparar com UTC
-  // Isso é necessário porque estamos comparando a data/hora do agendamento 
-  // (que está em UTC para o banco de dados) com a data/hora atual do servidor (também em UTC)
-  // Assim, se no Brasil são 13:00, no UTC são 16:00
-  const brazilOffsetHours = 3; // UTC-3
-  
-  // Obter a data e hora do agendamento
+  // Criar uma data com a data e hora do agendamento
+  const [year, month, day] = dateStr.split('-').map(Number);
   const [hours, minutes] = timeStr.split(':').map(Number);
-  const appointmentDate = new Date(`${dateStr}T${timeStr}:00.000Z`);
   
-  // Adicionar o offset do Brasil para comparação correta
-  const appointmentDateAdjusted = new Date(appointmentDate);
-  appointmentDateAdjusted.setHours(appointmentDate.getHours() + brazilOffsetHours);
+  // Criar a data do agendamento em UTC
+  const appointmentDateUTC = new Date(Date.UTC(year, month - 1, day, hours, minutes, 0));
+  
+  // Ajustar para o fuso horário do Brasil (UTC-3)
+  // Para comparação correta, adicionamos 3 horas à data do agendamento
+  // já que o horário armazenado é local (Brasil) mas estamos comparando em UTC
+  const brazilOffsetHours = 3;
+  appointmentDateUTC.setUTCHours(appointmentDateUTC.getUTCHours() + brazilOffsetHours);
   
   console.log(`Comparando:
-  - Data/hora agendamento (UTC): ${appointmentDate.toISOString()}
-  - Data/hora agendamento (ajustada): ${appointmentDateAdjusted.toISOString()}
+  - Data/hora agendamento (original): ${dateStr} ${timeStr}
+  - Data/hora agendamento (UTC ajustada): ${appointmentDateUTC.toISOString()}
   - Data/hora atual (UTC): ${now.toISOString()}`);
   
-  // Comparar as datas
-  return now > appointmentDateAdjusted;
+  // Comparar as datas em UTC
+  return now >= appointmentDateUTC;
 }

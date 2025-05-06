@@ -18,7 +18,8 @@ export const useAppointmentCache = () => {
     'appointment-details',
     'upcoming-appointments',
     'dashboard-data',
-    'new-clients'
+    'new-clients',
+    'agendamentos'
   ];
 
   /**
@@ -49,6 +50,21 @@ export const useAppointmentCache = () => {
           queryClient.invalidateQueries({ queryKey: [queryKey] })
         )
       );
+      
+      // Also invalidate all appointment-related partial matches
+      await queryClient.invalidateQueries({
+        predicate: query => {
+          if (Array.isArray(query.queryKey)) {
+            return query.queryKey.some(key => 
+              typeof key === 'string' && 
+              (key.includes('appointment') || 
+               key.includes('agendamento') ||
+               key.includes('dashboard'))
+            );
+          }
+          return false;
+        }
+      });
       
       console.log("✅ All appointment queries invalidated");
     } catch (error) {
@@ -95,7 +111,8 @@ export const useAppointmentCache = () => {
         queryClient.refetchQueries({ queryKey: ['week-appointments'] }),
         queryClient.refetchQueries({ queryKey: ['dashboard-data'] }),
         queryClient.refetchQueries({ queryKey: ['upcoming-appointments'] }),
-        queryClient.refetchQueries({ queryKey: ['new-clients'] })
+        queryClient.refetchQueries({ queryKey: ['new-clients'] }),
+        queryClient.refetchQueries({ queryKey: ['agendamentos'] })
       ]);
       
       console.log("✅ Todos os dados de agendamentos foram atualizados");

@@ -10,9 +10,16 @@ import { ptBR } from 'date-fns/locale';
  */
 export function isInPast(dateStr: string, timeStr: string): boolean {
   try {
+    // Obter a data atual
     const now = new Date();
-    const dateTime = new Date(`${dateStr}T${timeStr}:00`);
-    return now > dateTime;
+    
+    // Criar uma data com a data e hora do agendamento no fuso horário local
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    const appointmentDate = new Date(year, month - 1, day, hours, minutes);
+    
+    // Comparar diretamente usando o fuso horário local
+    return now > appointmentDate;
   } catch (e) {
     console.error('Erro ao verificar se data está no passado:', e);
     return false;

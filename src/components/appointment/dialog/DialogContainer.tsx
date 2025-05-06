@@ -8,6 +8,8 @@ import { HistorySidebar } from "./history/HistorySidebar";
 import { useAppointmentActions } from "@/hooks/appointment/useAppointmentActions";
 import { useToast } from "@/hooks/use-toast";
 import { createWhatsAppLink } from "@/lib/supabase";
+import { useWhatsAppTemplates } from "@/hooks/useWhatsAppTemplates";
+import { formatDate } from "@/lib/dateUtils";
 
 interface DialogContainerProps {
   appointment: AppointmentWithDetails;
@@ -29,6 +31,7 @@ export function DialogContainer({
   const [cancelReason, setCancelReason] = useState("");
   
   const { toast } = useToast();
+  const { templates, formatMessage } = useWhatsAppTemplates();
   const { 
     completeAppointment, 
     cancelAppointment, 
@@ -80,8 +83,24 @@ export function DialogContainer({
 
   // Handler for sending WhatsApp message
   const handleSendWhatsApp = () => {
-    const message = `Olá ${appointment.cliente.nome.split(' ')[0]}! Confirmamos seu agendamento para ${appointment.servico.nome} no dia ${appointment.data} às ${appointment.hora}.`;
+    const clientName = appointment.cliente.nome.split(' ')[0];
+    const formattedDate = formatDate(appointment.data, "dd/MM/yyyy");
+    
+    // Use o template de confirmação
+    const message = formatMessage('confirmation', {
+      nome: clientName,
+      data: formattedDate,
+      hora: appointment.hora,
+      servico: appointment.servico.nome,
+      profissional: appointment.profissional.nome
+    });
+    
     window.open(createWhatsAppLink(appointment.cliente.telefone, message), "_blank");
+    
+    toast({
+      title: "WhatsApp",
+      description: "Link do WhatsApp aberto em nova aba."
+    });
   };
   
   // Handler for rescheduling
