@@ -32,6 +32,8 @@ import { AppointmentWithDetails } from "@/types/appointment.types";
 import { useWhatsAppMessages } from "@/hooks/useWhatsAppMessages";
 import { useWhatsAppTemplates } from "@/hooks/useWhatsAppTemplates";
 import { WhatsAppTemplatePreview } from "@/components/admin/WhatsAppTemplatePreview";
+import { createWhatsAppLink } from "@/lib/whatsappUtils";
+import { getWhatsAppTemplates } from "@/lib/whatsappUtils";
 
 const WhatsAppSender = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -42,7 +44,8 @@ const WhatsAppSender = () => {
   
   const { toast } = useToast();
   const { appointments, isLoading, filterByDate } = useWhatsAppMessages(selectedDate);
-  const { templates, formatMessage } = useWhatsAppTemplates();
+  const whatsAppTemplates = useWhatsAppTemplates();
+  const allTemplates = getWhatsAppTemplates();
   
   // Filter appointments that haven't received messages yet
   const pendingAppointments = appointments.filter(
@@ -86,6 +89,29 @@ const WhatsAppSender = () => {
     return appointments.find(app => app.id === appointmentId) || null;
   };
   
+  // Format a message using the selected template and appointment data
+  const formatTemplateMessage = (templateKey: string, appointment: AppointmentWithDetails) => {
+    const template = allTemplates[templateKey as keyof typeof allTemplates] || "";
+    
+    // Replace all variables in the template
+    let formattedMessage = template;
+    const variables = {
+      nome: appointment.cliente.nome,
+      servico: appointment.servico.nome,
+      data: format(new Date(appointment.data), "dd/MM/yyyy"),
+      hora: appointment.hora,
+      valor: `R$ ${appointment.servico.valor.toFixed(2)}`,
+      profissional: appointment.profissional.nome
+    };
+    
+    for (const [key, value] of Object.entries(variables)) {
+      const regex = new RegExp(`{${key}}`, 'g');
+      formattedMessage = formattedMessage.replace(regex, value);
+    }
+    
+    return formattedMessage;
+  };
+  
   // Send a single message and prepare for the next one
   const sendNextMessage = async () => {
     const currentAppointment = getCurrentAppointment();
@@ -100,15 +126,8 @@ const WhatsAppSender = () => {
     }
     
     try {
-      // Format the message and open WhatsApp
-      const message = formatMessage(selectedTemplate, {
-        nome: currentAppointment.cliente.nome,
-        servico: currentAppointment.servico.nome,
-        data: format(new Date(currentAppointment.data), "dd/MM/yyyy"),
-        hora: currentAppointment.hora,
-        valor: `R$ ${currentAppointment.servico.valor.toFixed(2)}`,
-        profissional: currentAppointment.profissional.nome
-      });
+      // Format the message using the selected template
+      const message = formatTemplateMessage(selectedTemplate, currentAppointment);
       
       // Create and open the WhatsApp link
       const phoneNumber = currentAppointment.cliente.telefone;
@@ -171,7 +190,6 @@ const WhatsAppSender = () => {
         <TabsContent value="today" className="space-y-4">
           {/* Fix: Use effect instead of expression and wrap in a fragment */}
           <div className="hidden">
-            {/* This is now a self-executing function that returns null */}
             {(() => {
               handleDateChange(today);
               return null;

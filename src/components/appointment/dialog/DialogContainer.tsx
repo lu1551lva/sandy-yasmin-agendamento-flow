@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { AppointmentWithDetails } from "@/types/appointment.types";
-import { IconButton } from "@/components/ui/icon-button";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -136,7 +136,14 @@ export function DialogContainer({
           <DialogHeader className="flex-none">
             <div className="flex items-center justify-between">
               <DialogTitle>Detalhes do Agendamento</DialogTitle>
-              <IconButton icon={X} onClick={handleClose} variant="ghost" />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleClose}
+                className="h-8 w-8 rounded-full p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </div>
             <DialogDescription>
               {formatDateTime(appointment.data, appointment.hora)} - {appointment.cliente.nome}

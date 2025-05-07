@@ -1,8 +1,29 @@
 
+import { getWhatsAppTemplates } from "@/lib/whatsappUtils";
+
 /**
  * Hook para gerenciar templates de mensagens do WhatsApp
  */
 export const useWhatsAppTemplates = () => {
+  // Get the templates from local storage
+  const templates = getWhatsAppTemplates();
+
+  /**
+   * Format a message template with variables
+   */
+  const formatMessage = (templateKey: string, variables: Record<string, string>) => {
+    const template = templates[templateKey as keyof typeof templates] || "";
+    
+    // Replace all variables in the template
+    let formattedMessage = template;
+    for (const [key, value] of Object.entries(variables)) {
+      const regex = new RegExp(`{${key}}`, 'g');
+      formattedMessage = formattedMessage.replace(regex, value);
+    }
+    
+    return formattedMessage;
+  };
+
   /**
    * Gera uma mensagem de confirmação de agendamento
    */
@@ -106,6 +127,8 @@ Atenciosamente,
   };
 
   return {
+    templates,
+    formatMessage,
     getAppointmentConfirmationTemplate,
     getAppointmentReminderTemplate,
     getCancellationTemplate,
