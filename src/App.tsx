@@ -28,6 +28,8 @@ import Login from "./pages/auth/Login";
 import { initializeDefaultData } from "@/lib/initData";
 import BlocksList from "./pages/admin/blocks/BlocksList";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import Clients from "./pages/admin/Clients";
+import Tools from "./pages/admin/Tools";
 
 // Configure React Query with more robust error handling
 const queryClient = new QueryClient({
@@ -95,10 +97,12 @@ const App = () => {
                 <Route path="agendamentos" element={<AppointmentsOverview />} />
                 <Route path="agendamentos/lista" element={<AppointmentList />} />
                 <Route path="agenda-semanal" element={<WeeklySchedule />} />
+                <Route path="clientes" element={<Clients />} />
                 <Route path="profissionais" element={<Professionals />} />
                 <Route path="servicos" element={<Services />} />
                 <Route path="mensagens" element={<WhatsAppMessages />} />
                 <Route path="enviar-mensagens" element={<WhatsAppSender />} />
+                <Route path="ferramentas" element={<Tools />} />
                 <Route path="perfil" element={<Profile />} />
                 <Route path="bloqueios" element={<BlocksList />} />
                 <Route path="avaliacoes" element={<Reviews />} />

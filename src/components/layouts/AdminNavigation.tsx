@@ -11,6 +11,7 @@ import {
   Ban,
   Star,
   Send,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -52,6 +53,11 @@ const AdminNavigation = ({ isMobile = false, closeMobileMenu }: AdminNavigationP
       label: "Agenda Semanal",
     },
     {
+      to: "/admin/clientes",
+      icon: <Users size={18} />,
+      label: "Clientes",
+    },
+    {
       to: "/admin/profissionais",
       icon: <Users size={18} />,
       label: "Profissionais",
@@ -70,6 +76,11 @@ const AdminNavigation = ({ isMobile = false, closeMobileMenu }: AdminNavigationP
       to: "/admin/enviar-mensagens",
       icon: <Send size={18} />,
       label: "Enviar Mensagens",
+    },
+    {
+      to: "/admin/ferramentas",
+      icon: <Settings size={18} />,
+      label: "Ferramentas",
     },
     {
       to: "/admin/perfil",

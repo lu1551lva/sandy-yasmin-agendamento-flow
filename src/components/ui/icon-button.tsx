@@ -28,3 +28,27 @@ export const IconButton = ({
     </Button>
   );
 };
+
+// Export a more specific version for common use cases
+export const ActionIconButton = ({
+  icon,
+  onClick,
+  label,
+  variant = "ghost",
+  ...props
+}: {
+  icon: LucideIcon;
+  onClick?: () => void;
+  label: string;
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+}) => {
+  return (
+    <IconButton
+      icon={icon}
+      onClick={onClick}
+      aria-label={label}
+      variant={variant}
+      {...props}
+    />
+  );
+};

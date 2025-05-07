@@ -7,7 +7,9 @@ import {
   MessageSquare,
   User,
   Clock,
-  Star
+  Star,
+  Settings,
+  Ban
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -37,6 +39,11 @@ const AdminSidebar = ({ onItemClick }: AdminSidebarProps) => {
       path: "/admin/agenda-semanal",
     },
     {
+      title: "Clientes",
+      icon: <Users size={20} />,
+      path: "/admin/clientes",
+    },
+    {
       title: "Profissionais",
       icon: <Users size={20} />,
       path: "/admin/profissionais",
@@ -52,8 +59,13 @@ const AdminSidebar = ({ onItemClick }: AdminSidebarProps) => {
       path: "/admin/mensagens",
     },
     {
+      title: "Ferramentas",
+      icon: <Settings size={20} />,
+      path: "/admin/ferramentas",
+    },
+    {
       title: "Bloqueios",
-      icon: <Calendar size={20} />,
+      icon: <Ban size={20} />,
       path: "/admin/bloqueios",
     },
     {
