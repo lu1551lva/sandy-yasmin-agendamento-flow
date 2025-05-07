@@ -74,7 +74,7 @@ export function AppointmentDetails({ appointment }: AppointmentDetailsProps) {
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Duração:</span>
-              <span className="font-medium">{appointment.servico.duracao} minutos</span>
+              <span className="font-medium">{appointment.servico.duracao_em_minutos} minutos</span>
             </div>
           </div>
         </CardContent>
@@ -97,12 +97,12 @@ export function AppointmentDetails({ appointment }: AppointmentDetailsProps) {
         </CardContent>
       </Card>
       
-      {/* Notes section if applicable */}
-      {appointment.observacoes && (
+      {/* Notes section if applicable - only show if motivo_cancelamento exists */}
+      {appointment.motivo_cancelamento && (
         <Card>
           <CardContent className="pt-6">
             <h3 className="font-medium mb-2">Observações</h3>
-            <p className="text-sm whitespace-pre-wrap">{appointment.observacoes}</p>
+            <p className="text-sm whitespace-pre-wrap">{appointment.motivo_cancelamento}</p>
           </CardContent>
         </Card>
       )}
