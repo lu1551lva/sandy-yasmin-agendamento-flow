@@ -37,7 +37,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [studioTheme, setStudioTheme] = useLocalStorage<StudioTheme>("studioSettings", defaultTheme);
 
   const updateStudioTheme = (newTheme: Partial<StudioTheme>) => {
-    setStudioTheme(prev => ({ ...prev, ...newTheme }));
+    setStudioTheme((prev: StudioTheme) => ({ ...prev, ...newTheme }));
   };
 
   // Apply theme settings to document

@@ -25,7 +25,7 @@ export function ClientForm({ onSubmit, defaultValues = {} }: ClientFormProps) {
     handleBlur,
     validateForm,
     setValues
-  } = useFormValidation<ClientData>({
+  } = useFormValidation({
     initialValues: {
       nome: defaultValues.nome || "",
       telefone: defaultValues.telefone || "",
