@@ -18,6 +18,12 @@ export function isInPast(dateStr: string, timeStr: string): boolean {
     const [hours, minutes] = timeStr.split(':').map(Number);
     const appointmentDate = new Date(year, month - 1, day, hours, minutes);
     
+    // Adicionar logs para depuração
+    console.log(`Verificando se data está no passado:
+    - Data atual: ${now.toISOString()}
+    - Data do agendamento: ${appointmentDate.toISOString()}
+    - Resultado: ${now > appointmentDate ? 'SIM' : 'NÃO'}`);
+    
     // Comparar diretamente usando o fuso horário local
     return now > appointmentDate;
   } catch (e) {
@@ -65,5 +71,25 @@ export function formatDateTime(
   } catch (e) {
     console.error('Erro ao formatar data e hora:', e);
     return 'Data/hora inválida';
+  }
+}
+
+/**
+ * Formata uma data para o formato usado no WhatsApp
+ * @param dateStr Data no formato YYYY-MM-DD
+ * @param timeStr Hora no formato HH:MM
+ * @returns String formatada para WhatsApp (Ex: 01/05/2023 às 14:30)
+ */
+export function formatDateTimeForWhatsApp(dateStr: string, timeStr: string): string {
+  if (!dateStr || !timeStr) return '';
+  
+  try {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    const formattedDate = format(date, "dd/MM/yyyy", { locale: ptBR });
+    return `${formattedDate} às ${timeStr}`;
+  } catch (e) {
+    console.error('Erro ao formatar data e hora para WhatsApp:', e);
+    return '';
   }
 }

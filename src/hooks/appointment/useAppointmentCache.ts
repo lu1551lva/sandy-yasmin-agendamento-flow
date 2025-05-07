@@ -26,6 +26,7 @@ export const useAppointmentCache = () => {
    * Invalidates a specific query key
    */
   const invalidateQuery = async (queryKey: string): Promise<void> => {
+    console.log(`🔄 Invalidando cache para: ${queryKey}`);
     await queryClient.invalidateQueries({ queryKey: [queryKey] });
   };
 
@@ -33,6 +34,7 @@ export const useAppointmentCache = () => {
    * Forces a refetch of a specific query
    */
   const refetchQuery = async (queryKey: string): Promise<void> => {
+    console.log(`🔄 Forçando refetch para: ${queryKey}`);
     await queryClient.refetchQueries({ queryKey: [queryKey] });
   };
 
@@ -42,7 +44,7 @@ export const useAppointmentCache = () => {
    */
   const invalidateAppointmentQueries = async (): Promise<void> => {
     try {
-      console.log("🔄 Invalidating all appointment-related queries");
+      console.log("🔄 Invalidando todos os caches relacionados a agendamentos");
       
       // Invalidate all our known keys
       await Promise.all(
@@ -66,9 +68,9 @@ export const useAppointmentCache = () => {
         }
       });
       
-      console.log("✅ All appointment queries invalidated");
+      console.log("✅ Todos os caches de agendamentos foram invalidados");
     } catch (error) {
-      console.error("❌ Error invalidating queries:", error);
+      console.error("❌ Erro ao invalidar caches:", error);
     }
   };
 
@@ -80,7 +82,7 @@ export const useAppointmentCache = () => {
     try {
       console.log("🔄 Forçando atualização completa dos dados de agendamentos");
       
-      // First invalidate all queries using predicate
+      // First invalidate all queries using predicate - this is broader
       await queryClient.invalidateQueries({
         predicate: (query) => {
           if (Array.isArray(query.queryKey) && query.queryKey.length > 0) {
@@ -103,7 +105,7 @@ export const useAppointmentCache = () => {
         )
       );
 
-      // Force refetch of critical queries
+      // Force immediate refetch of critical queries
       await Promise.all([
         queryClient.refetchQueries({ queryKey: ['appointments'] }),
         queryClient.refetchQueries({ queryKey: ['dashboard-appointments'] }),
@@ -119,6 +121,37 @@ export const useAppointmentCache = () => {
       return true;
     } catch (error) {
       console.error("❌ Erro ao atualizar cache:", error);
+      return false;
+    }
+  };
+  
+  /**
+   * Função especial para assegurar que todos os caches relacionados ao dashboard sejam atualizados
+   */
+  const refreshDashboardData = async (): Promise<boolean> => {
+    try {
+      console.log("🔄 Atualizando dados do dashboard");
+      
+      // Invalidar caches específicos do dashboard
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['dashboard-data'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-appointments'] }),
+        queryClient.invalidateQueries({ queryKey: ['new-clients'] }),
+        queryClient.invalidateQueries({ queryKey: ['monthly-revenue'] })
+      ]);
+      
+      // Forçar refetch imediato
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ['dashboard-data'] }),
+        queryClient.refetchQueries({ queryKey: ['dashboard-appointments'] }),
+        queryClient.refetchQueries({ queryKey: ['new-clients'] }),
+        queryClient.refetchQueries({ queryKey: ['monthly-revenue'] })
+      ]);
+      
+      console.log("✅ Dashboard atualizado com sucesso");
+      return true;
+    } catch (error) {
+      console.error("❌ Erro ao atualizar dashboard:", error);
       return false;
     }
   };
@@ -138,6 +171,7 @@ export const useAppointmentCache = () => {
     forceRefetchAll,
     invalidateAppointmentHistory,
     invalidateAppointmentQueries,
+    refreshDashboardData,
     APPOINTMENT_QUERY_KEYS
   };
 };

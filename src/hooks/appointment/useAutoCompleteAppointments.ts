@@ -48,11 +48,12 @@ export function useAutoCompleteAppointments() {
     }
   };
 
+  // Não executamos mais automaticamente, conforme solicitado pelo cliente
   useEffect(() => {
-    // Garantir que nunca executamos automaticamente
+    // IMPORTANTE: Auto-complete está desativado, conforme solicitação
     // runAutoComplete();
     
-    // Por enquanto, não configuramos intervalo automático
+    // Por agora, não executamos mais automaticamente nem periodicamente
     // const interval = setInterval(runAutoComplete, 5 * 60 * 1000);
     // return () => clearInterval(interval);
     

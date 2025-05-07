@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { useAppointmentNotifications } from "../useAppointmentNotifications";
 import { useAppointmentCacheInvalidation } from "./useAppointmentCache";
+import { useUpdateAppointmentStatus } from "@/hooks/useUpdateAppointmentStatus";
 
 /**
  * Hook for handling appointment completion operations
@@ -13,8 +14,9 @@ export const useCompleteAppointment = () => {
   const { toast } = useToast();
   const { invalidateQueries } = useAppointmentCacheInvalidation();
   const { showStatusUpdateSuccess, showStatusUpdateError } = useAppointmentNotifications();
+  const { updateStatus } = useUpdateAppointmentStatus();
 
-  // Complete an appointment
+  // Complete an appointment - usando a função unificada
   const completeAppointment = async (appointmentId: string): Promise<boolean> => {
     if (!appointmentId) {
       showStatusUpdateError("ID de agendamento inválido");
@@ -26,37 +28,12 @@ export const useCompleteAppointment = () => {
     try {
       console.log(`✅ Completing appointment: ${appointmentId}`);
       
-      // Update appointment status
-      const { data, error: updateError } = await supabase
-        .from("agendamentos")
-        .update({ status: "concluido" })
-        .eq("id", appointmentId)
-        .select();
+      // Usar a função unificada de atualização de status
+      const success = await updateStatus(appointmentId, "concluido");
 
-      if (updateError) throw updateError;
-      if (!data || data.length === 0) throw new Error("Nenhum agendamento foi atualizado");
-      
-      console.log("✓ Status update result:", data);
-
-      // Create history entry
-      const { error: historyError } = await supabase
-        .from("agendamento_historico")
-        .insert({ 
-          agendamento_id: appointmentId, 
-          tipo: "concluido", 
-          descricao: "Agendamento concluído", 
-          novo_valor: "concluido" 
-        });
-
-      if (historyError) {
-        console.warn("⚠️ Failed to record history:", historyError);
-        // Continue despite history error
+      if (!success) {
+        throw new Error("Erro ao concluir o agendamento");
       }
-
-      // Invalidate and refetch queries
-      await invalidateQueries();
-      
-      showStatusUpdateSuccess("concluido");
       
       return true;
     } catch (error: any) {

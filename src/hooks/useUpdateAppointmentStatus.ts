@@ -1,5 +1,4 @@
 
-
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
@@ -7,68 +6,77 @@ import { AppointmentStatus } from '@/types/appointment.types';
 import { logAppointmentAction, logAppointmentError, traceAppointmentFlow } from '@/utils/debugUtils';
 import { useAppointmentCache } from './appointment/useAppointmentCache';
 import { useAppointmentDatabase } from './appointment/useAppointmentDatabase';
+import { logAppointment, logError, startTiming } from '@/utils/logUtils';
 
 export const useUpdateAppointmentStatus = () => {
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { forceRefetchAll } = useAppointmentCache();
+  const { forceRefetchAll, refreshDashboardData } = useAppointmentCache();
   const { 
     updateAppointmentStatus,
     createHistoryEntry,
     deleteAppointmentWithHistory 
   } = useAppointmentDatabase();
 
-  // Direct invalidation of all appointment queries to ensure UI updates
+  // Função aprimorada para invalidação de cache e atualização da UI
   const forceRefreshAppointments = async () => {
+    const endTiming = startTiming('forceRefreshAppointments');
     try {
-      console.log("🔄 Forcing refresh of all appointment data...");
+      logAppointment('Iniciando atualização de cache', 'global');
       
-      // First invalidate all queries that might contain appointment data
+      // Primeiro invalidamos todos os caches que possam conter dados de agendamentos
       await queryClient.invalidateQueries({ 
         predicate: query => 
           Array.isArray(query.queryKey) && 
           query.queryKey.some(key => 
             typeof key === 'string' && 
-            (key.includes('appointment') || key.includes('agendamento'))
+            (key.includes('appointment') || 
+             key.includes('agendamento') || 
+             key.includes('dashboard'))
           )
       });
 
-      // Then specifically invalidate the ones we know about
+      // Depois usamos nossa função especializada para garantir consistência
       await forceRefetchAll();
       
-      // Force immediate refetch of critical queries
-      await Promise.all([
-        queryClient.refetchQueries({ queryKey: ['appointments'] }),
-        queryClient.refetchQueries({ queryKey: ['dashboard-appointments'] }),
-        queryClient.refetchQueries({ queryKey: ['weekly-appointments'] })
-      ]);
-      
-      console.log("✅ All appointment data refreshed successfully");
+      // E também garantimos que o dashboard está atualizado
+      await refreshDashboardData();
+
+      logAppointment('Cache atualizado com sucesso', 'global');
+      endTiming();
       return true;
     } catch (error) {
-      console.error("❌ Erro ao forçar atualização do cache", error);
+      logError('Erro ao forçar atualização do cache', error);
+      endTiming();
       return false;
     }
   };
 
   const updateStatus = async (appointmentId: string, status: AppointmentStatus, reason?: string) => {
+    if (!appointmentId) {
+      toast({
+        title: "Erro na operação",
+        description: "ID de agendamento inválido",
+        variant: "destructive",
+      });
+      return false;
+    }
+
     setIsLoading(true);
+    const endTiming = startTiming(`updateStatus to ${status}`);
+    
     try {
-      if (!appointmentId) {
-        throw new Error("ID de agendamento inválido");
-      }
+      logAppointment('Atualizando status', appointmentId, { status, reason });
 
-      traceAppointmentFlow('Atualizando status do agendamento', appointmentId, { status, reason });
-
-      // Use our refactored hook to update the status
+      // Usar nosso hook refatorado para atualizar o status
       const { success, error } = await updateAppointmentStatus(appointmentId, status, reason);
       
       if (!success) {
         throw new Error(error?.message || "Falha ao atualizar status");
       }
 
-      // Create history entry using our refactored hook
+      // Criar entrada no histórico usando nosso hook refatorado
       const historyDescription = `Status alterado para ${status}${reason ? ` - Motivo: ${reason}` : ''}`;
       const { success: historySuccess, error: historyError } = await createHistoryEntry(
         appointmentId,
@@ -79,7 +87,8 @@ export const useUpdateAppointmentStatus = () => {
       );
 
       if (!historySuccess) {
-        console.warn("⚠️ Erro ao registrar histórico:", historyError);
+        logAppointment('Aviso: Erro ao registrar histórico', appointmentId, historyError);
+        // Continuamos apesar do erro no histórico
       }
 
       // Mostrar notificação de sucesso
@@ -90,17 +99,19 @@ export const useUpdateAppointmentStatus = () => {
                     "Status atualizado com sucesso.",
       });
 
-      // Invalidar caches e forçar atualização
+      // Força atualização completa dos dados
       await forceRefreshAppointments();
-
+      
+      endTiming();
       return true;
     } catch (error: any) {
-      logAppointmentError('Erro ao atualizar status', appointmentId, error);
+      logError(`Erro ao atualizar status para ${status}`, error);
       toast({
         title: "Erro ao atualizar agendamento",
         description: error?.message || "Ocorreu um erro inesperado. Tente novamente.",
         variant: "destructive",
       });
+      endTiming();
       return false;
     } finally {
       setIsLoading(false);
@@ -108,24 +119,30 @@ export const useUpdateAppointmentStatus = () => {
   };
 
   const deleteAppointment = async (appointmentId: string) => {
+    if (!appointmentId) {
+      toast({
+        title: "Erro na operação",
+        description: "ID de agendamento inválido",
+        variant: "destructive",
+      });
+      return false;
+    }
+
     setIsLoading(true);
+    const endTiming = startTiming('deleteAppointment');
+    
     try {
-      if (!appointmentId) {
-        throw new Error("ID de agendamento inválido");
-      }
+      logAppointment('Excluindo agendamento', appointmentId);
 
-      logAppointmentAction('Excluindo agendamento', appointmentId);
-      console.log(`🗑️ Iniciando processo de exclusão do agendamento: ${appointmentId}`);
-
-      // Use our refactored hook to delete the appointment
+      // Usar nosso hook refatorado para excluir o agendamento
       const { success, error } = await deleteAppointmentWithHistory(appointmentId);
 
       if (!success) {
-        console.error(`❌ Falha ao excluir agendamento: ${error?.message}`);
+        logError('Falha ao excluir agendamento', error);
         throw new Error(error?.message || "Falha ao excluir agendamento");
       }
 
-      console.log(`✅ Agendamento ${appointmentId} excluído com sucesso`);
+      logAppointment('Agendamento excluído com sucesso', appointmentId);
 
       // Mostrar notificação de sucesso
       toast({
@@ -133,9 +150,10 @@ export const useUpdateAppointmentStatus = () => {
         description: "O agendamento foi excluído com sucesso."
       });
 
-      // Invalidar caches e forçar atualização
+      // Força atualização completa dos dados
       await forceRefreshAppointments();
-
+      
+      endTiming();
       return true;
     } catch (error: any) {
       logAppointmentError('Erro ao excluir agendamento', appointmentId, error);
@@ -144,6 +162,7 @@ export const useUpdateAppointmentStatus = () => {
         description: error?.message || "Ocorreu um erro inesperado. Tente novamente.",
         variant: "destructive",
       });
+      endTiming();
       return false;
     } finally {
       setIsLoading(false);
@@ -156,4 +175,3 @@ export const useUpdateAppointmentStatus = () => {
     isLoading,
   };
 };
-
