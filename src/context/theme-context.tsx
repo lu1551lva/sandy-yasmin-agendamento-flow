@@ -37,7 +37,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [studioTheme, setStudioTheme] = useLocalStorage<StudioTheme>("studioSettings", defaultTheme);
 
   const updateStudioTheme = (newTheme: Partial<StudioTheme>) => {
-    setStudioTheme((prev: StudioTheme) => ({ ...prev, ...newTheme }));
+    // Create a new merged theme object directly instead of using the functional update pattern
+    const updatedTheme = { ...studioTheme, ...newTheme };
+    setStudioTheme(updatedTheme);
   };
 
   // Apply theme settings to document

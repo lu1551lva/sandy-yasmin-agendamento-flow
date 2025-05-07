@@ -49,7 +49,9 @@ export function useStudioTheme() {
   
   return { 
     settings,
-    updateSettings: setSettings,
+    updateSettings: (newSettings: Partial<StudioThemeSettings>) => {
+      setSettings({...settings, ...newSettings});
+    },
     updateTheme: (newSettings: Partial<StudioThemeSettings>) => {
       setSettings({...settings, ...newSettings});
     }
