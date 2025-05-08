@@ -3,6 +3,7 @@ import { StatusUpdateDialog } from "../../StatusUpdateDialog";
 import { AppointmentStatus } from "@/types/appointment.types";
 import { useUpdateAppointmentStatus } from "@/hooks/useUpdateAppointmentStatus";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface AppointmentStatusUpdateDialogProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export function AppointmentStatusUpdateDialog({
   appointmentId,
   onStatusUpdated
 }: AppointmentStatusUpdateDialogProps) {
+  const { toast } = useToast();
   const { updateStatus, deleteAppointment, isLoading } = useUpdateAppointmentStatus();
   const [isUpdating, setIsUpdating] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
@@ -51,13 +53,27 @@ export function AppointmentStatusUpdateDialog({
       
       if (success) {
         console.log("Status updated successfully");
+        toast({
+          title: "Status atualizado",
+          description: `O agendamento foi ${status === "concluido" ? "concluído" : "cancelado"} com sucesso.`,
+        });
         onStatusUpdated();
         onOpenChange(false);
       } else {
         console.error("Failed to update status");
+        toast({
+          title: "Erro",
+          description: "Não foi possível atualizar o status do agendamento.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error("Error updating status:", error);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao atualizar o status do agendamento.",
+        variant: "destructive",
+      });
     } finally {
       setIsUpdating(false);
     }

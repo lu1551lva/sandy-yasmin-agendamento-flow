@@ -1,4 +1,3 @@
-
 import { format } from "date-fns";
 import { AppointmentWithDetails } from "@/types/appointment.types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -7,8 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Clock, Ban, Check, Trash } from "lucide-react";
+import { Clock, Ban, Check, Trash, RefreshCw } from "lucide-react";
 import { formatCurrency } from "@/lib/currencyUtils";
+import { IconButton } from "@/components/ui/icon-button";
 
 interface DetailsDialogProps {
   appointment: AppointmentWithDetails | null;
@@ -39,11 +39,49 @@ export function DetailsDialog({
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "agendado":
-        return <Badge variant="outline" className="bg-blue-100 text-blue-800">Agendado</Badge>;
+        return (
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="bg-blue-100 text-blue-800">Agendado</Badge>
+            {isActive && (
+              <IconButton 
+                icon={Check} 
+                variant="outline" 
+                className="h-6 w-6 border-green-500 hover:bg-green-50 text-green-600"
+                onClick={onComplete}
+                tooltip="Concluir agendamento"
+                disabled={isLoading}
+              />
+            )}
+          </div>
+        );
       case "concluido":
-        return <Badge variant="outline" className="bg-green-100 text-green-800">Concluído</Badge>;
+        return (
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="bg-green-100 text-green-800">Concluído</Badge>
+            <IconButton 
+              icon={RefreshCw} 
+              variant="outline" 
+              className="h-6 w-6 border-blue-500 hover:bg-blue-50 text-blue-600"
+              onClick={onReschedule}
+              tooltip="Alterar status"
+              disabled={isLoading}
+            />
+          </div>
+        );
       case "cancelado":
-        return <Badge variant="outline" className="bg-red-100 text-red-800">Cancelado</Badge>;
+        return (
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="bg-red-100 text-red-800">Cancelado</Badge>
+            <IconButton 
+              icon={RefreshCw} 
+              variant="outline" 
+              className="h-6 w-6 border-blue-500 hover:bg-blue-50 text-blue-600"
+              onClick={onReschedule}
+              tooltip="Alterar status"
+              disabled={isLoading}
+            />
+          </div>
+        );
       default:
         return <Badge variant="outline">Desconhecido</Badge>;
     }

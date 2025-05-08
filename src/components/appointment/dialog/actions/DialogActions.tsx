@@ -1,7 +1,8 @@
 
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import { AppointmentStatus } from "@/types/appointment.types";
-import { CheckCircle, XCircle, CalendarPlus, Phone, History, Trash2 } from "lucide-react";
+import { CheckCircle, XCircle, CalendarPlus, Phone, History, Trash2, RefreshCw } from "lucide-react";
 
 interface DialogActionsProps {
   status: AppointmentStatus;
@@ -46,6 +47,19 @@ export function DialogActions({
             className="text-red-500 border-red-500 hover:bg-red-50"
           >
             <XCircle className="h-4 w-4 mr-2" /> Cancelar
+          </Button>
+        </div>
+      )}
+      
+      {/* Mostrar botão para reagendar mesmo para agendamentos concluídos ou cancelados */}
+      {status !== "agendado" && (
+        <div className="grid grid-cols-1 gap-3">
+          <Button 
+            variant="default" 
+            onClick={onShowReschedule}
+            disabled={isUpdatingStatus}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" /> Alterar Status
           </Button>
         </div>
       )}
