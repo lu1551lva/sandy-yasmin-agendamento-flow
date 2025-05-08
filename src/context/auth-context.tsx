@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
+import { clearSensitiveData } from '@/lib/securityUtils';
 
 // Simplified User type for single-tenant admin
 interface User {
@@ -97,10 +98,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const signOut = () => {
     console.log('Signing out user');
+    // Clean up sensitive data before logging out
+    clearSensitiveData();
     setUser(null);
     setIsLoggedIn(false);
     localStorage.removeItem('user');
     navigate('/admin/login');
+    
+    toast({
+      title: "Logout realizado com sucesso",
+      description: "Você saiu do painel administrativo com segurança",
+    });
   };
 
   // Added signUp function to satisfy the Register.tsx requirements
