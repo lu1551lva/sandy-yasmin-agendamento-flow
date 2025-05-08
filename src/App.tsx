@@ -5,31 +5,21 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import PublicLayout from "./components/layouts/PublicLayout";
 import AdminLayout from "./components/layouts/AdminLayout";
 import Appointment from "./pages/public/Appointment";
 import ClientArea from "./pages/public/ClientArea"; 
 import AdminLogin from "./pages/admin/Login";
-import Dashboard from "./pages/admin/Dashboard";
 import AppointmentList from "./pages/admin/appointments/AppointmentList";
-import AppointmentsOverview from "./pages/admin/appointments/AppointmentsOverview";
 import WeeklySchedule from "./pages/admin/WeeklySchedule";
 import Professionals from "./pages/admin/Professionals";
 import Services from "./pages/admin/Services";
-import WhatsAppMessages from "./pages/admin/WhatsAppMessages";
-import Profile from "./pages/admin/Profile";
-import Reviews from "./pages/admin/Reviews";
-import WhatsAppSender from "./pages/admin/WhatsAppSender";
 import { AuthProvider } from "./context/auth-context";
 import Register from "./pages/auth/Register";
 import Login from "./pages/auth/Login";
 import { initializeDefaultData } from "@/lib/initData";
-import BlocksList from "./pages/admin/blocks/BlocksList";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
-import Clients from "./pages/admin/Clients";
-import Tools from "./pages/admin/Tools";
 
 // Configure React Query with more robust error handling
 const queryClient = new QueryClient({
@@ -93,19 +83,11 @@ const App = () => {
 
               {/* Protected admin routes */}
               <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<Dashboard />} />
-                <Route path="agendamentos" element={<AppointmentsOverview />} />
+                <Route index element={<AppointmentList />} />
                 <Route path="agendamentos/lista" element={<AppointmentList />} />
                 <Route path="agenda-semanal" element={<WeeklySchedule />} />
-                <Route path="clientes" element={<Clients />} />
                 <Route path="profissionais" element={<Professionals />} />
                 <Route path="servicos" element={<Services />} />
-                <Route path="mensagens" element={<WhatsAppMessages />} />
-                <Route path="enviar-mensagens" element={<WhatsAppSender />} />
-                <Route path="ferramentas" element={<Tools />} />
-                <Route path="perfil" element={<Profile />} />
-                <Route path="bloqueios" element={<BlocksList />} />
-                <Route path="avaliacoes" element={<Reviews />} />
               </Route>
 
               {/* Fallback route */}

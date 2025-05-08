@@ -65,7 +65,7 @@ export function DialogActions({
       )}
       
       {/* Ações secundárias */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Button 
           variant="outline" 
           onClick={onShowReschedule}
@@ -74,13 +74,8 @@ export function DialogActions({
           <CalendarPlus className="h-4 w-4 mr-2" /> Reagendar
         </Button>
         
-        <Button 
-          variant="outline" 
-          onClick={onSendWhatsApp}
-        >
-          <Phone className="h-4 w-4 mr-2" /> WhatsApp
-        </Button>
-
+        {/* Removed WhatsApp button */}
+        
         <Button 
           variant="outline" 
           onClick={onShowHistory}
