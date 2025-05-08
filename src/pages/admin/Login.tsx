@@ -1,42 +1,49 @@
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Logo } from '@/components/common/Logo';
-import { Loader, ArrowLeft } from 'lucide-react';
-import { useAuth } from '@/context/auth-context';
-import { useToast } from '@/hooks/use-toast';
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 const AdminLogin = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn } = useAuth();
-  const navigate = useNavigate();
   const { toast } = useToast();
-  
+  const navigate = useNavigate();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Hardcoded credentials for demo - in a real app, use Supabase Auth
+    const ADMIN_EMAIL = "admin@studio.com";
+    const ADMIN_PASSWORD = "admin123";
+    
     setIsLoading(true);
     
     try {
-      const { error } = await signIn(email, password);
+      // Simulate API request delay
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      if (error) {
+      if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
         toast({
-          title: "Erro de login",
-          description: "E-mail ou senha inválidos. Tente novamente.",
+          title: "Login bem-sucedido",
+          description: "Bem-vindo ao painel administrativo."
+        });
+        navigate("/admin");
+      } else {
+        toast({
+          title: "Erro de autenticação",
+          description: "Email ou senha inválidos. Tente novamente.",
           variant: "destructive"
         });
       }
     } catch (error) {
-      console.error('Erro no login:', error);
       toast({
-        title: "Erro no sistema",
-        description: "Ocorreu um erro ao processar seu login.",
+        title: "Erro ao fazer login",
+        description: "Ocorreu um erro durante o login. Tente novamente.",
         variant: "destructive"
       });
     } finally {
@@ -45,60 +52,60 @@ const AdminLogin = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-secondary/30 px-4">
-      <Button 
-        variant="ghost" 
-        className="absolute top-4 left-4" 
-        onClick={() => navigate('/')}
-      >
-        <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para a página inicial
-      </Button>
-      
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <Logo />
-          </div>
-          <CardTitle className="text-2xl font-playfair">Studio Sandy Yasmin</CardTitle>
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">Admin Login</CardTitle>
           <CardDescription>
             Entre com suas credenciais de administrador
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit}>
+          <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
+              <label htmlFor="email" className="text-sm font-medium">
+                Email
+              </label>
               <Input
                 id="email"
                 type="email"
-                placeholder="seu@email.com"
+                placeholder="admin@studio.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
+                required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
+              <label htmlFor="password" className="text-sm font-medium">
+                Senha
+              </label>
               <Input
                 id="password"
                 type="password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
+                required
               />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
+          </CardContent>
+          <CardFooter>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isLoading}
+            >
               {isLoading ? (
                 <>
-                  <Loader className="mr-2 h-4 w-4 animate-spin" /> Entrando...
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                  Entrando...
                 </>
               ) : (
                 "Entrar"
               )}
             </Button>
-          </form>
-        </CardContent>
+          </CardFooter>
+        </form>
       </Card>
     </div>
   );

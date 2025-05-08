@@ -1,94 +1,76 @@
 
+import { AppointmentWithDetails } from "@/types/appointment.types";
 import { Button } from "@/components/ui/button";
-import { AppointmentStatus } from "@/types/appointment.types";
-import { CheckCircle, XCircle, CalendarPlus, Phone, History, Trash2 } from "lucide-react";
+import { DialogFooter } from "@/components/ui/dialog";
+import { ClipboardCheck, Calendar, X } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 interface DialogActionsProps {
-  status: AppointmentStatus;
-  isUpdatingStatus: boolean;
+  appointment: AppointmentWithDetails;
+  onRescheduleClick: () => void;
   onComplete: () => void;
-  onShowCancelConfirm: () => void;
-  onShowReschedule: () => void;
-  onSendWhatsApp: () => void;
-  onShowHistory: () => void;
-  onShowDeleteConfirm: () => void;
-  onClose: () => void;
+  onCancel: () => void;
+  isLoading: boolean;
 }
 
-export function DialogActions({
-  status,
-  isUpdatingStatus,
-  onComplete,
-  onShowCancelConfirm,
-  onShowReschedule,
-  onSendWhatsApp,
-  onShowHistory,
-  onShowDeleteConfirm,
-  onClose,
+export function DialogActions({ 
+  appointment, 
+  onRescheduleClick, 
+  onComplete, 
+  onCancel,
+  isLoading 
 }: DialogActionsProps) {
+  const isActive = appointment.status === "agendado";
+
   return (
-    <div className="grid grid-cols-1 gap-3 w-full">
-      {/* Ações principais - mostrar apenas para agendamentos não cancelados */}
-      {status === "agendado" && (
-        <div className="grid grid-cols-2 gap-3">
-          <Button 
-            variant="default" 
+    <DialogFooter className="flex flex-col sm:flex-row gap-2">
+      {isActive ? (
+        <>
+          <Button
+            variant="outline"
+            className="w-full sm:w-auto"
+            onClick={onRescheduleClick}
+            disabled={isLoading || !isActive}
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Calendar className="h-4 w-4 mr-2" />
+            )}
+            Reagendar
+          </Button>
+          <Button
+            variant="destructive"
+            className="w-full sm:w-auto"
+            onClick={onCancel}
+            disabled={isLoading || !isActive}
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <X className="h-4 w-4 mr-2" />
+            )}
+            Cancelar
+          </Button>
+          <Button
+            variant="default"
+            className="w-full sm:w-auto"
             onClick={onComplete}
-            disabled={isUpdatingStatus}
+            disabled={isLoading || !isActive}
           >
-            <CheckCircle className="h-4 w-4 mr-2" /> Concluir
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <ClipboardCheck className="h-4 w-4 mr-2" />
+            )}
+            Concluir
           </Button>
-          
-          <Button 
-            variant="outline" 
-            onClick={onShowCancelConfirm}
-            disabled={isUpdatingStatus}
-            className="text-red-500 border-red-500 hover:bg-red-50"
-          >
-            <XCircle className="h-4 w-4 mr-2" /> Cancelar
-          </Button>
-        </div>
+        </>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Este agendamento está {appointment.status === "concluido" ? "concluído" : "cancelado"}.
+        </p>
       )}
-      
-      {/* Ações secundárias */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <Button 
-          variant="outline" 
-          onClick={onShowReschedule}
-          disabled={status === 'cancelado'}
-        >
-          <CalendarPlus className="h-4 w-4 mr-2" /> Reagendar
-        </Button>
-        
-        <Button 
-          variant="outline" 
-          onClick={onSendWhatsApp}
-        >
-          <Phone className="h-4 w-4 mr-2" /> WhatsApp
-        </Button>
-
-        <Button 
-          variant="outline" 
-          onClick={onShowHistory}
-        >
-          <History className="h-4 w-4 mr-2" /> Histórico
-        </Button>
-      </div>
-
-      {/* Ações de controle */}
-      <div className="grid grid-cols-2 gap-3">
-        <Button 
-          variant="outline" 
-          onClick={onShowDeleteConfirm}
-          className="text-red-600"
-        >
-          <Trash2 className="h-4 w-4 mr-2" /> Excluir
-        </Button>
-        
-        <Button variant="ghost" onClick={onClose}>
-          Fechar
-        </Button>
-      </div>
-    </div>
+    </DialogFooter>
   );
 }

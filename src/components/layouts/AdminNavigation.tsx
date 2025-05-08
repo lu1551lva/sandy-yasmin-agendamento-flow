@@ -1,120 +1,72 @@
 
-import { NavLink } from "react-router-dom";
-import {
-  LayoutDashboard,
-  CalendarCheck,
-  Users,
-  Scissors,
-  MessageSquare,
-  User,
-  Calendar,
-  Ban,
-  Star,
-  Send,
-  Settings,
+import { Link, useLocation } from "react-router-dom";
+import { 
+  Calendar, 
+  UserCircle, 
+  Users, 
+  PackageSearch, 
+  User
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
-interface AdminNavigationProps {
-  isMobile?: boolean;
-  closeMobileMenu?: () => void;
-}
+export function AdminNavigation() {
+  const location = useLocation();
+  const currentPath = location.pathname;
 
-const AdminNavigation = ({ isMobile = false, closeMobileMenu }: AdminNavigationProps) => {
-  // Function to handle item click on mobile
-  const handleItemClick = () => {
-    if (isMobile && closeMobileMenu) {
-      closeMobileMenu();
-    }
+  const isActive = (path: string) => {
+    return currentPath.startsWith(path);
   };
 
-  const linkClass = (isActive: boolean) =>
-    cn(
-      "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-      isActive
-        ? "bg-primary text-primary-foreground"
-        : "hover:bg-muted text-muted-foreground"
-    );
-
-  const navLinks = [
+  const navItems = [
     {
-      to: "/admin",
-      icon: <LayoutDashboard size={18} />,
-      label: "Dashboard",
+      name: "Agendamentos",
+      icon: <Calendar className="h-5 w-5" />,
+      path: "/admin/agendamentos",
+      isActive: isActive("/admin/agendamentos") || currentPath === "/admin",
     },
     {
-      to: "/admin/agendamentos",
-      icon: <CalendarCheck size={18} />,
-      label: "Agendamentos",
+      name: "Clientes",
+      icon: <Users className="h-5 w-5" />,
+      path: "/admin/clientes",
+      isActive: isActive("/admin/clientes"),
     },
     {
-      to: "/admin/agenda-semanal",
-      icon: <Calendar size={18} />,
-      label: "Agenda Semanal",
+      name: "Profissionais",
+      icon: <UserCircle className="h-5 w-5" />,
+      path: "/admin/profissionais",
+      isActive: isActive("/admin/profissionais"),
     },
     {
-      to: "/admin/clientes",
-      icon: <Users size={18} />,
-      label: "Clientes",
+      name: "Serviços",
+      icon: <PackageSearch className="h-5 w-5" />,
+      path: "/admin/servicos",
+      isActive: isActive("/admin/servicos"),
     },
     {
-      to: "/admin/profissionais",
-      icon: <Users size={18} />,
-      label: "Profissionais",
-    },
-    {
-      to: "/admin/servicos",
-      icon: <Scissors size={18} />,
-      label: "Serviços",
-    },
-    {
-      to: "/admin/mensagens",
-      icon: <MessageSquare size={18} />,
-      label: "Modelos de Mensagem",
-    },
-    {
-      to: "/admin/enviar-mensagens",
-      icon: <Send size={18} />,
-      label: "Enviar Mensagens",
-    },
-    {
-      to: "/admin/ferramentas",
-      icon: <Settings size={18} />,
-      label: "Ferramentas",
-    },
-    {
-      to: "/admin/perfil",
-      icon: <User size={18} />,
-      label: "Perfil",
-    },
-    {
-      to: "/admin/bloqueios",
-      icon: <Ban size={18} />,
-      label: "Bloqueios",
-    },
-    {
-      to: "/admin/avaliacoes",
-      icon: <Star size={18} />,
-      label: "Avaliações",
+      name: "Perfil",
+      icon: <User className="h-5 w-5" />,
+      path: "/admin/perfil",
+      isActive: isActive("/admin/perfil"),
     },
   ];
 
   return (
-    <nav className="space-y-1 py-2">
-      {navLinks.map((link) => (
-        <NavLink
-          key={link.to}
-          to={link.to}
-          className={({ isActive }) => linkClass(isActive)}
-          onClick={handleItemClick}
-          end={link.to === "/admin"}
+    <div className="space-y-1">
+      {navItems.map((item) => (
+        <Link
+          key={item.name}
+          to={item.path}
+          className={`flex items-center px-3 py-2 text-sm rounded-md group transition-colors ${
+            item.isActive
+              ? "bg-accent text-accent-foreground"
+              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          }`}
         >
-          {link.icon}
-          <span>{link.label}</span>
-        </NavLink>
+          <div className={`mr-2 ${item.isActive ? "text-foreground" : ""}`}>
+            {item.icon}
+          </div>
+          <span>{item.name}</span>
+        </Link>
       ))}
-    </nav>
+    </div>
   );
-};
-
-export default AdminNavigation;
+}
