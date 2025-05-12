@@ -84,7 +84,7 @@ const App = () => {
 
               {/* Protected admin routes */}
               <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<AppointmentList />} />
+                <Route index element={<Navigate to="/admin/agendamentos" replace />} />
                 <Route path="agendamentos" element={<AppointmentList />} />
                 <Route path="clientes" element={<Clients />} />
                 <Route path="profissionais" element={<Professionals />} />

@@ -1,15 +1,10 @@
 
 import { 
-  LayoutDashboard, 
   Calendar, 
   Users, 
   Scissors, 
-  MessageSquare,
   User,
-  Clock,
-  Star,
-  Settings,
-  Ban
+  Settings
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -24,19 +19,9 @@ const AdminSidebar = ({ onItemClick }: AdminSidebarProps) => {
   
   const menuItems = [
     {
-      title: "Dashboard",
-      icon: <LayoutDashboard size={20} />,
-      path: "/admin",
-    },
-    {
       title: "Agendamentos",
       icon: <Calendar size={20} />,
       path: "/admin/agendamentos",
-    },
-    {
-      title: "Agenda Semanal",
-      icon: <Clock size={20} />,
-      path: "/admin/agenda-semanal",
     },
     {
       title: "Clientes",
@@ -52,26 +37,6 @@ const AdminSidebar = ({ onItemClick }: AdminSidebarProps) => {
       title: "Serviços",
       icon: <Scissors size={20} />,
       path: "/admin/servicos",
-    },
-    {
-      title: "Mensagens WhatsApp",
-      icon: <MessageSquare size={20} />,
-      path: "/admin/mensagens",
-    },
-    {
-      title: "Ferramentas",
-      icon: <Settings size={20} />,
-      path: "/admin/ferramentas",
-    },
-    {
-      title: "Bloqueios",
-      icon: <Ban size={20} />,
-      path: "/admin/bloqueios",
-    },
-    {
-      title: "Avaliações",
-      icon: <Star size={20} />,
-      path: "/admin/avaliacoes",
     },
     {
       title: "Perfil",

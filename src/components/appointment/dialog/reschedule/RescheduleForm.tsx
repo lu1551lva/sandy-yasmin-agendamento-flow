@@ -18,6 +18,7 @@ interface RescheduleFormProps {
   note: string;
   setNote: (note: string) => void;
   availableTimesData: string[];
+  onReschedule?: (date: Date, time: string) => Promise<boolean>;
 }
 
 export function RescheduleForm({
@@ -28,7 +29,8 @@ export function RescheduleForm({
   setSelectedTime,
   note,
   setNote,
-  availableTimesData
+  availableTimesData,
+  onReschedule
 }: RescheduleFormProps) {
   // Parse the date string safely
   const parsedDate = (() => {
