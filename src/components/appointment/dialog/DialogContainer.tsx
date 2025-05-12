@@ -60,7 +60,6 @@ export function DialogContainer({
           <RescheduleForm
             appointment={appointment}
             onReschedule={handleReschedule}
-            onCancel={() => setShowReschedule(false)}
             isLoading={isRescheduling}
           />
         )}

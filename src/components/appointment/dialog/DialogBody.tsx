@@ -54,10 +54,10 @@ export function DialogBody({ appointment }: DialogBodyProps) {
       </div>
 
       {/* Observações */}
-      {appointment.observacao && (
+      {appointment.motivo_cancelamento && (
         <div className="mt-4 pt-4 border-t">
           <p className="text-sm font-medium">Observações</p>
-          <p className="text-sm text-muted-foreground mt-1">{appointment.observacao}</p>
+          <p className="text-sm text-muted-foreground mt-1">{appointment.motivo_cancelamento}</p>
         </div>
       )}
     </div>

@@ -4,34 +4,30 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { DateSelector } from "@/components/shared/date-time/DateSelector";
 import { TimeSelector } from "@/components/shared/date-time/TimeSelector";
+import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { parseISO } from "date-fns";
 import { AppointmentWithDetails } from "@/types/appointment.types";
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
 
 interface RescheduleFormProps {
   appointment: AppointmentWithDetails;
-  selectedDate: Date | undefined;
-  setSelectedDate: (date: Date | undefined) => void;
-  selectedTime: string;
-  setSelectedTime: (time: string) => void;
-  note: string;
-  setNote: (note: string) => void;
-  availableTimesData: string[];
   onReschedule?: (date: Date, time: string) => Promise<boolean>;
+  isLoading?: boolean;
 }
 
 export function RescheduleForm({
   appointment,
-  selectedDate,
-  setSelectedDate,
-  selectedTime,
-  setSelectedTime,
-  note,
-  setNote,
-  availableTimesData,
-  onReschedule
+  onReschedule,
+  isLoading = false
 }: RescheduleFormProps) {
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedTime, setSelectedTime] = useState<string>("");
+  const [note, setNote] = useState<string>("");
+  const [availableTimesData, setAvailableTimesData] = useState<string[]>([]);
+
   // Parse the date string safely
   const parsedDate = (() => {
     try {
@@ -54,6 +50,12 @@ export function RescheduleForm({
   const newDateTime = selectedDate && selectedTime 
     ? `${format(selectedDate, 'dd/MM/yyyy', { locale: ptBR })} às ${selectedTime}` 
     : "Selecione data e hora";
+
+  const handleSubmit = async () => {
+    if (selectedDate && selectedTime && onReschedule) {
+      await onReschedule(selectedDate, selectedTime);
+    }
+  };
 
   return (
     <>
@@ -104,6 +106,20 @@ export function RescheduleForm({
           </AlertDescription>
         </Alert>
       )}
+
+      <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
+        <Button variant="outline" onClick={() => window.history.back()} disabled={isLoading}>
+          Cancelar
+        </Button>
+        <Button onClick={handleSubmit} disabled={!selectedDate || !selectedTime || isLoading}>
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Reagendando...
+            </>
+          ) : "Confirmar Reagendamento"}
+        </Button>
+      </div>
     </>
   );
 }
