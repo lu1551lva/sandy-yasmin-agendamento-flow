@@ -32,25 +32,11 @@ export function RescheduleDialog({
   isLoading,
 }: RescheduleDialogProps) {
   const { toast } = useToast();
-  const {
-    selectedDate,
-    setSelectedDate,
-    selectedTime,
-    setSelectedTime,
-    note,
-    setNote,
-    availableTimesData,
-    validateForm
-  } = useRescheduleForm({ appointment, isOpen });
 
-  const handleReschedule = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
+  const handleReschedule = async (date: Date, time: string) => {
     try {
       console.log("Iniciando processo de reagendamento...");
-      const success = await onReschedule(selectedDate!, selectedTime);
+      const success = await onReschedule(date, time);
       
       if (success) {
         console.log("Reagendamento concluído com sucesso");
@@ -82,34 +68,9 @@ export function RescheduleDialog({
 
         <RescheduleForm
           appointment={appointment}
-          selectedDate={selectedDate}
-          setSelectedDate={setSelectedDate}
-          selectedTime={selectedTime}
-          setSelectedTime={setSelectedTime}
-          note={note}
-          setNote={setNote}
-          availableTimesData={availableTimesData}
+          onReschedule={handleReschedule}
+          isLoading={isLoading}
         />
-
-        <DialogFooter className="flex-none mt-4 border-t pt-4 flex flex-col sm:flex-row gap-2">
-          <Button variant="outline" onClick={onClose} disabled={isLoading} className="w-full sm:w-auto">
-            Cancelar
-          </Button>
-          <Button 
-            onClick={handleReschedule} 
-            disabled={!selectedDate || !selectedTime || isLoading}
-            className="w-full sm:w-auto"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Reagendando...
-              </>
-            ) : (
-              "Confirmar Reagendamento"
-            )}
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
