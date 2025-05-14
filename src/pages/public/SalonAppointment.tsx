@@ -88,9 +88,11 @@ const SalonAppointment = () => {
         );
       case 4:
         // Convert Date to string for Confirmation component
-        const confirmationData = {
+        { const confirmationData = {
           ...appointmentData,
-          date: appointmentData.date ? format(appointmentData.date, 'yyyy-MM-dd') : '',
+          date: appointmentData.date ? 
+            format(appointmentData.date, 'yyyy-MM-dd') : 
+            '',
         };
         
         return (
@@ -102,7 +104,7 @@ const SalonAppointment = () => {
             setIsComplete={setIsComplete}
             prevStep={prevStep}
           />
-        );
+        ); }
       default:
         return null;
     }
@@ -119,7 +121,7 @@ const SalonAppointment = () => {
   return (
     <div className="max-w-3xl mx-auto">
       <h1 className="text-3xl font-bold text-center font-playfair mb-2">
-        Agendamento Online - Studio Sandy Yasmin
+        Agendamento Online - Connect Studio Pro
       </h1>
       <p className="text-center text-muted-foreground mb-8">
         Reserve seu horário em poucos passos

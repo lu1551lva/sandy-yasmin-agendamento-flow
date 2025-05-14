@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Copy } from "lucide-react";
 
 const defaultTemplates = {
-  confirmation: `Olá {nome}! Confirmamos seu agendamento no Studio Sandy Yasmin para {servico} no dia {data} às {hora}. Valor: {valor}. Aguardamos sua presença!`,
+  confirmation: `Olá {nome}! Confirmamos seu agendamento no Connect Studio Pro para {servico} no dia {data} às {hora}. Valor: {valor}. Aguardamos sua presença!`,
   
   reminder: `Olá {nome}! Passando para lembrar do seu agendamento amanhã às {hora} para {servico}. Caso precise remarcar, entre em contato conosco. Obrigado!`,
   
@@ -23,7 +23,7 @@ const defaultTemplates = {
   
   cancellation: `Olá {nome}! Lamentamos informar que precisamos cancelar seu agendamento para {servico} no dia {data} às {hora}. Por favor, entre em contato conosco para mais informações. Pedimos desculpas pelo inconveniente.`,
   
-  followup: `Olá {nome}! Como foi sua experiência com o serviço {servico} no Studio Sandy Yasmin? Ficaríamos felizes em receber seu feedback. Obrigado pela preferência!`
+  followup: `Olá {nome}! Como foi sua experiência com o serviço {servico} no Connect Studio Pro? Ficaríamos felizes em receber seu feedback. Obrigado pela preferência!`
 };
 
 const WhatsAppMessages = () => {

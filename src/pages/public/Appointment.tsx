@@ -121,7 +121,7 @@ const Appointment = () => {
   return (
     <div className="max-w-3xl mx-auto">
       <h1 className="text-3xl font-bold text-center font-playfair mb-2">
-        Studio Sandy Yasmin
+        Connect Studio Pro
       </h1>
       <p className="text-center text-muted-foreground mb-8">
         Reserve seu horário em poucos passos

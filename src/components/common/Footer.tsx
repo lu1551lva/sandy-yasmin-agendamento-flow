@@ -37,7 +37,7 @@ export const Footer = () => {
             </div>
             
             <p className="text-sm text-gray-400">
-              &copy; {currentYear} Studio Sandy Yasmin. Todos os direitos reservados.
+              &copy; {currentYear} Connect Studio Pro. Todos os direitos reservados.
             </p>
             
             <Link 

@@ -10,7 +10,7 @@ export function getWhatsAppTemplates(): Record<string, string> {
   const defaultTemplates = {
     confirmation: `Olá {nome}! 
 
-Seu agendamento para {servico} com {profissional} no dia {data} às {hora} foi confirmado. Aguardamos você no Studio Sandy Yasmin! ✨`,
+Seu agendamento para {servico} com {profissional} no dia {data} às {hora} foi confirmado. Aguardamos você no Connect Studio Pro! ✨`,
     
     reminder: `Olá {nome}! 👋
 
@@ -49,7 +49,7 @@ Pedimos desculpas pelo inconveniente. 🙏`,
     
     followup: `Olá {nome}! 
 
-Como foi sua experiência com o serviço {servico} no Studio Sandy Yasmin? 
+Como foi sua experiência com o serviço {servico} no Connect Studio Pro? 
 
 Ficaríamos felizes em receber seu feedback! 
 Obrigado pela preferência! ⭐`

@@ -16,7 +16,7 @@ const AdminHeader = ({ onLogout }: AdminHeaderProps) => {
   return (
     <div className="flex-1 flex items-center justify-between h-16 px-2 sm:px-4">
       <div className="flex-1 truncate">
-        <h1 className="text-base sm:text-lg font-semibold truncate">Studio Sandy Yasmin</h1>
+        <h1 className="text-base sm:text-lg font-semibold truncate">Connect Studio Pro</h1>
         <p className="text-xs sm:text-sm text-muted-foreground truncate">Painel Administrativo</p>
       </div>
       <div className="flex items-center gap-2 sm:gap-4">

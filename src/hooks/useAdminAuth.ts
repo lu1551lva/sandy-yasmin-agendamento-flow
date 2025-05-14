@@ -41,7 +41,7 @@ export const useAdminAuth = (): AdminAuthState => {
 
   const login = async (email: string, password: string) => {
     try {
-      // Fixed credentials for Studio Sandy Yasmin
+      // Fixed credentials for Connect Studio Pro
       const validEmail = 'admin@studio.com';
       const validPassword = 'admin123';
       

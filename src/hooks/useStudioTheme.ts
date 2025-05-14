@@ -11,7 +11,7 @@ interface StudioThemeSettings {
 }
 
 const defaultSettings: StudioThemeSettings = {
-  name: "Studio Sandy Yasmin",
+  name: "Connect Studio Pro",
   logoUrl: "",
   bannerUrl: "",
   primaryColor: "#D0A638", // Gold color

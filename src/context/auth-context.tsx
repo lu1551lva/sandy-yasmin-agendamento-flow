@@ -61,7 +61,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.log('Attempting to sign in with email:', email);
       setIsLoading(true);
       
-      // Fixed credentials for Studio Sandy Yasmin
+      // Fixed credentials for Connect Studio Pro
       if (email === 'admin@studio.com' && password === 'admin123') {
         const userData: User = { email };
         
@@ -117,12 +117,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     console.log('Sign up attempted, but not allowed in this single-tenant app');
     toast({
       title: "Registro não permitido",
-      description: "Este é um aplicativo exclusivo para o Studio Sandy Yasmin.",
+      description: "Este é um aplicativo exclusivo para o Connect Studio Pro.",
       variant: "destructive",
     });
     
     return { 
-      error: "Registro não permitido. Este é um aplicativo exclusivo para o Studio Sandy Yasmin.", 
+      error: "Registro não permitido. Este é um aplicativo exclusivo para o Connect Studio Pro.", 
       user: null 
     };
   };

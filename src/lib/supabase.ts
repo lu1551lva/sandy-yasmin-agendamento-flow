@@ -38,7 +38,7 @@ export type AppointmentWithDetails = Appointment & {
   profissional: Professional;
 };
 
-// Define Salon type for Studio Sandy Yasmin
+// Define Salon type for Connect Studio Pro
 export interface Salon {
   id: string;
   nome: string;
@@ -94,7 +94,7 @@ export function formatWhatsAppTemplate(template: string, variables: Record<strin
 // Helper function to get WhatsApp templates
 export function getWhatsAppTemplates(): Record<string, string> {
   const defaultTemplates = {
-    confirmation: `Olá {nome}! Confirmamos seu agendamento no Studio Sandy Yasmin para {servico} no dia {data} às {hora}. Valor: {valor}. Aguardamos sua presença!`,
+    confirmation: `Olá {nome}! Confirmamos seu agendamento no Connect Studio Pro para {servico} no dia {data} às {hora}. Valor: {valor}. Aguardamos sua presença!`,
     
     reminder: `Olá {nome}! Passando para lembrar do seu agendamento amanhã às {hora} para {servico}. Caso precise remarcar, entre em contato conosco. Obrigado!`,
     
@@ -102,19 +102,19 @@ export function getWhatsAppTemplates(): Record<string, string> {
     
     cancellation: `Olá {nome}! Lamentamos informar que precisamos cancelar seu agendamento para {servico} no dia {data} às {hora}. Por favor, entre em contato conosco para mais informações. Pedimos desculpas pelo inconveniente.`,
     
-    followup: `Olá {nome}! Como foi sua experiência com o serviço {servico} no Studio Sandy Yasmin? Ficaríamos felizes em receber seu feedback. Obrigado pela preferência!`
+    followup: `Olá {nome}! Como foi sua experiência com o serviço {servico} no Connect Studio Pro? Ficaríamos felizes em receber seu feedback. Obrigado pela preferência!`
   };
 
   const savedTemplates = localStorage.getItem('whatsappTemplates');
   return savedTemplates ? JSON.parse(savedTemplates) : defaultTemplates;
 }
 
-// Function to get salon by slug - simplified for Studio Sandy Yasmin
+// Function to get salon by slug - simplified for Connect Studio Pro
 export const getSalonBySlug = async (slug: string): Promise<Salon | null> => {
   // Since we're returning to a single-tenant app, we'll create a static salon object
   return {
     id: "sandy-yasmin-id",
-    nome: "Studio Sandy Yasmin",
+    nome: "Connect Studio Pro",
     url_personalizado: "studio-sandy-yasmin",
     email: "admin@studio.com",
     status: "ativo",

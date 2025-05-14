@@ -72,7 +72,7 @@ export const RegisterForm = () => {
   return (
     <CardContent>
       <div className="space-y-4 text-center">
-        <p>O registro não é permitido para Studio Sandy Yasmin.</p>
+        <p>O registro não é permitido para Connect Studio Pro.</p>
         <p>Este é um aplicativo de inquilino único.</p>
         
         <Button

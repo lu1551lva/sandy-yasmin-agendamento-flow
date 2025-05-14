@@ -10,7 +10,7 @@ const PublicLayout = () => {
       <header className="bg-white border-b py-4 shadow-sm">
         <div className="container mx-auto px-4 flex justify-between items-center">
           <Link to="/" className="text-xl font-bold text-primary font-playfair">
-            Studio Sandy Yasmin
+            Connect Studio Pro
           </Link>
           <div className="flex items-center space-x-3">
             <Button variant="ghost" asChild>
